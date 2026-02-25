@@ -1,5 +1,5 @@
 {
-  "name": "polymarket-arb",
+  "name": "nuxt-v4-template",
   "type": "module",
   "private": true,
   "version": "1.0.0",
@@ -10,26 +10,26 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "typecheck": "npx nuxt typecheck",
-    "deploy": "nuxt build && node scripts/patch-cf-process-proxy.mjs && wrangler pages deploy dist"
+    "deploy": "nuxt build && wrangler deploy",
+    "generate:favicons": "node scripts/generate-favicons.mjs"
   },
   "dependencies": {
+    "@nuxt/content": "^3.11.2",
+    "@nuxt/image": "^2.0.0",
     "@nuxt/ui": "^4.3.0",
-    "@polymarket/clob-client": "^5.2.1",
-    "chart.js": "^4.5.1",
+    "@nuxtjs/seo": "^3.4.0",
+    "better-sqlite3": "^12.6.2",
     "drizzle-orm": "^0.45.1",
-    "ethers": "^6.16.0",
     "nuxt": "^4.3.0",
-    "posthog-js": "^1.342.1",
     "tailwindcss": "^4.1.18",
     "vue": "^3.5.27",
-    "vue-chartjs": "^5.3.3",
-    "vue-router": "^4.6.4"
+    "vue-router": "^4.6.4",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250620.0",
+    "@iconify-json/lucide": "^1.2.94",
     "@nuxt/fonts": "^0.11.4",
-    "@nuxtjs/robots": "^5.7.0",
-    "@nuxtjs/sitemap": "^7.6.0",
     "@types/node": "^22.15.0",
     "wrangler": "^4.20.0"
   },

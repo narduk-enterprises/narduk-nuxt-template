@@ -73,7 +73,7 @@
         </UButton>
       </form>
 
-      <UDivider label="or" />
+      <USeparator label="or" />
 
       <UButton
         block

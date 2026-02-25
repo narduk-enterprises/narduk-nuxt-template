@@ -1,12 +1,11 @@
-import pkg from './package.json'
-
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
     '@nuxt/ui',
     '@nuxt/fonts',
-    '@nuxtjs/sitemap',
-    '@nuxtjs/robots'
+    '@nuxt/image',
+    '@nuxt/content',
+    '@nuxtjs/seo',
   ],
   css: ['~/assets/css/main.css'],
 
@@ -26,51 +25,79 @@ export default defineNuxtConfig({
     preference: 'dark'
   },
 
-  vite: {
-    define: {
-      __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
-      __APP_VERSION__: JSON.stringify(pkg.version)
-    }
-  },
-
   runtimeConfig: {
-    // Server-only Polymarket secrets
-    polymarketPrivateKey: process.env.POLYMARKET_PRIVATE_KEY || '',
-    polymarketApiKey: process.env.POLYMARKET_API_KEY || '',
-    polymarketSecret: process.env.POLYMARKET_SECRET || '',
-    polymarketPassphrase: process.env.POLYMARKET_PASSPHRASE || '',
-    polymarketProxyAddress: process.env.POLYMARKET_PROXY_ADDRESS || '',
-
     public: {
-      appUrl: process.env.SITE_URL || 'https://polymarket-arb.pages.dev',
-      posthogPublicKey: process.env.POSTHOG_PUBLIC_KEY || '',
-      posthogHost: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',
-      gaMeasurementId: process.env.GA_MEASUREMENT_ID || '',
-      appName: process.env.APP_NAME || pkg.name || ''
+      appUrl: process.env.SITE_URL || 'https://nuxt-v4-template.workers.dev',
+      appName: 'Nuxt 4 Demo'
     }
   },
+
+  // ─── SEO Configuration (@nuxtjs/seo) ──────────────────────────
+  // This single config block powers sitemap, robots, schema.org,
+  // OG images, and site-wide SEO defaults. Individual pages override
+  // these via the `useSeo()` composable.
 
   site: {
-    url: 'https://polymarket-arb.pages.dev',
-    name: 'Polymarket Arb'
+    url: process.env.SITE_URL || 'https://nuxt-v4-template.workers.dev',
+    name: 'Nuxt 4 Demo',
+    description: 'A production-ready demo template showcasing Nuxt 4, Nuxt UI 4, Tailwind CSS 4, and Cloudflare Workers with D1 database.',
+    defaultLocale: 'en',
   },
 
-  sitemap: {
-    sources: ['/api/sitemap-urls']
+  ogImage: {
+    defaults: {
+      component: 'OgImageDefault',
+    },
   },
+
+  schemaOrg: {
+    identity: {
+      type: 'Organization',
+      name: 'Nuxt 4 Demo',
+      url: process.env.SITE_URL || 'https://nuxt-v4-template.workers.dev',
+      logo: '/favicon.svg',
+    },
+  },
+
+  image: {
+    provider: 'cloudflare',
+    cloudflare: {
+      baseURL: process.env.SITE_URL || 'https://nuxt-v4-template.workers.dev',
+    },
+  },
+
+  content: {
+    // @nuxt/content v3 — edge-compatible, SQL-based storage
+    build: {
+      markdown: {
+        toc: { depth: 3 },
+        highlight: {
+          langs: ['typescript', 'vue', 'bash', 'json', 'css', 'html'],
+        },
+      },
+    },
+  },
+
+  sitemap: {},
 
   robots: {
-    disallow: ['/api/']
+    groups: [
+      {
+        userAgent: '*',
+        allow: '/',
+      },
+    ],
   },
 
+  // ─── Nitro (Cloudflare Workers) ────────────────────────────────
+
   nitro: {
-    preset: 'cloudflare-pages',
+    preset: 'cloudflare-module',
     esbuild: {
       options: {
         target: 'esnext'
       }
     },
-    // Inline drizzle-orm so it's bundled into the worker (not treated as external)
     externals: {
       inline: ['drizzle-orm']
     }
@@ -78,25 +105,17 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Polymarket Arb — Prediction Market Arbitrage Tracker',
       htmlAttrs: { lang: 'en' },
       meta: [
-        { name: 'description', content: 'Automated prediction market arbitrage scanner for Polymarket. Detects pricing inefficiencies, tracks opportunities, and monitors trades in real time.' },
-        { name: 'keywords', content: 'polymarket, arbitrage, prediction markets, trading bot, arb scanner' },
-        { property: 'og:title', content: 'Polymarket Arb — Prediction Market Arbitrage Tracker' },
-        { property: 'og:description', content: 'Automated prediction market arbitrage scanner. Detects pricing inefficiencies in real time.' },
-        { property: 'og:type', content: 'website' },
-        { property: 'og:url', content: 'https://polymarket-arb.pages.dev' },
-        { property: 'og:site_name', content: 'Polymarket Arb' },
-        { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: 'Polymarket Arb — Prediction Market Arbitrage Tracker' },
-        { name: 'twitter:description', content: 'Automated prediction market arbitrage scanner. Detects pricing inefficiencies in real time.' },
         { name: 'theme-color', content: '#0a0f1a' },
-        { name: 'google-site-verification', content: '' }
       ],
       link: [
-        { rel: 'canonical', href: 'https://polymarket-arb.pages.dev' }
-      ]
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
+        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/site.webmanifest' },
+      ],
     },
     pageTransition: { name: 'page', mode: 'out-in' }
   }

@@ -1,3 +1,0 @@
-# Doppler project for this app. Run: doppler run -- npm run dev
-project: polymarket-arb
-config: dev_base

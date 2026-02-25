@@ -4,29 +4,6 @@
 @import '@nuxt/ui';
 
 @theme {
-  /* Cedar Pollen Brand Colors */
-  --color-cedar-50: #f0fdf0;
-  --color-cedar-100: #d5f5d5;
-  --color-cedar-200: #abeaab;
-  --color-cedar-300: #73d573;
-  --color-cedar-400: #44b944;
-  --color-cedar-500: #2d5016;
-  --color-cedar-600: #234010;
-  --color-cedar-700: #1a300c;
-  --color-cedar-800: #122008;
-  --color-cedar-900: #0a1004;
-
-  --color-pollen-gold: #f59e0b;
-  --color-allergy-red: #dc2626;
-  --color-sky-accent: #0ea5e9;
-
-  /* Severity Scale */
-  --color-severity-low: #22c55e;
-  --color-severity-medium: #f59e0b;
-  --color-severity-high: #f97316;
-  --color-severity-very-high: #dc2626;
-  --color-severity-extreme: #9333ea;
-
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Outfit', system-ui, sans-serif;
@@ -44,28 +21,17 @@ h4,
   font-family: var(--font-display);
 }
 
-/* Severity Gradient Backgrounds */
-.severity-bg-low {
-  background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
-}
-.severity-bg-medium {
-  background: linear-gradient(135deg, #78350f 0%, #92400e 50%, #b45309 100%);
-}
-.severity-bg-high {
-  background: linear-gradient(135deg, #7c2d12 0%, #9a3412 50%, #c2410c 100%);
-}
-.severity-bg-very-high {
-  background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #dc2626 100%);
-}
-.severity-bg-extreme {
-  background: linear-gradient(135deg, #581c87 0%, #7c3aed 50%, #a855f7 100%);
-}
-
 /* Animated gradient background */
 @keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .animate-gradient {
@@ -75,8 +41,14 @@ h4,
 
 /* Count-up animation */
 @keyframes count-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-count-in {
@@ -99,19 +71,17 @@ h4,
   border-radius: 1rem;
 }
 
-/* Severity ring animation */
-@keyframes ring-fill {
-  from { stroke-dashoffset: 283; }
-}
-
-.animate-ring {
-  animation: ring-fill 1.5s ease-out forwards;
-}
-
 /* Pulse glow for live indicator */
 @keyframes pulse-glow {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px currentColor; }
-  50% { opacity: 0.5; box-shadow: 0 0 16px currentColor; }
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 8px currentColor;
+  }
+  50% {
+    opacity: 0.5;
+    box-shadow: 0 0 16px currentColor;
+  }
 }
 
 .animate-pulse-glow {

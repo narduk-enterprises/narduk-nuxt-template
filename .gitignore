@@ -4,7 +4,6 @@
 .nuxt
 .nitro
 .cache
-dist
 
 # Node dependencies
 node_modules
@@ -23,14 +22,8 @@ logs
 .env.*
 !.env.example
 
-# Service account keys
-*.serviceaccount.json
-gen-lang-client-*.json
-narduk-seo-automation-*.json
-
-# Misc build artifacts
-*.bak
-typecheck_errors.txt
-
-.vercel
+# Cloudflare
 .wrangler/
+
+# Build artifacts
+*.bak

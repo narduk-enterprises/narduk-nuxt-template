@@ -1,9 +1,6 @@
 import { drizzle, type DrizzleD1Database } from 'drizzle-orm/d1'
 import * as schema from '../database/schema'
 
-export { schema }
-export * from '../database/schema'
-
 let _db: DrizzleD1Database<typeof schema> | null = null
 
 /**

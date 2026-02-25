@@ -1,6 +1,4 @@
 import { z } from 'zod'
-import { createUser, createSession, getUserByEmail } from '../../utils/auth'
-import { enforceRateLimit } from '../../utils/rateLimit'
 
 const signupSchema = z.object({
   email: z.string().email(),
