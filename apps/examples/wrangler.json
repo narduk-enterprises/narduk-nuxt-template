@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/schemas/config/wrangler.json",
-  "name": "nuxt-v4-template",
+  "name": "nuxt-v4-template-examples",
   "main": ".output/server/index.mjs",
   "assets": {
     "directory": ".output/public"
@@ -13,8 +13,9 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "nuxt-v4-template-db",
-      "database_id": "83b9f319-c34e-4625-9c08-1eb384d9d36d"
+      "database_name": "nuxt-v4-template-examples-db",
+      "database_id": "83b9f319-c34e-4625-9c08-1eb384d9d36d",
+      "preview_database_id": "DB"
     }
   ]
 }

@@ -50,27 +50,44 @@ async function main() {
     `Database ${dbName} not found or Wrangler not authenticated`
   ) && allGood
 
-  // 2. Check wrangler.json
+  // 2. Check wrangler.json in each app
   console.log('\nStep 2/4: Validating wrangler.json...')
   try {
-    const wranglerPath = path.join(ROOT_DIR, 'wrangler.json')
-    const wranglerContent = await fs.readFile(wranglerPath, 'utf-8')
-    const parsedWrangler = JSON.parse(wranglerContent)
-    
-    if (parsedWrangler.d1_databases && parsedWrangler.d1_databases.length > 0) {
-      const dbId = parsedWrangler.d1_databases[0].database_id
-      if (dbId && dbId.length > 0) {
-        console.log(`  ✅ Database ID configured in wrangler.json: ${dbId}`)
-      } else {
-        console.error('  ❌ Database ID missing from wrangler.json.')
-        allGood = false
+    const appsDir = path.join(ROOT_DIR, 'apps')
+    const entries = await fs.readdir(appsDir, { withFileTypes: true })
+    const appDirs = entries.filter(e => e.isDirectory()).map(e => e.name)
+    let foundAny = false
+
+    for (const appDir of appDirs) {
+      const wranglerPath = path.join(appsDir, appDir, 'wrangler.json')
+      try {
+        const wranglerContent = await fs.readFile(wranglerPath, 'utf-8')
+        const parsedWrangler = JSON.parse(wranglerContent)
+        foundAny = true
+
+        if (parsedWrangler.d1_databases && parsedWrangler.d1_databases.length > 0) {
+          const dbId = parsedWrangler.d1_databases[0].database_id
+          if (dbId && dbId.length > 0) {
+            console.log(`  ✅ apps/${appDir}/wrangler.json — database_id: ${dbId}`)
+          } else {
+            console.error(`  ❌ apps/${appDir}/wrangler.json — database_id missing.`)
+            allGood = false
+          }
+        } else {
+          console.error(`  ❌ apps/${appDir}/wrangler.json — d1_databases misconfigured.`)
+          allGood = false
+        }
+      } catch {
+        // App doesn't have a wrangler.json — skip
       }
-    } else {
-      console.error('  ❌ d1_databases misconfigured in wrangler.json.')
+    }
+
+    if (!foundAny) {
+      console.error('  ❌ No wrangler.json files found in apps/*/')
       allGood = false
     }
   } catch (e: any) {
-    console.error(`  ❌ Failed to read or parse wrangler.json: ${e.message}`)
+    console.error(`  ❌ Failed to scan apps directory: ${e.message}`)
     allGood = false
   }
 

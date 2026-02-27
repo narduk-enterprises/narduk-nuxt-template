@@ -31,13 +31,7 @@
  * ```
  */
 
-interface R2Bucket {
-  put: (key: string, value: ReadableStream | ArrayBuffer | string, options?: any) => Promise<any>
-  get: (key: string) => Promise<any>
-  delete: (key: string | string[]) => Promise<void>
-  list: (options?: { prefix?: string; limit?: number; cursor?: string }) => Promise<any>
-  head: (key: string) => Promise<any>
-}
+/// <reference types="@cloudflare/workers-types" />
 
 /**
  * Get the R2 bucket binding from the Cloudflare event context.

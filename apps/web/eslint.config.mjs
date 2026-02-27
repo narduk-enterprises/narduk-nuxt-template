@@ -1,20 +1,5 @@
 // @ts-check
 import withNuxt from './.nuxt/eslint.config.mjs'
+import { sharedConfigs } from '@narduk/eslint-config'
 
-export default withNuxt(
-  {
-    rules: {
-      'vue/multi-word-component-names': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-    }
-  },
-  {
-    ignores: [
-      '.nuxt/**',
-      '.output/**',
-      'dist/**',
-      'node_modules/**',
-      '**/*.d.ts'
-    ],
-  }
-)
+export default withNuxt(...sharedConfigs)

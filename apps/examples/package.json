@@ -14,13 +14,15 @@
     "prelint": "test -f .nuxt/eslint.config.mjs || nuxt prepare",
     "lint": "eslint .",
     "quality": "pnpm run lint && pnpm run typecheck",
+    "db:migrate": "wrangler d1 execute nuxt-v4-template-examples-db --local --file=../../layers/narduk-nuxt-layer/drizzle/0000_initial_schema.sql",
+    "db:seed": "wrangler d1 execute nuxt-v4-template-examples-db --local --file=../../layers/narduk-nuxt-layer/drizzle/seed.sql",
     "init": "jiti ../../tools/init.ts"
   },
   "dependencies": {
-    "nuxt": "^4.3.0"
+    "nuxt": "^4.3.1"
   },
   "devDependencies": {
-    "eslint": "^9.39.3",
+    "eslint": "^10.0.2",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.2.5",
     "wrangler": "^4.20.0"
@@ -30,6 +32,6 @@
     "vite": "npm:rolldown-vite@latest"
   },
   "volta": {
-    "node": "22.14.0"
+    "node": "22.22.0"
   }
 }

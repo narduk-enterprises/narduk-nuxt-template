@@ -19,7 +19,7 @@
   "dependencies": {
     "@narduk/eslint-config": "workspace:*",
     "@nuxt/eslint": "^1.15.2",
-    "@nuxt/fonts": "^0.11.4",
+    "@nuxt/fonts": "^0.14.0",
     "@nuxt/image": "^2.0.0",
     "@nuxt/ui": "^4.5.0",
     "@nuxtjs/seo": "^3.4.0",
@@ -35,9 +35,9 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250620.0",
     "@iconify-json/lucide": "^1.2.94",
-    "@types/node": "^22.15.0",
+    "@types/node": "^22.19.13",
     "drizzle-kit": "^0.31.9",
-    "eslint": "^9.39.3",
+    "eslint": "^10.0.2",
     "nuxt": "^4.3.1",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
@@ -50,6 +50,6 @@
     "vite": "npm:rolldown-vite@latest"
   },
   "volta": {
-    "node": "22.14.0"
+    "node": "22.22.0"
   }
 }

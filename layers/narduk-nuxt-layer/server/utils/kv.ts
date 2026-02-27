@@ -31,12 +31,7 @@
  * ```
  */
 
-interface KVNamespace {
-  get: (key: string, options?: any) => Promise<string | null>
-  put: (key: string, value: string, options?: { expirationTtl?: number; expiration?: number; metadata?: any }) => Promise<void>
-  delete: (key: string) => Promise<void>
-  list: (options?: { prefix?: string; limit?: number; cursor?: string }) => Promise<any>
-}
+/// <reference types="@cloudflare/workers-types" />
 
 /**
  * Get the KV namespace binding from the Cloudflare event context.

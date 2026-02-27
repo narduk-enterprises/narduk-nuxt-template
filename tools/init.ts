@@ -59,9 +59,13 @@ const SITE_URL = (args.url as string).replace(/\/$/, '') // strip trailing slash
 const REPAIR_MODE = !!args.repair
 
 // Boilerplate targets to replace
+// Order matters: more-specific patterns must come before less-specific ones
 const REPLACEMENTS = [
+  { from: /nuxt-v4-template-examples-db/g, to: `${APP_NAME}-examples-db` },
+  { from: /nuxt-v4-template-examples/g, to: `${APP_NAME}-examples` },
   { from: /nuxt-v4-template-db/g, to: `${APP_NAME}-db` },
   { from: /nuxt-v4-template/g, to: APP_NAME },
+  { from: /Nuxt 4 Demo Examples/g, to: `${DISPLAY_NAME} Examples` },
   { from: /Nuxt 4 Demo/g, to: DISPLAY_NAME },
   { from: /https:\/\/nuxt-v4-template\.workers\.dev/g, to: SITE_URL }
 ]
@@ -165,7 +169,7 @@ async function main() {
     }
   }
 
-  // 3. Extract DB ID and rewrite wrangler.json
+  // 3. Extract DB ID and rewrite wrangler.json in each app
   console.log('\nStep 3/8: Linking Database to wrangler.json...')
   // Match both key=value format and wrangler table format (│ DB │ uuid │)
   const idMatch = d1Output.match(/database_id[=:]\s*"?([a-fA-F0-9-]+)"?/) || d1Output.match(/│\s*DB\s*│\s*([a-fA-F0-9-]+)\s*│/)
@@ -177,28 +181,46 @@ async function main() {
     console.warn(d1Output)
   } else {
     const dbId = idMatch[1]
-    const wranglerPath = path.join(ROOT_DIR, 'wrangler.json')
+    // Find all wrangler.json files in apps/*/
+    const appsDir = path.join(ROOT_DIR, 'apps')
+    let appDirs: string[] = []
     try {
-      const wranglerContent = await fs.readFile(wranglerPath, 'utf-8')
-      const parsedWrangler = JSON.parse(wranglerContent)
-      
-      if (parsedWrangler.d1_databases && parsedWrangler.d1_databases.length > 0) {
-        parsedWrangler.d1_databases[0].database_id = dbId
-      }
-      
-      try {
-        const urlObj = new URL(SITE_URL)
-        parsedWrangler.routes = [
-          { pattern: urlObj.hostname, custom_domain: true }
-        ]
-      } catch (_e) {
-        console.warn(`  ⚠️ Could not configure custom domain: Invalid SITE_URL (${SITE_URL})`)
-      }
+      const entries = await fs.readdir(appsDir, { withFileTypes: true })
+      appDirs = entries.filter(e => e.isDirectory()).map(e => e.name)
+    } catch {
+      appDirs = []
+    }
 
-      await fs.writeFile(wranglerPath, JSON.stringify(parsedWrangler, null, 2) + '\n', 'utf-8')
-      console.log(`  ✅ Injected database_id: ${dbId} and configured custom domain map.`)
-    } catch (e: any) {
-      console.warn(`  ⚠️ Failed to update wrangler.json: ${e.message}`)
+    let updatedCount = 0
+    for (const appDir of appDirs) {
+      const wranglerPath = path.join(appsDir, appDir, 'wrangler.json')
+      try {
+        const wranglerContent = await fs.readFile(wranglerPath, 'utf-8')
+        const parsedWrangler = JSON.parse(wranglerContent)
+        
+        if (parsedWrangler.d1_databases && parsedWrangler.d1_databases.length > 0) {
+          parsedWrangler.d1_databases[0].database_id = dbId
+        }
+        
+        try {
+          const urlObj = new URL(SITE_URL)
+          parsedWrangler.routes = [
+            { pattern: urlObj.hostname, custom_domain: true }
+          ]
+        } catch (_e) {
+          console.warn(`  ⚠️ Could not configure custom domain: Invalid SITE_URL (${SITE_URL})`)
+        }
+
+        await fs.writeFile(wranglerPath, JSON.stringify(parsedWrangler, null, 2) + '\n', 'utf-8')
+        updatedCount++
+        console.log(`  ✅ Updated apps/${appDir}/wrangler.json (database_id: ${dbId})`)
+      } catch {
+        // App doesn't have a wrangler.json — skip silently
+      }
+    }
+
+    if (updatedCount === 0) {
+      console.warn('  ⚠️ No wrangler.json files found in apps/*/')
     }
   }
 
