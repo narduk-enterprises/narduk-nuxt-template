@@ -20,10 +20,11 @@ description: Migrate a flat Nuxt 4 app from ~/code into the nuxt-v4-template mon
 
 ## Phase 0: Scaffold the New Repo
 
-1. Clone the template into a **new directory** with the project name:
+1. Navigate to the source repository and clone the template into a sub-directory:
    ```bash
-   git clone https://github.com/loganrenz/nuxt-v4-template.git ~/code/<project-name>-v2
-   cd ~/code/<project-name>-v2
+   cd ~/code/<source>
+   git clone https://github.com/loganrenz/nuxt-v4-template.git ./<project-name>-v2
+   cd ./<project-name>-v2
    rm -rf .git
    git init && git add . && git commit -m "chore: scaffold from nuxt-v4-template"
    ```
@@ -92,7 +93,7 @@ Execute commands to selectively copy code from the old repo to the new `apps/web
 
    ```bash
    # Make sure you are in the new repo
-   cd ~/code/<project-name>-v2
+   cd ~/code/<source>/<project-name>-v2
 
    # Pages, components, layouts, composables, middleware
    cp -R ~/code/<source>/app/pages/* apps/web/app/pages/ || true
@@ -111,6 +112,7 @@ Execute commands to selectively copy code from the old repo to the new `apps/web
    - Read `~/code/<source>/app/assets/css/main.css` and merge ONLY the app-specific `@theme` tokens or custom utilities into `apps/web/app/assets/css/main.css`.
    - Read `~/code/<source>/app/app.vue` and copy any app-specific global providers or schema setup into `apps/web/app/app.vue`.
 3. **Copy app-specific server code & migrations:**
+
    ```bash
    cp -R ~/code/<source>/server/api/* apps/web/server/api/ || true
    cp ~/code/<source>/drizzle/*.sql apps/web/drizzle/ || true
@@ -259,13 +261,31 @@ Run the quality agent slash commands to validate the final state:
 
 ---
 
-## Phase 7: Retire Old Directory
+## Phase 7: Finalize Directory Structure and Review
 
-Once the migration is fully verified, audits have passed, and the new monorepo app is working as expected, delete the old source directory to clean up your workspace:
+Once the migration is fully verified and the new monorepo app is working as expected in the local subdirectory, elevate it to be the main project and remove the old one.
 
-```bash
-rm -rf ~/code/<source>
-```
+1. **Rename the old directory and move the new one to `~/code`:**
+
+   ```bash
+   cd ~/code
+   mv ~/code/<source> ~/code/<source>-old
+   mv ~/code/<source>-old/<project-name>-v2 ~/code/<project-name>-v2
+   cd ~/code/<project-name>-v2
+   ```
+
+2. **Final Quality Review:**
+
+   ```bash
+   pnpm run quality
+   ```
+
+   _Take a moment to perform one final, thorough review of the app to ensure everything functions perfectly in its new location._
+
+3. **Delete the old directory:**
+   ```bash
+   rm -rf ~/code/<source>-old
+   ```
 
 ---
 
