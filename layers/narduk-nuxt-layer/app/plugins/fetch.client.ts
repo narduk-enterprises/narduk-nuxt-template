@@ -11,10 +11,11 @@ export default defineNuxtPlugin(() => {
   const { $fetch: _fetch } = useNuxtApp()
 
   globalThis.$fetch = $fetch.create({
-    onRequest({ options }) {
+    onRequest(ctx) {
       // Cleanly construct a Headers object to satisfy DOM types
-      options.headers = new Headers(options.headers || {})
-      options.headers.set('X-Requested-With', 'XMLHttpRequest')
+      const headers = new Headers(ctx.options.headers as HeadersInit || {})
+      headers.set('X-Requested-With', 'XMLHttpRequest')
+      ctx.options.headers = headers
     },
   }) as typeof $fetch
 })

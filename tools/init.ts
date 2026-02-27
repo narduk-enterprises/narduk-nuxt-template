@@ -314,64 +314,77 @@ Pushes to \`main\` are automatically built and deployed via the GitHub Actions C
 
   // 6. Doppler Service Token → GitHub Secret (skip if token exists)
   console.log('\nStep 6/8: Adding Doppler token to GitHub repository...')
+
+  // Pre-check: a non-template git remote must exist for gh secret set to work
+  let hasGitRemote = false
   try {
-    // Check if ci-deploy token already exists
-    let tokenExists = false
+    const remotesCheck = execSync('git remote -v', { encoding: 'utf-8', stdio: 'pipe' }).trim()
+    hasGitRemote = remotesCheck.split('\n').some(line => !line.includes('nuxt-v4-template') && line.includes('(push)'))
+  } catch { /* no git or no remotes */ }
+
+  if (!hasGitRemote) {
+    console.log('  ⏭ No git remote found (expected for fresh scaffolds).')
+    console.log('    After adding a remote, re-run with --repair to set the GitHub secret.')
+  } else {
     try {
-      const tokensOutput = execSync(
-        `doppler configs tokens --project ${APP_NAME} --config prd --plain`,
-        { encoding: 'utf-8', stdio: 'pipe' }
-      )
-      tokenExists = tokensOutput.includes('ci-deploy')
-    } catch {
-      // If listing fails, proceed with creation attempt
-    }
-
-    if (tokenExists) {
-      console.log(`  ⏭ ci-deploy token already exists. Skipping to avoid invalidating active CI token.`)
-    } else {
-      const dopplerToken = execSync(
-        `doppler configs tokens create ci-deploy --project ${APP_NAME} --config prd --plain`,
-        { encoding: 'utf-8', stdio: 'pipe' }
-      ).trim()
-
-      if (!dopplerToken) {
-        throw new Error('Doppler returned an empty token.')
+      // Check if ci-deploy token already exists
+      let tokenExists = false
+      try {
+        const tokensOutput = execSync(
+          `doppler configs tokens --project ${APP_NAME} --config prd --plain`,
+          { encoding: 'utf-8', stdio: 'pipe' }
+        )
+        tokenExists = tokensOutput.includes('ci-deploy')
+      } catch {
+        // If listing fails, proceed with creation attempt
       }
 
-      // Automatically determine the target GitHub repository (excluding nuxt-v4-template)
-      let targetRepoFlag = ''
-      try {
-        const remotesOutput = execSync('git remote -v', { encoding: 'utf-8', stdio: 'pipe' })
-        const remotes = remotesOutput.split('\n').filter(Boolean)
-        const targetRemoteLine = remotes.find(line => !line.includes('nuxt-v4-template') && line.includes('(push)'))
-        if (targetRemoteLine) {
-          let url = targetRemoteLine.split(/\s+/)[1]
-          if (url) {
-            url = url.replace(/^(https?:\/\/|git@)/, '')
-            url = url.replace(/^github\.com[:/]/, '')
-            url = url.replace(/\.git$/, '')
+      if (tokenExists) {
+        console.log(`  ⏭ ci-deploy token already exists. Skipping to avoid invalidating active CI token.`)
+      } else {
+        const dopplerToken = execSync(
+          `doppler configs tokens create ci-deploy --project ${APP_NAME} --config prd --plain`,
+          { encoding: 'utf-8', stdio: 'pipe' }
+        ).trim()
+
+        if (!dopplerToken) {
+          throw new Error('Doppler returned an empty token.')
+        }
+
+        // Automatically determine the target GitHub repository (excluding nuxt-v4-template)
+        let targetRepoFlag = ''
+        try {
+          const remotesOutput = execSync('git remote -v', { encoding: 'utf-8', stdio: 'pipe' })
+          const remotes = remotesOutput.split('\n').filter(Boolean)
+          const targetRemoteLine = remotes.find(line => !line.includes('nuxt-v4-template') && line.includes('(push)'))
+          if (targetRemoteLine) {
+            let url = targetRemoteLine.split(/\s+/)[1]
             if (url) {
-              targetRepoFlag = `--repo "${url}"`
-              console.log(`  🎯 Automatically selected GitHub repository for secrets: ${url}`)
+              url = url.replace(/^(https?:\/\/|git@)/, '')
+              url = url.replace(/^github\.com[:/]/, '')
+              url = url.replace(/\.git$/, '')
+              if (url) {
+                targetRepoFlag = `--repo "${url}"`
+                console.log(`  🎯 Automatically selected GitHub repository for secrets: ${url}`)
+              }
             }
           }
+        } catch {
+          // Fallback to default gh cli behavior if parsing fails
         }
-      } catch {
-        // Fallback to default gh cli behavior if parsing fails
-      }
 
-      // Upload to GitHub as a repository secret via gh CLI
-      execSync(`gh secret set DOPPLER_TOKEN ${targetRepoFlag} --body "${dopplerToken}"`, { encoding: 'utf-8', stdio: 'pipe' })
-      console.log(`  ✅ DOPPLER_TOKEN set as GitHub Actions secret.`)
-    }
-  } catch (error: any) {
-    const stderr = error.stderr || error.message || ''
-    if (stderr.includes('token') && stderr.includes('already exists')) {
-      console.log(`  ⏭ Doppler CI token already exists. Skipping.`)
-    } else {
-      console.warn(`  ⚠️ Failed to set DOPPLER_TOKEN on GitHub: ${stderr}`)
-      console.warn('  Ensure you are logged into gh (gh auth login) and have a git remote set.')
+        // Upload to GitHub as a repository secret via gh CLI
+        execSync(`gh secret set DOPPLER_TOKEN ${targetRepoFlag} --body "${dopplerToken}"`, { encoding: 'utf-8', stdio: 'pipe' })
+        console.log(`  ✅ DOPPLER_TOKEN set as GitHub Actions secret.`)
+      }
+    } catch (error: any) {
+      const stderr = error.stderr || error.message || ''
+      if (stderr.includes('token') && stderr.includes('already exists')) {
+        console.log(`  ⏭ Doppler CI token already exists. Skipping.`)
+      } else {
+        console.warn(`  ⚠️ Failed to set DOPPLER_TOKEN on GitHub: ${stderr}`)
+        console.warn('  Ensure you are logged into gh (gh auth login) and have a git remote set.')
+      }
     }
   }
 
@@ -380,21 +393,34 @@ Pushes to \`main\` are automatically built and deployed via the GitHub Actions C
   try {
     const toolsDir = path.join(ROOT_DIR, 'tools')
     if (await fs.stat(path.join(toolsDir, 'setup-analytics.ts')).catch(() => null)) {
-      console.log('  Installing ephemeral dependencies (googleapis, google-auth-library)...')
-      execSync('pnpm add -w --save-dev googleapis google-auth-library', { encoding: 'utf-8', stdio: 'pipe' })
-      
-      console.log('  Executing Narduk Analytics provisioning pipeline...')
-      // Run against the app's own Doppler project (prd config) so SITE_URL, GSC creds,
-      // and hub references all resolve correctly. Command is `all`, not `setup:all`.
-      execSync(`doppler run --project ${APP_NAME} --config prd -- npx jiti tools/setup-analytics.ts all`, {
-        stdio: 'inherit',
-        env: {
-          ...process.env,
-          APP_NAME,
-          GSC_USER_EMAIL: 'narduk@gmail.com'
-        }
-      })
-      console.log(`  ✅ Analytics & Search Console setup successful.`)
+      // Pre-check: analytics setup requires these keys in Doppler.
+      // If they're not set yet, defer gracefully instead of letting the
+      // analytics script hard-exit with process.exit(1).
+      const analyticsSecrets = getDopplerSecretNames(APP_NAME, 'prd')
+      const requiredAnalyticsKeys = ['GA_ACCOUNT_ID', 'SITE_URL', 'GSC_SERVICE_ACCOUNT_JSON']
+      const missingAnalytics = requiredAnalyticsKeys.filter(k => !analyticsSecrets.has(k))
+
+      if (missingAnalytics.length > 0) {
+        console.log('  ⏭ Deferring analytics setup — missing Doppler secrets:')
+        missingAnalytics.forEach(k => console.log(`    • ${k}`))
+        console.log(`  Once set, run: doppler run --project ${APP_NAME} --config prd -- npx jiti tools/setup-analytics.ts all`)
+      } else {
+        console.log('  Installing ephemeral dependencies (googleapis, google-auth-library)...')
+        execSync('pnpm add -w --save-dev googleapis google-auth-library', { encoding: 'utf-8', stdio: 'pipe' })
+        
+        console.log('  Executing Narduk Analytics provisioning pipeline...')
+        // Run against the app's own Doppler project (prd config) so SITE_URL, GSC creds,
+        // and hub references all resolve correctly. Command is `all`, not `setup:all`.
+        execSync(`doppler run --project ${APP_NAME} --config prd -- npx jiti tools/setup-analytics.ts all`, {
+          stdio: 'inherit',
+          env: {
+            ...process.env,
+            APP_NAME,
+            GSC_USER_EMAIL: 'narduk@gmail.com'
+          }
+        })
+        console.log(`  ✅ Analytics & Search Console setup successful.`)
+      }
     } else {
       console.log('  ⚠️ tools/setup-analytics.ts missing. Skipping analytics.')
     }
