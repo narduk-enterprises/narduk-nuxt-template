@@ -108,6 +108,19 @@ Run these during development (Antigravity slash-commands):
 | `/check-types-services`   | Audits Thin Store decomposition (types/services/sizes)     |
 | `/check-hydration-safety` | Deep hydration audit (isHydrated, ClientOnly, DOM nesting) |
 
+## ESLint Plugins (Automated Enforcement)
+
+These workspace-local ESLint plugins enforce patterns at lint time. Run `pnpm run build:plugins` after cloning to build the TypeScript plugins.
+
+| Plugin                                      | Rules | What It Enforces                                                                 |
+| ------------------------------------------- | ----- | -------------------------------------------------------------------------------- |
+| `eslint-plugin-nuxt-ui`                     | 7     | Nuxt UI v4 props, slots, events, variants, deprecated API usage                  |
+| `eslint-plugin-nuxt-guardrails`             | 7     | SSR DOM access, legacy head/fetch, `import.meta.client`, `useAsyncData`          |
+| `eslint-plugin-atx`                         | 24    | Design system: prefer UButton/ULink, no inline hex, Lucide icons, Zod validation |
+| `eslint-plugin-vue-official-best-practices` | 13    | Composition API, Pinia patterns, typed defineProps, `use` prefix                 |
+
+**Build:** `pnpm run build:plugins` (ATX plugin is plain `.mjs` — no build needed).
+
 ---
 
 # 📖 Recipes
