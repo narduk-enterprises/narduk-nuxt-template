@@ -27,8 +27,10 @@ export default defineNuxtConfig({
   $development: {
     hooks: {
       'vite:extendConfig'(config) {
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         ;(config as any).server = (config as any).server || {}
         ;(config as any).server.hmr = { port: hmrPort++ }
+        /* eslint-enable @typescript-eslint/no-explicit-any */
       },
     },
   },
@@ -46,7 +48,7 @@ export default defineNuxtConfig({
   },
 
   site: {
-    url: 'http://localhost:3011',
+    url: 'http://127.0.0.1:3011',
     name: 'Auth Example',
     description: 'Authentication example using Web Crypto PBKDF2 and D1 sessions.',
     defaultLocale: 'en',

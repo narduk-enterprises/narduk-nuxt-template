@@ -14,8 +14,10 @@ export default defineNuxtConfig({
   $development: {
     hooks: {
       'vite:extendConfig'(config) {
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         ;(config as any).server ??= {}
         ;(config as any).server.hmr = { port: hmrPort++ }
+        /* eslint-enable @typescript-eslint/no-explicit-any */
       },
     },
   },
@@ -31,7 +33,7 @@ export default defineNuxtConfig({
   },
 
   site: {
-    url: process.env.SITE_URL || 'http://localhost:3016',
+    url: process.env.SITE_URL || 'http://127.0.0.1:3016',
     name: 'Apple Maps Example',
     description: 'Apple MapKit JS integration on Nuxt 4 and Cloudflare Workers.',
     defaultLocale: 'en',

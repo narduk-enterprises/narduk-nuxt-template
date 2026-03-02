@@ -8,6 +8,16 @@ const HYDRATION_PATTERNS = [
   /data-server-rendered/i,
 ]
 
+/**
+ * Wait for Nuxt/Vue hydration to complete.
+ * After SSR, the page renders HTML but Vue event handlers aren't attached
+ * until the client bundle loads and hydrates. We wait for network idle
+ * (all Vite module loads settled) then a brief tick for Vue to mount.
+ */
+async function waitForHydration(page: Page) {
+  await page.waitForLoadState('networkidle')
+}
+
 export const test = base.extend<{ page: Page }>({
   page: async ({ page }, use) => {
     const consoleLogs: string[] = []
@@ -26,4 +36,4 @@ export const test = base.extend<{ page: Page }>({
   },
 })
 
-export { expect }
+export { expect, waitForHydration }

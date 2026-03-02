@@ -2,24 +2,32 @@
 
 Read `AGENTS.md` at the project root for full project rules and conventions.
 
-## Architecture
+## Architecture & Monorepo
 
-This is a **PNPM Workspace Monorepo**. Your application code goes in `apps/web/`. The shared layer at `layers/narduk-nuxt-layer/` provides modules, security middleware, analytics, SEO composables, design tokens, and more — do NOT recreate what the layer already provides.
+- **PNPM Workspace**: The main application lives in `apps/web/`.
+- **Shared Layer**: `layers/narduk-nuxt-layer/` provides standard modules (Nuxt UI 4, SEO, Auth), security middleware, and styling. **Do NOT recreate** what the layer already provides.
+- **Example Apps**: Reference `apps/showcase/` or `apps/example-*/` for working implementations.
 
-## Key Rules
+## Key Rules & Constraints
 
-- **Nuxt 4 + Nuxt UI 4** on **Cloudflare Workers** — no Node.js modules allowed.
-- All frontend code goes in `app/` (Nuxt 4 structure). Use `USeparator` not `UDivider`.
-- Every page must call `useSeo()` and a `useSchemaOrg()` helper.
-- Use `useAsyncData`/`useFetch` for data fetching, never raw `$fetch` in setup.
-- Use `useState()` or Pinia for SSR-safe state, never bare `ref()` at module scope.
-- Wrap `window`/`document` access in `onMounted` or `<ClientOnly>`.
+- **Environment**: Nuxt 4 + Nuxt UI 4 deployed to **Cloudflare Workers** using D1 (SQLite) and Drizzle ORM.
+- **NO Node.js**: Cloudflare Workers isolates do not support Node built-ins (`fs`, `crypto`, `path`). Use the Web Crypto API.
+- **Nuxt 4 Structure**: All frontend code must go in `app/` (e.g., `app/components/`, `app/pages/`).
+- **Nuxt UI 4**: Use `USeparator` instead of `UDivider`. Icons use the `i-` prefix (e.g., `i-lucide-home`).
+- **Tailwind v4**: Configured via `@theme` variables in `main.css`, not a `tailwind.config` file.
+- **Data Fetching**: Always use `useAsyncData` or `useFetch`. **Never** use raw `$fetch` in `<script setup>` to prevent request waterfalls and N+1 queries.
+- **State Management**: Use `useState()` or Pinia. **Never** use bare `ref()` or reactive state at the module scope (causes cross-request leaks).
+- **SSR/Hydration Safety**: Wrap any `window` or `document` access inside `onMounted` or `<ClientOnly>`.
+- **SEO**: Every page component must call `useSeo()` and a `useSchemaOrg()` helper (e.g., `useWebPageSchema()`).
+- **Pattern**: Thin Components, Thick Composables. Keep complex logic out of `.vue` files.
 
-## Build Pipeline
+## Build & Quality Pipeline
 
-`pnpm run quality` (lint + typecheck) → `pnpm run build:plugins` must run before lint.
+1. Run `pnpm run build:plugins` first to compile workspace-local ESLint plugins.
+2. Run `pnpm run quality` for full linting and typechecking. Fix all errors.
 
-## Important
+## Start & Automations
 
-- **CRITICAL**: If building a new app from this template, run `pnpm setup` first and verify `git remote -v` does NOT point to `loganrenz/narduk-nuxt-template`.
-- Run `/check-*` and `/audit-*` agent workflows for quality audits.
+- **CRITICAL**: If starting a new project, run `pnpm setup` first. Verify `git remote -v` does NOT point to `loganrenz/narduk-nuxt-template`.
+- **Secrets**: Use Doppler. Secrets are consumed via `process.env.SECRET_NAME` in `nuxt.config.ts`.
+- Run `/check-*` and `/audit-*` AI workflows (in `.agents/workflows/`) for extensive codebase audits.

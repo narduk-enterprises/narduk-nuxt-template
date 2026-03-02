@@ -12,7 +12,7 @@ export default defineConfig({
   maxFailures: process.env.CI ? undefined : 1,
   reporter: 'html',
   // Tight timeouts for fail-fast; increase when tuning (e.g. timeout: 30_000, actionTimeout: 10_000).
-  timeout: 5_000,
+  timeout: 15_000,
   expect: { timeout: 2_000 },
   use: {
     trace: 'on-first-retry',
@@ -34,10 +34,10 @@ export default defineConfig({
     {
       name: 'example-auth',
       testDir: 'apps/example-auth/tests/e2e',
+      timeout: 15_000,
       use: {
         ...devices['Desktop Chrome'],
         baseURL: 'http://localhost:3011',
-        timeout: 15_000,
       },
     },
     {

@@ -14,8 +14,10 @@ export default defineNuxtConfig({
   $development: {
     hooks: {
       'vite:extendConfig'(config) {
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         ;(config as any).server ??= {}
         ;(config as any).server.hmr = { port: hmrPort++ }
+        /* eslint-enable @typescript-eslint/no-explicit-any */
       },
     },
   },
@@ -28,7 +30,7 @@ export default defineNuxtConfig({
   },
 
   site: {
-    url: process.env.SITE_URL || 'http://localhost:3015',
+    url: process.env.SITE_URL || 'http://127.0.0.1:3015',
     name: 'OG Image Example',
     description: 'Dynamic Open Graph image generation on Cloudflare Workers with nuxt-og-image v6 beta.',
     defaultLocale: 'en',

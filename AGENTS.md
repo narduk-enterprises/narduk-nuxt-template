@@ -432,7 +432,7 @@ doppler secrets set CLOUDFLARE_API_TOKEN='${narduk-enterprise-apps.prd.CLOUDFLAR
 
 1. `init.ts` creates a Doppler service token (`ci-deploy`) scoped to `<app-name>/prd`
 2. The token is stored as `DOPPLER_TOKEN` GitHub Actions secret
-3. On push to `main`, `deploy.yml` installs the Doppler CLI, fetches **all resolved secrets** (hub refs are resolved server-side), and injects them into `$GITHUB_ENV`
+3. On push to `main`, `deploy.yml` uses the `dopplerhq/secrets-fetch-action` to securely fetch **all resolved secrets** (hub refs are resolved server-side) and inject them into `$GITHUB_ENV`
 4. `pnpm build` and `wrangler deploy` run with full access to all secrets
 
 **Reference:** See `apps/example-auth/nuxt.config.ts` for the full runtimeConfig block.

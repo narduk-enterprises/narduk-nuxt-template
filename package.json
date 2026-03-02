@@ -2,14 +2,15 @@
   "name": "narduk-nuxt-template",
   "version": "1.2.3",
   "private": true,
+  "packageManager": "pnpm@10.28.0",
   "scripts": {
     "dev": "pnpm --filter web dev",
     "build": "doppler run -- pnpm -r build",
     "build:plugins": "pnpm --filter @narduk/eslint-config build",
     "prelint": "pnpm run build:plugins",
-    "lint": "pnpm run prelint && pnpm -r lint",
-    "typecheck": "pnpm -r typecheck",
-    "quality": "pnpm -r quality",
+    "lint": "pnpm run prelint && turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "quality": "turbo run quality",
     "setup": "doppler run -- jiti tools/init.ts",
     "validate": "doppler run -- jiti tools/validate.ts",
     "clean": "find . -type d \\( -name node_modules -o -name .nuxt -o -name .output -o -name .nitro -o -name .wrangler -o -name .turbo -o -name .data -o -name dist \\) -not -path './.git/*' -prune -exec rm -rf {} +",
@@ -59,7 +60,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",
+    "@types/node": "^22.19.13",
     "concurrently": "^9.2.1",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "turbo": "^2.8.12"
   }
 }

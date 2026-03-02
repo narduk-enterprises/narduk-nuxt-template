@@ -27,7 +27,7 @@ export default defineNuxtConfig({
   },
 
   site: {
-    url: process.env.SITE_URL || 'http://localhost:3000',
+    url: process.env.SITE_URL || 'http://127.0.0.1:3000',
     name: process.env.APP_NAME || 'Nuxt 4 App',
     description: 'A Nuxt 4 application deployed on Cloudflare Workers.',
   },
