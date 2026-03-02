@@ -79,6 +79,10 @@ Define the specific features:
 - **API Routes:** Nitro/Worker endpoints, D1 interactions, validation logic.
 - **Frontend UI:** Pages, components, design requirements using Nuxt UI 4 and the `base` layer design system.
 
+### Section 2b: Brand Identity
+
+Instruct the agent to run the `/generate-brand-identity` workflow (`.agents/workflows/generate-brand-identity.md`) after the app is built and functional. This ensures every new app ships with an intentional visual identity — theme colors, typography, favicons, imagery, and design polish — instead of default template styling.
+
 ### Section 3: Template Audit & Issue Reporting
 
 Instruct the agent to create `audit_report.md` capturing friction across:
@@ -140,6 +144,10 @@ Build the app inside `apps/web`. Features:
 - **Requirement:** Use the `base` layer design tokens, Nuxt UI 4 components, and Tailwind v4.
 
 ---
+
+## Mission 1b: Brand Identity
+
+Once the app is built and functional, follow the `/generate-brand-identity` workflow (`.agents/workflows/generate-brand-identity.md`) end-to-end. **Do not ask any questions** — you are the creative director. Analyze the app, make all creative decisions yourself, and execute the full pipeline: theme colors, typography, visual assets (logo, hero imagery), favicons, and holistic design polish. The app should feel like a real product — not a template.
 
 ## Mission 2: Template Audit & Issue Reporting
 

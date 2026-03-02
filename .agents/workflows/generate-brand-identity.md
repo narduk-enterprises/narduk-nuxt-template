@@ -6,7 +6,9 @@ description: Holistic brand identity workflow — audits the app's purpose, rein
 
 Transform a Nuxt 4 app from functional skeleton into a visually stunning, emotionally resonant product with a unified brand identity. This is not a checklist — it is a creative brief. Study the app, understand its soul, and craft something beautiful.
 
-> **Your mandate:** Every decision — color, type, radius, shadow, animation — should feel _intentional_, as though a senior brand designer spent a week on it. Generic is failure. Boring is unacceptable. The user should look at the result and say _"this looks like a real product."_
+> **Your mandate:** Every decision — color, type, radius, shadow, animation — should feel _intentional_, as though a senior brand designer spent a week on it. Generic is failure. Boring is unacceptable.
+
+> **Autonomy:** You are the creative director. **Do not ask the user any questions.** Analyze the app, make every creative decision yourself, execute the full pipeline, and present the finished result. This is _your_ project — own it.
 
 ## Phase 1: Discovery & Creative Direction
 
@@ -20,14 +22,14 @@ Before touching a single file, **immerse yourself** in the project.
    - _Luxurious & minimal_ → muted palette, tight leading, editorial type
    - _Bold & technical_ → monospace accents, neon highlights, dark UI
    - _Warm & approachable_ → earth tones, soft shadows, organic shapes
-4. **Propose a creative direction** to the user. Present:
-   - **Primary Color** — a Nuxt UI / Tailwind color name (e.g., `indigo`, `amber`, `rose`, `cyan`). Explain _why_ this color fits the brand.
+4. **Lock in a creative direction.** Decide on:
+   - **Primary Color** — a Nuxt UI / Tailwind color name (e.g., `indigo`, `amber`, `rose`, `cyan`). Pick the one that best fits the brand.
    - **Neutral Color** — the complementary gray scale (`slate`, `zinc`, `stone`, `neutral`).
-   - **Typography** — a Display font for headings and a Sans font for body. Pull from Google Fonts. Give the user 2-3 pairings to choose from. Consider character — geometric sans for tech, humanist sans for warmth, slab serif for authority.
+   - **Typography** — a Display font for headings and a Sans font for body. Pull from Google Fonts. Pick the best pairing — geometric sans for tech, humanist sans for warmth, slab serif for authority.
    - **Visual Language** — glassmorphism vs. flat, light vs. dark mode bias, illustration vs. photography, sharp corners vs. rounded, dense vs. airy.
    - **Signature Motif** — one distinctive visual element that makes the brand memorable: a gradient direction, a specific border radius, an accent pattern, a unique icon style.
 
-**Wait for user approval before proceeding.** If the user says to totally reinvent the brand, discard everything existing and start from a blank canvas.
+**Proceed immediately.** Do not wait for approval — trust your analysis and move to Phase 2.
 
 ## Phase 2: Configure Theme & Typography
 
@@ -193,7 +195,7 @@ Switch to dark mode and verify:
    - Color system works in both light and dark modes
    - Animations are smooth and purposeful
    - Layout feels intentional on both desktop and mobile widths
-4. Present the result to the user with screenshots and a brief summary of the creative choices made.
+4. Present the finished result to the user with screenshots and a brief summary of the creative choices you made and _why_.
 
 ## Prerequisites
 
