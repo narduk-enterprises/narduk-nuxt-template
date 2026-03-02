@@ -49,7 +49,7 @@ export default {
         'If this is user-facing, move it outside the exempt prefix.',
     },
   },
-  create(context: Rule.RuleContext<string, any[]>): Rule.RuleListener {
+  create(context: Rule.RuleContext): Rule.RuleListener {
     const options = context.options[0] as { testMode?: boolean } | undefined
     const testMode = options?.testMode === true
     const filename = context.filename ?? (context as any).getFilename?.() ?? ''

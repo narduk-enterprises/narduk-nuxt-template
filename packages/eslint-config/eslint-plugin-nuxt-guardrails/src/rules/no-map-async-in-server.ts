@@ -21,7 +21,7 @@ export default {
       mapAsync: '.map(async ...) in server code often causes N+1 queries. Prefer batched queries (e.g. .in("id", ids)).',
     },
   },
-  create(context: Rule.RuleContext<string, any[]>): Rule.RuleListener {
+  create(context: Rule.RuleContext): Rule.RuleListener {
     const filename = context.filename ?? (context as any).getFilename?.() ?? ''
     const normalized = filename.replace(/\\/g, '/')
     if (!normalized.includes('/server/')) return {}

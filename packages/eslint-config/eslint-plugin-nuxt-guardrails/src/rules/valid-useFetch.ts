@@ -21,7 +21,7 @@ export default {
       invalidOptions: 'useFetch options may be invalid. See: {{docUrl}}',
     },
   },
-  create(context: Rule.RuleContext<string, any[]>): Rule.RuleListener {
+  create(context: Rule.RuleContext): Rule.RuleListener {
     const useFetchSpec = getApiSpec('useFetch')
     const docUrl = useFetchSpec?.docUrl || 'https://nuxt.com/docs/api/composables/use-fetch'
     

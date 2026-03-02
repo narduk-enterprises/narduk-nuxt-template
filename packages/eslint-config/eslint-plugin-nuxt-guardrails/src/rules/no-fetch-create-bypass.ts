@@ -35,7 +35,7 @@ export default {
         '$fetch.create() bypasses the layer\'s CSRF header injection. Use useNuxtApp().$csrfFetch or the globally patched $fetch instead.',
     },
   },
-  create(context: Rule.RuleContext<string, any[]>): Rule.RuleListener {
+  create(context: Rule.RuleContext): Rule.RuleListener {
     const options = context.options[0] as { testMode?: boolean } | undefined
     const testMode = options?.testMode === true
     const filename = context.filename ?? (context as any).getFilename?.() ?? ''

@@ -8,6 +8,7 @@ import rule from '../src/rules/no-fetch-create-bypass'
 import { describe, it, afterAll } from 'vitest'
 RuleTester.describe = describe
 RuleTester.it = it
+// @ts-expect-error — RuleTester.afterAll exists at runtime but is missing from the type definitions
 RuleTester.afterAll = afterAll
 
 const ruleTester = new RuleTester({

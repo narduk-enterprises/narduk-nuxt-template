@@ -30,7 +30,7 @@ export default {
         'Use import.meta.dev instead of process.env.NODE_ENV (reliable in Workers/Vite).',
     },
   },
-  create(context: Rule.RuleContext<string, any[]>): Rule.RuleListener {
+  create(context: Rule.RuleContext): Rule.RuleListener {
     const options = context.options[0] as { testMode?: boolean } | undefined
     const testMode = options?.testMode === true
     const filename = context.filename ?? (context as any).getFilename?.() ?? ''

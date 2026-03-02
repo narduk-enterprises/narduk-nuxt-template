@@ -78,7 +78,7 @@ export default {
         'Mutation $fetch calls in composables must include { headers: { \'X-Requested-With\': \'XMLHttpRequest\' } } for CSRF protection, or use useNuxtApp().$csrfFetch.',
     },
   },
-  create(context: Rule.RuleContext<string, any[]>): Rule.RuleListener {
+  create(context: Rule.RuleContext): Rule.RuleListener {
     const options = context.options[0] as { testMode?: boolean } | undefined
     const testMode = options?.testMode === true
     const filename = context.filename ?? (context as any).getFilename?.() ?? ''

@@ -3,6 +3,6 @@ export default {
   test: {
     globals: true,
     environment: 'node',
-    include: ['eslint-plugins/tests/**/*.test.mjs'],
+    include: ['eslint-plugin-nuxt-guardrails/tests/**/*.test.ts'],
   },
 }

@@ -34,7 +34,7 @@ export default {
       preferImportMetaServer: 'Use import.meta.server instead of process.server. See: https://nuxt.com/docs/4.x/guide/concepts/rendering',
     },
   },
-  create(context: Rule.RuleContext<string, PluginOptions[]>): Rule.RuleListener {
+  create(context: Rule.RuleContext): Rule.RuleListener {
     const options = context.options[0] || {}
     const allowProcessClientServer = options.allowProcessClientServer || false
     

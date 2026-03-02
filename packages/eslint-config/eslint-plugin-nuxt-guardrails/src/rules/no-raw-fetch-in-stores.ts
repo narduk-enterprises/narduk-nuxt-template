@@ -24,7 +24,7 @@ export default {
         'Stores must use useAppFetch() or useRequestFetch() for SSR cookie/auth proxying. Avoid $fetch/useFetch in app/stores/.',
     },
   },
-  create(context: Rule.RuleContext<string, any[]>): Rule.RuleListener {
+  create(context: Rule.RuleContext): Rule.RuleListener {
     const filename = context.filename ?? (context as any).getFilename?.() ?? ''
     const normalized = filename.replace(/\\/g, '/')
     if (!normalized.includes('/app/stores/') || !normalized.endsWith('.ts')) return {}
