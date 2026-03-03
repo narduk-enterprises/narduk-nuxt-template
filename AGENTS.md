@@ -618,7 +618,7 @@ Using the auto-imported `useDatabase` from the layer will resolve to the layer's
 
 ---
 
-## � Recipe: Analytics (PostHog + GA4 + GSC + IndexNow)
+## 📊 Recipe: Analytics (PostHog + GA4 + GSC + IndexNow + Indexing API)
 
 **When:** You need product analytics, web analytics, and search engine integration.
 
@@ -626,12 +626,13 @@ Using the auto-imported `useDatabase` from the layer will resolve to the layer's
 
 1. **PostHog:** Already wired.
 2. **GA4:** Already wired.
-3. **IndexNow:** Already wired.
+3. **IndexNow:** Already wired (Covers Bing, Yandex, Seznam, Naver).
 4. **Google Search Console:** Use the setup automation in the examples app.
+5. **Google Indexing API:** Already wired (Requires GSC_SERVICE_ACCOUNT_JSON and the Web Search Indexing API enabled in GCP).
 
 All plugins **no-op gracefully** when their keys are empty — safe for dev without any Doppler config.
 
-**Automated setup:** The examples app includes `tools/setup-analytics.ts` which bootstraps GA4 and GSC via API.
+**Automated setup:** The examples app includes `tools/setup-analytics.ts` which bootstraps GA4 and GSC via API. Use `tools/gsc-toolbox.ts` to manually submit or check status for the Indexing API (`index-url`, `remove-url`, `index-status`).
 
 **Doppler architecture:** Universal management keys live in the `narduk-analytics` Doppler project. Per-app keys go in the app's own Doppler project. You must reference the exact `POSTHOG_PUBLIC_KEY` and `POSTHOG_PROJECT_ID` from the analytics hub.
 

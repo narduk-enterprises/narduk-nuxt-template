@@ -5,12 +5,16 @@ import { join, resolve } from 'node:path'
 import 'dotenv/config'
 
 /**
- * GSC Toolbox: Programmatically manage Google Search Console properties.
+ * GSC Toolbox: Programmatically manage Google Search Console properties
+ * and Google Indexing API notifications.
  * 
  * Usage:
  * npx jiti tools/gsc-toolbox.ts init <site_url>
  * npx jiti tools/gsc-toolbox.ts verify <site_url>
  * npx jiti tools/gsc-toolbox.ts submit <site_url>
+ * npx jiti tools/gsc-toolbox.ts index-url <site_url> [url]
+ * npx jiti tools/gsc-toolbox.ts remove-url <site_url> [url]
+ * npx jiti tools/gsc-toolbox.ts index-status <site_url> [url]
  */
 
 const siteUrl = process.argv[3] || process.env.SITE_URL
@@ -52,6 +56,14 @@ async function getAuth() {
   })
 }
 
+async function getIndexingAuth() {
+  const credentials = loadCredentials()
+  return new google.auth.GoogleAuth({
+    credentials,
+    scopes: ['https://www.googleapis.com/auth/indexing'],
+  })
+}
+
 async function addSite(url: string) {
   const auth = await getAuth()
   const searchconsole = google.searchconsole({ version: 'v1', auth })
@@ -63,7 +75,7 @@ async function addSite(url: string) {
 async function getVerificationToken(url: string) {
   const auth = await getAuth()
   const siteVerification = google.siteVerification({ version: 'v1', auth })
-  
+
   console.log(`🔍 Getting verification token for ${url}...`)
   const response = await siteVerification.webResource.getToken({
     requestBody: {
@@ -71,14 +83,14 @@ async function getVerificationToken(url: string) {
       verificationMethod: 'FILE'
     }
   })
-  
+
   return response.data.token
 }
 
 async function verifySite(url: string) {
   const auth = await getAuth()
   const siteVerification = google.siteVerification({ version: 'v1', auth })
-  
+
   console.log(`🛡️  Verifying ownership of ${url}...`)
   await siteVerification.webResource.insert({
     verificationMethod: 'FILE',
@@ -92,7 +104,7 @@ async function verifySite(url: string) {
 async function grantAccess(url: string, email: string) {
   const auth = await getAuth()
   const siteVerification = google.siteVerification({ version: 'v1', auth })
-  
+
   console.log(`👤 Granting "Owner" access to ${email}...`)
   // First get current owners to avoid overwriting them
   const resource = await siteVerification.webResource.get({
@@ -117,8 +129,8 @@ async function grantAccess(url: string, email: string) {
 async function submitSitemap(url: string) {
   const auth = await getAuth()
   const searchconsole = google.searchconsole({ version: 'v1', auth })
-  const sitemapUrl = `${url.endsWith('/') ? url : url + '/' }sitemap.xml`
-  
+  const sitemapUrl = `${url.endsWith('/') ? url : url + '/'}sitemap.xml`
+
   console.log(`🚀 Submitting sitemap: ${sitemapUrl}`)
   await searchconsole.sitemaps.submit({
     siteUrl: url,
@@ -127,9 +139,36 @@ async function submitSitemap(url: string) {
   console.log('✅ Sitemap submitted.')
 }
 
+async function indexUrl(targetUrl: string, type: 'URL_UPDATED' | 'URL_DELETED') {
+  const auth = await getIndexingAuth()
+  const client = await auth.getClient()
+  const label = type === 'URL_UPDATED' ? 'Indexing' : 'Removing'
+  console.log(`🔎 ${label}: ${targetUrl}...`)
+
+  const response = await client.request({
+    url: 'https://indexing.googleapis.com/v3/urlNotifications:publish',
+    method: 'POST',
+    data: { url: targetUrl, type },
+  })
+  console.log('✅ Response:', JSON.stringify(response.data, null, 2))
+}
+
+async function indexStatus(targetUrl: string) {
+  const auth = await getIndexingAuth()
+  const client = await auth.getClient()
+  const encoded = encodeURIComponent(targetUrl)
+  console.log(`🔍 Checking index status for: ${targetUrl}...`)
+
+  const response = await client.request({
+    url: `https://indexing.googleapis.com/v3/urlNotifications/metadata?url=${encoded}`,
+    method: 'GET',
+  })
+  console.log('✅ Status:', JSON.stringify(response.data, null, 2))
+}
+
 async function main() {
   const cmd = process.argv[2]
-  
+
   if (!siteUrl) {
     console.error('❌ SITE_URL is required.')
     process.exit(1)
@@ -174,7 +213,7 @@ async function main() {
         }
         break
       }
-      
+
       case 'verify': {
         await verifySite(siteUrl)
         const userEmail = process.env.GSC_USER_EMAIL
@@ -191,8 +230,26 @@ async function main() {
         await submitSitemap(siteUrl)
         break
 
+      case 'index-url': {
+        const targetUrl = process.argv[4] || `${siteUrl.endsWith('/') ? siteUrl : siteUrl + '/'}`
+        await indexUrl(targetUrl, 'URL_UPDATED')
+        break
+      }
+
+      case 'remove-url': {
+        const targetUrl = process.argv[4] || `${siteUrl.endsWith('/') ? siteUrl : siteUrl + '/'}`
+        await indexUrl(targetUrl, 'URL_DELETED')
+        break
+      }
+
+      case 'index-status': {
+        const targetUrl = process.argv[4] || `${siteUrl.endsWith('/') ? siteUrl : siteUrl + '/'}`
+        await indexStatus(targetUrl)
+        break
+      }
+
       default:
-        console.log('Usage: npx jiti tools/gsc-toolbox.ts [init|verify|submit]')
+        console.log('Usage: npx jiti tools/gsc-toolbox.ts [init|verify|submit|index-url|remove-url|index-status]')
     }
   } catch (error: any) {
     console.error('❌ Error:', error.response?.data?.error?.message || error.message)

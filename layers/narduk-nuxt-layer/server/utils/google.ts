@@ -8,6 +8,10 @@ export const GSC_SCOPES = [
   'https://www.googleapis.com/auth/webmasters.readonly',
 ]
 
+export const INDEXING_SCOPES = [
+  'https://www.googleapis.com/auth/indexing',
+]
+
 // ─── Token cache ────────────────────────────────────────────
 // INTENTIONAL module-scope cache: within a Worker isolate's lifetime, this avoids
 // redundant JWT exchanges with Google. The cache is scoped to a single isolate and
