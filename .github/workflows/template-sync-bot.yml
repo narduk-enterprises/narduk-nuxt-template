@@ -40,6 +40,12 @@ jobs:
       matrix:
         repo:
           - neon-sewer-raid
+          - drift-map
+          - tiny-invoice
+          - enigma-box
+          - papa-everetts-pizza
+          - flashcard-pro
+          - clawdle
           - circuit-breaker-online
           - nagolnagemluapleira
           - austin-texas-net
