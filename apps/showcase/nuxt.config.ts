@@ -36,18 +36,18 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      appUrl: 'https://showcase.narduk.workers.dev',
+      appUrl: 'https://showcase.nard.uk',
       appName: 'Nuxt 4 Showcase',
-      exampleAuthUrl: 'https://example-auth.narduk.workers.dev',
-      exampleBlogUrl: 'https://example-blog.narduk.workers.dev',
-      exampleMarketingUrl: 'https://example-marketing.narduk.workers.dev',
-      exampleOgImageUrl: 'https://example-og-image.narduk.workers.dev',
-      exampleAppleMapsUrl: 'https://example-apple-maps.narduk.workers.dev',
+      exampleAuthUrl: 'https://example-auth.nard.uk',
+      exampleBlogUrl: 'https://example-blog.nard.uk',
+      exampleMarketingUrl: 'https://example-marketing.nard.uk',
+      exampleOgImageUrl: 'https://example-og-image.nard.uk',
+      exampleAppleMapsUrl: 'https://example-apple-maps.nard.uk',
     },
   },
 
   site: {
-    url: process.env.SITE_URL || 'https://showcase.narduk.workers.dev',
+    url: process.env.SITE_URL || 'https://showcase.nard.uk',
     name: 'Nuxt 4 Showcase',
     description: 'Interactive examples showcasing Nuxt 4 + Nuxt UI 4 + Cloudflare Workers patterns.',
     defaultLocale: 'en',
@@ -57,7 +57,7 @@ export default defineNuxtConfig({
     identity: {
       type: 'Organization',
       name: 'Nuxt 4 Showcase',
-      url: process.env.SITE_URL || 'https://showcase.narduk.workers.dev',
+      url: process.env.SITE_URL || 'https://showcase.nard.uk',
       logo: '/favicon.svg',
     },
   },
