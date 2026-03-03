@@ -54,6 +54,8 @@ const COPY_VERBATIM = [
   'tools/check-drift-ci.ts',
   'tools/generate-favicons.ts',
   'tools/check-setup.js',
+  'tools/validate.ts',
+  'tools/init.ts',
 
   // CI/CD
   '.github/workflows/version-bump.yml',
@@ -494,6 +496,90 @@ jobs:
   }
 
   if (datesUpdated === 0) console.log('  All compatibility dates are current.')
+  console.log()
+
+  // Phase 11: Enforce Doppler hub-and-spoke references
+  console.log('Phase 11: Checking Doppler hub references...')
+  let dopplerAvailable = false
+  try {
+    execSync('doppler --version', { encoding: 'utf-8', stdio: 'pipe' })
+    dopplerAvailable = true
+  } catch { /* not installed */ }
+
+  if (!dopplerAvailable) {
+    console.log('  ⏭ Doppler CLI not available; skipping.')
+  } else {
+    const appPkgPath = join(appDir, 'package.json')
+    let projectName = appName
+    if (existsSync(appPkgPath)) {
+      try {
+        const pkg = JSON.parse(readFileSync(appPkgPath, 'utf-8'))
+        if (pkg.name) projectName = pkg.name
+      } catch { /* use fallback */ }
+    }
+
+    let projectExists = false
+    try {
+      execSync(`doppler projects get ${projectName}`, { encoding: 'utf-8', stdio: 'pipe' })
+      projectExists = true
+    } catch { /* project doesn't exist */ }
+
+    if (!projectExists) {
+      console.log(`  ⏭ Doppler project "${projectName}" not found; skipping.`)
+    } else {
+      const hubRefs: Record<string, string> = {
+        CLOUDFLARE_API_TOKEN: '${narduk-nuxt-template.prd.CLOUDFLARE_API_TOKEN}',
+        CLOUDFLARE_ACCOUNT_ID: '${narduk-nuxt-template.prd.CLOUDFLARE_ACCOUNT_ID}',
+        POSTHOG_PUBLIC_KEY: '${narduk-analytics.prd.POSTHOG_PUBLIC_KEY}',
+        POSTHOG_PROJECT_ID: '${narduk-analytics.prd.POSTHOG_PROJECT_ID}',
+        POSTHOG_HOST: '${narduk-analytics.prd.POSTHOG_HOST}',
+      }
+
+      let hubTokenValue = ''
+      try {
+        const hubJson = execSync(
+          'doppler secrets get CLOUDFLARE_API_TOKEN --project narduk-nuxt-template --config prd --json',
+          { encoding: 'utf-8', stdio: 'pipe' },
+        )
+        hubTokenValue = JSON.parse(hubJson).CLOUDFLARE_API_TOKEN?.computed || ''
+      } catch { /* can't read hub */ }
+
+      if (!hubTokenValue) {
+        console.log('  ⏭ Cannot read hub project; skipping Doppler validation.')
+      } else {
+        let spokeTokenValue = ''
+        try {
+          const spokeJson = execSync(
+            `doppler secrets get CLOUDFLARE_API_TOKEN --project ${projectName} --config prd --json`,
+            { encoding: 'utf-8', stdio: 'pipe' },
+          )
+          spokeTokenValue = JSON.parse(spokeJson).CLOUDFLARE_API_TOKEN?.computed || ''
+        } catch { /* secret missing */ }
+
+        if (spokeTokenValue === hubTokenValue) {
+          console.log('  Doppler hub references are correct.')
+        } else {
+          console.log('  STALE: Cloudflare credentials are direct values, not hub references.')
+          if (!dryRun) {
+            const pairs = Object.entries(hubRefs)
+              .map(([k, v]) => `${k}='${v}'`)
+              .join(' ')
+            try {
+              execSync(
+                `doppler secrets set ${pairs} --project ${projectName} --config prd`,
+                { encoding: 'utf-8', stdio: 'pipe' },
+              )
+              console.log(`  ✅ Set ${Object.keys(hubRefs).length} hub references in ${projectName}/prd`)
+            } catch (e: any) {
+              console.warn(`  ⚠️ Failed to set hub references: ${e.message}`)
+            }
+          } else {
+            console.log(`  Would set ${Object.keys(hubRefs).length} hub references in ${projectName}/prd`)
+          }
+        }
+      }
+    }
+  }
   console.log()
 
   // Summary

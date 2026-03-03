@@ -439,30 +439,72 @@ Pushes to \`main\` are automatically built and deployed via the GitHub Actions C
       }
     }
 
-    // Only set hub references for keys that aren't already configured
+    // Set hub references — overwrites stale direct values with cross-project refs
     try {
       const existing = getDopplerSecretNames(APP_NAME, 'prd')
-      const hubSecrets: Record<string, string> = {
+
+      // Hub cross-project references (always enforce these)
+      const hubRefs: Record<string, string> = {
         CLOUDFLARE_API_TOKEN: '${narduk-nuxt-template.prd.CLOUDFLARE_API_TOKEN}',
         CLOUDFLARE_ACCOUNT_ID: '${narduk-nuxt-template.prd.CLOUDFLARE_ACCOUNT_ID}',
         POSTHOG_PUBLIC_KEY: '${narduk-analytics.prd.POSTHOG_PUBLIC_KEY}',
         POSTHOG_PROJECT_ID: '${narduk-analytics.prd.POSTHOG_PROJECT_ID}',
         POSTHOG_HOST: '${narduk-analytics.prd.POSTHOG_HOST}',
-        APP_NAME: APP_NAME,
-        SITE_URL: SITE_URL,
         GA_ACCOUNT_ID: '${narduk-analytics.prd.GA_ACCOUNT_ID}',
-        GSC_SERVICE_ACCOUNT_JSON: '${narduk-analytics.prd.GSC_SERVICE_ACCOUNT_JSON}'
+        GSC_SERVICE_ACCOUNT_JSON: '${narduk-analytics.prd.GSC_SERVICE_ACCOUNT_JSON}',
       }
 
-      const toSet = Object.entries(hubSecrets)
-        .filter(([key]) => !existing.has(key))
-        .map(([key, val]) => `${key}='${val}'`)
+      // Per-app secrets (only set if missing — don't overwrite app-specific values)
+      const appSecrets: Record<string, string> = {
+        APP_NAME: APP_NAME,
+        SITE_URL: SITE_URL,
+      }
+
+      // Hub refs: verify resolved value matches hub, overwrite if stale
+      let hubToken = ''
+      try {
+        const hubJson = execSync(
+          'doppler secrets get CLOUDFLARE_API_TOKEN --project narduk-nuxt-template --config prd --json',
+          { encoding: 'utf-8', stdio: 'pipe' },
+        )
+        hubToken = JSON.parse(hubJson).CLOUDFLARE_API_TOKEN?.computed || ''
+      } catch { /* hub unavailable */ }
+
+      const toSet: string[] = []
+
+      if (hubToken) {
+        let spokeToken = ''
+        try {
+          const spokeJson = execSync(
+            `doppler secrets get CLOUDFLARE_API_TOKEN --project ${APP_NAME} --config prd --json`,
+            { encoding: 'utf-8', stdio: 'pipe' },
+          )
+          spokeToken = JSON.parse(spokeJson).CLOUDFLARE_API_TOKEN?.computed || ''
+        } catch { /* not set */ }
+
+        if (spokeToken !== hubToken) {
+          // Stale or missing — force all hub refs
+          for (const [key, val] of Object.entries(hubRefs)) {
+            toSet.push(`${key}='${val}'`)
+          }
+        }
+      } else {
+        // Can't verify hub — only set missing refs
+        for (const [key, val] of Object.entries(hubRefs)) {
+          if (!existing.has(key)) toSet.push(`${key}='${val}'`)
+        }
+      }
+
+      // Per-app secrets: only add if missing
+      for (const [key, val] of Object.entries(appSecrets)) {
+        if (!existing.has(key)) toSet.push(`${key}='${val}'`)
+      }
 
       if (toSet.length > 0) {
         execSync(`doppler secrets set ${toSet.join(' ')} --project ${APP_NAME} --config prd`, { stdio: 'pipe' })
-        console.log(`  ✅ Synced ${toSet.length} hub credentials: ${toSet.map(s => s.split('=')[0]).join(', ')}`)
+        console.log(`  ✅ Synced ${toSet.length} credentials: ${toSet.map(s => s.split('=')[0]).join(', ')}`)
       } else {
-        console.log(`  ⏭ All core credentials already configured.`)
+        console.log(`  ⏭ All credentials correctly configured (hub references verified).`)
       }
     } catch (error: any) {
       console.warn(`  ⚠️ Failed to sync hub credentials: ${error.message}`)
