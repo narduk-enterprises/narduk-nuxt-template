@@ -88,10 +88,11 @@ jobs:
         working-directory: ${{ inputs.app-directory }}
         run: |
           if [ -f "package.json" ]; then
-            cmd=$(node -p "require('./package.json').scripts['db:migrate']?.replace('--local', '--remote') || ''")
+            cmd=$(node -p "require('./package.json').scripts['db:migrate']?.replaceAll('--local', '--remote') || ''")
             if [ -n "$cmd" ]; then
               echo "Running remote migrations..."
-              pnpm exec $cmd
+              export PATH="$(pwd)/node_modules/.bin:$PATH"
+              eval "$cmd"
             else
               echo "No db:migrate script found, skipping."
             fi
