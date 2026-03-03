@@ -28,7 +28,7 @@ Check the tier from `STANDARDIZATION.md`, or detect it:
 | Check | Result |
 |-------|--------|
 | Has `$APP_DIR/apps/web/nuxt.config.ts`? | Monorepo structure |
-| `nuxt.config.ts` extends `@loganrenz/narduk-nuxt-template-layer`? | Published layer ✅ |
+| `nuxt.config.ts` extends `@narduk-enterprises/narduk-nuxt-template-layer`? | Published layer ✅ |
 | `nuxt.config.ts` extends `../../layers/...`? | Relative path ⚠️ |
 | No `extends` clause + inline modules? | Standalone (Tier 3) |
 
@@ -47,7 +47,7 @@ These apps already have the right structure. Fix inconsistencies only.
 If `nuxt.config.ts` has `extends: ['../../layers/narduk-nuxt-layer']`:
 ```diff
 - extends: ['../../layers/narduk-nuxt-layer'],
-+ extends: ['@loganrenz/narduk-nuxt-template-layer'],
++ extends: ['@narduk-enterprises/narduk-nuxt-template-layer'],
 ```
 
 ### 2A.2: Update layer to latest

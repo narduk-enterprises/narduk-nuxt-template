@@ -9,7 +9,7 @@ Built exclusively for the edge. This template combines the power of **Nuxt 4**, 
 
 > **⚠️ ARCHITECTURE:** This repository is a **PNPM Workspace Monorepo**. Your application lives in `apps/web/` and consumes the shared layer at `layers/narduk-nuxt-layer/` (linked via `workspace:*` in `package.json`).
 
-> **Looking for examples?** Check out the companion repo **[`narduk-nuxt-template-examples`](https://github.com/loganrenz/narduk-nuxt-template-examples)** for full-featured implementations of auth, analytics, blog, dashboard layouts, and more.
+> **Looking for examples?** Check out the companion repo **[`narduk-nuxt-template-examples`](https://github.com/narduk-enterprises/narduk-nuxt-template-examples)** for full-featured implementations of auth, analytics, blog, dashboard layouts, and more.
 
 ---
 
@@ -29,7 +29,7 @@ Built exclusively for the edge. This template combines the power of **Nuxt 4**, 
 
 ## ⚠️ IMPORTANT: This is a Template Repository
 
-> **DO NOT push changes back to `loganrenz/narduk-nuxt-template`.** This repository is a read-only template. Always create your own copy first.
+> **DO NOT push changes back to `narduk-enterprises/narduk-nuxt-template`.** This repository is a read-only template. Always create your own copy first.
 
 ---
 
@@ -38,7 +38,7 @@ Built exclusively for the edge. This template combines the power of **Nuxt 4**, 
 ### 1. Initial Setup
 
 ```bash
-git clone https://github.com/loganrenz/narduk-nuxt-template.git my-new-project
+git clone https://github.com/narduk-enterprises/narduk-nuxt-template.git my-new-project
 cd my-new-project
 pnpm install
 ```
@@ -106,7 +106,7 @@ apps/
   web/                 # The main Nuxt 4 application
     app/               # App UI (pages, components, layouts)
     server/            # Edge API endpoints and D1 database handling
-    nuxt.config.ts     # Extends @loganrenz/narduk-nuxt-template-layer
+    nuxt.config.ts     # Extends @narduk-enterprises/narduk-nuxt-template-layer
   showcase/            # Landing page with links to each example app
   example-auth/        # Auth example (independent worker)
   example-blog/        # Blog example (independent worker)

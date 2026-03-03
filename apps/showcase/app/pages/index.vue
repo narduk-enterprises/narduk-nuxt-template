@@ -74,7 +74,7 @@ const examples = [
       </p>
       <div class="flex items-center justify-center gap-4">
         <UButton
-          to="https://github.com/loganrenz/narduk-nuxt-template"
+          to="https://github.com/narduk-enterprises/narduk-nuxt-template"
           target="_blank"
           icon="i-lucide-github"
           color="neutral"

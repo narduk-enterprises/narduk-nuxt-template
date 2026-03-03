@@ -31,7 +31,7 @@ test -f apps/web/nuxt.config.ts && echo "✅ Monorepo structure" || echo "❌ Mi
 
 ```bash
 # PASS if extends uses the published package name
-grep -q "@loganrenz/narduk-nuxt-template-layer" apps/web/nuxt.config.ts && echo "✅ Published layer" || echo "❌ Not using published layer"
+grep -q "@narduk-enterprises/narduk-nuxt-template-layer" apps/web/nuxt.config.ts && echo "✅ Published layer" || echo "❌ Not using published layer"
 ```
 
 ```bash

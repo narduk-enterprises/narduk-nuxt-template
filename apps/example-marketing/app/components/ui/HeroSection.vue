@@ -19,7 +19,7 @@
         <UButton size="xl" to="#pricing">
           Get Started
         </UButton>
-        <UButton size="xl" variant="ghost" color="neutral" to="https://github.com/loganrenz/narduk-nuxt-template" target="_blank" icon="i-lucide-github">
+        <UButton size="xl" variant="ghost" color="neutral" to="https://github.com/narduk-enterprises/narduk-nuxt-template" target="_blank" icon="i-lucide-github">
           View on GitHub
         </UButton>
       </div>

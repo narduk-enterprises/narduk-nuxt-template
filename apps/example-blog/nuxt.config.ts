@@ -14,7 +14,7 @@ const mdcOptimizeDepsPackages = [
 let hmrPort = 24630
 
 export default defineNuxtConfig({
-  extends: ['@loganrenz/narduk-nuxt-template-layer'],
+  extends: ['@narduk-enterprises/narduk-nuxt-template-layer'],
 
   modules: ['@nuxt/content'],
 

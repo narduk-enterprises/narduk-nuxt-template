@@ -1,7 +1,7 @@
 let hmrPort = 24660
 
 export default defineNuxtConfig({
-  extends: ['@loganrenz/narduk-nuxt-template-layer'],
+  extends: ['@narduk-enterprises/narduk-nuxt-template-layer'],
 
   future: {
     compatibilityVersion: 4,

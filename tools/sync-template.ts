@@ -106,6 +106,7 @@ const REMOVE_STALE = [
   '.github/workflows/deploy-showcase.yml',
   '.github/workflows/reusable-quality.yml',
   '.github/workflows/reusable-deploy.yml',
+  '.github/workflows/template-sync-bot.yml',
   '.env',
   '.env.local',
   '.env.example',
@@ -337,22 +338,33 @@ jobs:
   const npmrcPath = join(appDir, '.npmrc')
   if (existsSync(npmrcPath)) {
     let npmrc = readFileSync(npmrcPath, 'utf-8')
+    let patched = false
+
     if (!npmrc.includes('strict-peer-dependencies')) {
       console.log('  ADD: strict-peer-dependencies=true')
-      if (!dryRun) {
-        npmrc += '\nstrict-peer-dependencies=true\n'
-        writeFileSync(npmrcPath, npmrc, 'utf-8')
-      }
+      npmrc += '\nstrict-peer-dependencies=true\n'
+      patched = true
     }
-    else {
-      console.log('  .npmrc already has strict-peer-dependencies.')
+
+    if (npmrc.includes('@loganrenz:registry')) {
+      console.log('  UPDATE: @loganrenz → @narduk-enterprises registry scope')
+      npmrc = npmrc.replace(/@loganrenz:registry/g, '@narduk-enterprises:registry')
+      patched = true
+    }
+
+    if (patched && !dryRun) {
+      writeFileSync(npmrcPath, npmrc, 'utf-8')
+    }
+
+    if (!patched) {
+      console.log('  .npmrc is up to date.')
     }
   }
   else {
     console.log('  ADD: .npmrc with registry + strict-peer-dependencies')
     if (!dryRun) {
       writeFileSync(npmrcPath, [
-        '@loganrenz:registry=https://npm.pkg.github.com',
+        '@narduk-enterprises:registry=https://npm.pkg.github.com',
         '',
         'strict-peer-dependencies=true',
         '',
@@ -385,15 +397,29 @@ jobs:
       }
     }
 
+    const devDeps = pkg.devDependencies || {}
+    const requiredDevDeps: Record<string, string> = {
+      'tsx': '^4.21.0',
+    }
+
+    for (const [name, version] of Object.entries(requiredDevDeps)) {
+      if (!devDeps[name]) {
+        console.log(`  ADD devDependency: "${name}@${version}"`)
+        devDeps[name] = version
+        patchCount++
+      }
+    }
+    pkg.devDependencies = devDeps
+
     if (patchCount > 0) {
       pkg.scripts = scripts
       if (!dryRun) {
         writeFileSync(rootPkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8')
       }
-      console.log(`  ${patchCount} scripts added.`)
+      console.log(`  ${patchCount} items patched.`)
     }
     else {
-      console.log('  All required scripts present.')
+      console.log('  All required scripts and dependencies present.')
     }
   }
   console.log()

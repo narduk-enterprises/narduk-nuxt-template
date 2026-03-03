@@ -17,7 +17,7 @@
     "test:e2e": "playwright test --project=example-marketing --config=../../playwright.config.ts"
   },
   "dependencies": {
-    "@loganrenz/narduk-nuxt-template-layer": "workspace:*",
+    "@narduk-enterprises/narduk-nuxt-template-layer": "workspace:*",
     "@narduk/eslint-config": "workspace:*",
     "@takumi-rs/core": "^0.69.5",
     "nuxt": "^4.3.1",

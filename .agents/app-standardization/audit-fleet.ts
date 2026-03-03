@@ -64,7 +64,7 @@ function checkLayerRef(appDir: string): 'published' | 'relative' | 'none' {
     for (const configPath of configPaths) {
         try {
             const content = require('node:fs').readFileSync(configPath, 'utf-8')
-            if (content.includes('@loganrenz/narduk-nuxt-template-layer')) return 'published'
+            if (content.includes('@narduk-enterprises/narduk-nuxt-template-layer')) return 'published'
             if (content.includes('../../layers/narduk-nuxt-layer')) return 'relative'
         } catch { /* file doesn't exist */ }
     }

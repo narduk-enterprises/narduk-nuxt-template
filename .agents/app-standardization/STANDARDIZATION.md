@@ -30,7 +30,7 @@ Legend: ✅ done | ⚠️ partial | ❌ missing | ⬜ not checked
 ### Column Definitions
 
 - **Structure:** `monorepo` = has `apps/web/` + `layers/narduk-nuxt-layer/`
-- **Layer:** `published` = extends `@loganrenz/narduk-nuxt-template-layer`; `relative path` = uses `../../layers/...`
+- **Layer:** `published` = extends `@narduk-enterprises/narduk-nuxt-template-layer`; `relative path` = uses `../../layers/...`
 - **Analytics:** GA = GA_MEASUREMENT_ID; GSC = SITE_URL + GSC_SERVICE_ACCOUNT_JSON; INow = INDEXNOW_KEY
 - **CI/CD:** GitHub Actions uses canonical `ci.yml` (see requirements below)
 - **Quality:** `pnpm run quality` passes with zero errors/warnings
@@ -307,7 +307,7 @@ doppler run --project "$APP" --config prd -- npx jiti tools/setup-analytics.ts a
 ### neon-sewer-raid — 2026-03-03
 - **Migrated by:** 5284f31f-7c42-4e17-bf7b-d4ae7ee4cb99
 - **Tier:** 1
-- **Work done:** Fixed `extends` from relative path `../../layers/narduk-nuxt-layer` to published package `@loganrenz/narduk-nuxt-template-layer`. Added `@loganrenz/narduk-nuxt-template-layer` as `workspace:*` dependency. Updated `db:seed` script to use `node_modules/` path. Updated local layer copy from template repo.
+- **Work done:** Fixed `extends` from relative path `../../layers/narduk-nuxt-layer` to published package `@narduk-enterprises/narduk-nuxt-template-layer`. Added `@narduk-enterprises/narduk-nuxt-template-layer` as `workspace:*` dependency. Updated `db:seed` script to use `node_modules/` path. Updated local layer copy from template repo.
 - **Quality:** pnpm run quality → pass
 - **Deployed:** no (pending user deploy)
 

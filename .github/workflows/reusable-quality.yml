@@ -181,4 +181,4 @@ jobs:
 
       - name: Check for template drift
         continue-on-error: true
-        run: npx --yes tsx tools/check-drift-ci.ts
+        run: pnpm exec tsx tools/check-drift-ci.ts

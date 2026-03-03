@@ -1,7 +1,7 @@
 let hmrPort = 24640
 
 export default defineNuxtConfig({
-  extends: ['@loganrenz/narduk-nuxt-template-layer'],
+  extends: ['@narduk-enterprises/narduk-nuxt-template-layer'],
 
   components: [
     { path: '~/components/ui', pathPrefix: false },
