@@ -15,8 +15,8 @@ export default defineNuxtConfig({
     hooks: {
       'vite:extendConfig'(config) {
         /* eslint-disable @typescript-eslint/no-explicit-any */
-        ;(config as any).server ??= {}
-        ;(config as any).server.hmr = { port: hmrPort++ }
+        ; (config as any).server ??= {}
+          ; (config as any).server.hmr = { port: hmrPort++ }
         /* eslint-enable @typescript-eslint/no-explicit-any */
       },
     },
@@ -26,7 +26,7 @@ export default defineNuxtConfig({
     public: {
       appUrl: process.env.SITE_URL || 'http://localhost:3016',
       appName: 'Apple Maps Example',
-      appleMapkitToken:
+      mapkitToken:
         process.env.APPLE_MAPKIT_TOKEN ||
         'eyJraWQiOiI0OVdRVFo0OTRTIiwidHlwIjoiSldUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJGVlNZN0NGQzNTIiwiaWF0IjoxNzcyMTUyNDIwLCJleHAiOjE3NzI3ODM5OTl9.zoFgOLvq8H54AkAV7Oh9WcJQtYA0EwB3s6IF_dj5YdNnSnzKHbBLfE8oxi2qjW2AuuEWGiRSJLqS6dQzpzDtoA',
     },
