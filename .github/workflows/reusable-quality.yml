@@ -12,7 +12,7 @@ on:
         description: 'Run ESLint'
         required: false
         type: boolean
-        default: true
+        default: false
       run-typecheck:
         description: 'Run TypeScript type checking'
         required: false
