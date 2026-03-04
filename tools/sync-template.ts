@@ -470,6 +470,38 @@ jobs:
   }
   console.log()
 
+  // Phase 8.5: Sync pnpm configuration (overrides and onlyBuiltDependencies)
+  console.log('Phase 8.5: Syncing pnpm configuration...')
+  if (existsSync(rootPkgPath)) {
+    try {
+      const pkg = JSON.parse(readFileSync(rootPkgPath, 'utf-8'))
+      const templatePkg = JSON.parse(readFileSync(join(TEMPLATE_DIR, 'package.json'), 'utf-8'))
+      let changed = false
+
+      if (JSON.stringify(pkg.pnpm?.overrides) !== JSON.stringify(templatePkg.pnpm?.overrides)) {
+        console.log('  UPDATE: pnpm.overrides')
+        pkg.pnpm = pkg.pnpm || {}
+        pkg.pnpm.overrides = templatePkg.pnpm.overrides
+        changed = true
+      }
+
+      if (JSON.stringify(pkg.pnpm?.onlyBuiltDependencies) !== JSON.stringify(templatePkg.pnpm?.onlyBuiltDependencies)) {
+        console.log('  UPDATE: pnpm.onlyBuiltDependencies')
+        pkg.pnpm = pkg.pnpm || {}
+        pkg.pnpm.onlyBuiltDependencies = templatePkg.pnpm.onlyBuiltDependencies
+        changed = true
+      }
+
+      if (changed && !dryRun) {
+        writeFileSync(rootPkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8')
+        console.log('  ✅ Updated package.json pnpm config')
+      } else if (!changed) {
+        console.log('  pnpm configuration matches template.')
+      }
+    } catch { /* skip */ }
+  }
+  console.log()
+
   // Phase 9: Ensure .setup-complete sentinel exists
   // sync-template only runs on already-initialized derived apps, so the bootstrap
   // guard (check-setup.js) should never block them. Create the sentinel if missing.
@@ -577,9 +609,14 @@ jobs:
       const hubRefs: Record<string, string> = {
         CLOUDFLARE_API_TOKEN: '${narduk-nuxt-template.prd.CLOUDFLARE_API_TOKEN}',
         CLOUDFLARE_ACCOUNT_ID: '${narduk-nuxt-template.prd.CLOUDFLARE_ACCOUNT_ID}',
-        POSTHOG_PUBLIC_KEY: '${narduk-analytics.prd.POSTHOG_PUBLIC_KEY}',
-        POSTHOG_PROJECT_ID: '${narduk-analytics.prd.POSTHOG_PROJECT_ID}',
-        POSTHOG_HOST: '${narduk-analytics.prd.POSTHOG_HOST}',
+        POSTHOG_PUBLIC_KEY: '${narduk-nuxt-template.prd.POSTHOG_PUBLIC_KEY}',
+        POSTHOG_PROJECT_ID: '${narduk-nuxt-template.prd.POSTHOG_PROJECT_ID}',
+        POSTHOG_PROJECT_TOKEN: '${narduk-nuxt-template.prd.POSTHOG_PROJECT_TOKEN}',
+        POSTHOG_HOST: '${narduk-nuxt-template.prd.POSTHOG_HOST}',
+        POSTHOG_PERSONAL_API_KEY: '${narduk-nuxt-template.prd.POSTHOG_PERSONAL_API_KEY}',
+        GA_ACCOUNT_ID: '${narduk-nuxt-template.prd.GA_ACCOUNT_ID}',
+        GSC_SERVICE_ACCOUNT_JSON: '${narduk-nuxt-template.prd.GSC_SERVICE_ACCOUNT_JSON}',
+        GSC_USER_EMAIL: '${narduk-nuxt-template.prd.GSC_USER_EMAIL}',
       }
 
       let hubTokenValue = ''
