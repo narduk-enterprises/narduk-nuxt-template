@@ -162,9 +162,9 @@ async function main() {
     console.warn(`  ⚠️ Could not enforce pnpm overrides: ${e.message}`)
   }
 
-  // 6. pnpm install
+  // 6. pnpm install (--no-frozen-lockfile because overrides may change lockfile config)
   console.log('\n📦 Running pnpm install to sync dependencies...')
-  run('pnpm install')
+  run('pnpm install --no-frozen-lockfile')
   run('git add pnpm-lock.yaml')
 
   console.log('\n🎉 Layer update complete!')
