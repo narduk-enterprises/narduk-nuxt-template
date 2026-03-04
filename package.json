@@ -16,6 +16,7 @@
     "lint": "pnpm run prelint && turbo run lint",
     "typecheck": "turbo run typecheck",
     "quality": "turbo run quality",
+    "quality:fleet": "bash scripts/fleet-quality.sh",
     "setup": "npx tsx tools/init.ts",
     "update-layer": "npx tsx tools/update-layer.ts",
     "sync-template": "npx tsx tools/sync-template.ts",
