@@ -57,9 +57,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node-version }}
-          cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      - name: Restore workspace cache
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            layers/*/node_modules
+            packages/*/node_modules
+            packages/eslint-config/*/node_modules
+            apps/*/.nuxt
+            layers/*/.nuxt
+            packages/eslint-config/*/dist
+            packages/eslint-config/eslint-plugin-nuxt-guardrails/dist
+            packages/eslint-config/eslint-plugin-nuxt-ui/dist
+            packages/eslint-config/eslint-plugin-vue-official-best-practices/dist
+          key: workspace-${{ github.sha }}
+
+      - name: Install dependencies (cache miss fallback)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile
 
       - name: Fetch secrets from Doppler
         if: env.DEPLOY_METHOD == 'doppler'
