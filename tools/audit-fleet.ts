@@ -80,8 +80,6 @@ jobs:
     uses: narduk-enterprises/narduk-nuxt-template/.github/workflows/reusable-deploy.yml@main
     secrets:
       DOPPLER_TOKEN: \${{ secrets.DOPPLER_TOKEN }}
-      CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 `
 }
 
@@ -256,7 +254,7 @@ function main() {
                 const migrateScript = webPkg.scripts?.['db:migrate'] || ''
                 if (migrateScript.includes('web-db') && wranglerDbName !== 'web-db') {
                     d1Mismatch = `script uses 'web-db' but wrangler has '${wranglerDbName}'`
-                } else if (migrateScript && !migrateScript.includes(wranglerDbName)) {
+                } else if (migrateScript && !migrateScript.includes(wranglerDbName) && !migrateScript.includes('.sh')) {
                     d1Mismatch = `db:migrate doesn't reference '${wranglerDbName}'`
                 }
             } catch { }
