@@ -120,7 +120,7 @@ export const sharedConfigs = [
     rules: {
       'no-unused-vars': 'off',
       'no-debugger': 'warn',
-      '@typescript-eslint/no-explicit-any': 'off', // Relaxed per fleet audit (austin-texas-net)
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
@@ -161,7 +161,6 @@ export const sharedConfigs = [
     },
     rules: {
       ...vueOfficialBestPractices.configs.recommended.rules,
-      'vue-official/no-template-complex-expressions': 'off', // Way too noisy for existing fleet
     },
   },
 
@@ -198,10 +197,10 @@ export const sharedConfigs = [
     rules: {
       'unicorn/prefer-node-protocol': 'error',
       'unicorn/no-array-for-each': 'warn',
-      'unicorn/prefer-at': 'off', // Relaxed per fleet audit
+      'unicorn/prefer-at': 'warn',
       'unicorn/no-useless-undefined': 'warn',
-      'unicorn/prefer-string-replace-all': 'off', // Relaxed per fleet audit
-      'unicorn/prefer-number-properties': 'off', // Relaxed per fleet audit (isNaN)
+      'unicorn/prefer-string-replace-all': 'warn',
+      'unicorn/prefer-number-properties': 'warn',
       'unicorn/no-lonely-if': 'warn',
       'unicorn/prefer-array-find': 'warn',
       'unicorn/prefer-includes': 'warn',

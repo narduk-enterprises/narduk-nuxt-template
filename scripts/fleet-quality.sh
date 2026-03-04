@@ -40,8 +40,8 @@ run_quality() {
   EXIT_CODE=$?
 
   if [ $EXIT_CODE -eq 0 ]; then
-    WARNS=$(echo "$OUTPUT" | grep -ci "warning" 2>/dev/null || echo 0)
-    if [ "$WARNS" -ne 0 ]; then
+    WARNS=$(echo "$OUTPUT" | grep -ci "warning" | tr -d '[:space:]' || echo 0)
+    if [[ -n "$WARNS" && "$WARNS" -ne 0 ]]; then
       ERRS=$(echo "$OUTPUT" | grep "warning " | head -5)
       echo "FAIL | $repo | $WARNS warnings" > "$result_file"
       echo "$ERRS" >> "$result_file"

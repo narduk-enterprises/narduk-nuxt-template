@@ -26,10 +26,10 @@ export default defineNuxtConfig({
     },
     hooks: {
       'vite:extendConfig'(config) {
-        /* eslint-disable @typescript-eslint/no-explicit-any */
-        ;(config as any).server ??= {}
-        ;(config as any).server.hmr = { port: hmrPort++ }
-        /* eslint-enable @typescript-eslint/no-explicit-any */
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ; (config as any).server ??= {}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ; (config as any).server.hmr = { port: hmrPort++ }
       },
     },
   },
