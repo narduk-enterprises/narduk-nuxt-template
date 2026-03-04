@@ -713,6 +713,29 @@ jobs:
     console.log('Phase 13: Would sync pnpm-lock.yaml (dry run).')
   }
 
+  // Phase 14: Sync pre-commit hook (lockfile drift prevention)
+  console.log('Phase 14: Syncing pre-commit hook...')
+  const templateHook = join(TEMPLATE_DIR, '.githooks/pre-commit')
+  const appHooksDir = join(appDir, '.githooks')
+  const appHook = join(appHooksDir, 'pre-commit')
+  if (existsSync(templateHook)) {
+    const templateContent = readFileSync(templateHook, 'utf-8')
+    const appContent = existsSync(appHook) ? readFileSync(appHook, 'utf-8') : ''
+    if (templateContent !== appContent) {
+      if (!dryRun) {
+        mkdirSync(appHooksDir, { recursive: true })
+        copyFileSync(templateHook, appHook)
+        execSync(`chmod +x ${appHook}`, { stdio: 'pipe' })
+        execSync(`git config core.hooksPath .githooks`, { cwd: appDir, stdio: 'pipe' })
+        console.log('  ✅ Pre-commit hook synced and activated.')
+      } else {
+        console.log('  Would sync pre-commit hook (dry run).')
+      }
+    } else {
+      console.log('  ✅ Pre-commit hook already up to date.')
+    }
+  }
+
   // Summary
   console.log('═══════════════════════════════════════════════════════════════')
   if (dryRun) {
