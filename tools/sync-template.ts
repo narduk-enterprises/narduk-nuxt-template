@@ -295,6 +295,37 @@ jobs:
   }
   console.log()
 
+  // Phase 4.5: Sync critical package.json scripts (these must match the template exactly)
+  console.log('Phase 4.5: Syncing critical package.json scripts...')
+  const CRITICAL_SCRIPTS: Record<string, string> = {
+    'postinstall': "node -e \"if(!require('fs').existsSync('.setup-complete'))console.log('\\n⚠️  Run pnpm run setup before doing anything else! See AGENTS.md.\\n')\"",
+    'build:plugins': 'pnpm --filter @narduk/eslint-config build',
+    'prelint': 'pnpm run build:plugins',
+  }
+
+  const appPkgPath = join(appDir, 'package.json')
+  try {
+    const appPkg = JSON.parse(readFileSync(appPkgPath, 'utf-8'))
+    let changed = false
+    for (const [name, expected] of Object.entries(CRITICAL_SCRIPTS)) {
+      if (appPkg.scripts?.[name] !== expected) {
+        console.log(`  FIX: scripts.${name}`)
+        appPkg.scripts = appPkg.scripts || {}
+        appPkg.scripts[name] = expected
+        changed = true
+      }
+    }
+    if (changed && !dryRun) {
+      writeFileSync(appPkgPath, JSON.stringify(appPkg, null, 2) + '\n', 'utf-8')
+      console.log('  ✅ Updated package.json')
+    } else if (!changed) {
+      console.log('  All critical scripts match.')
+    }
+  } catch (e: any) {
+    console.warn(`  ⚠️ Failed to sync scripts: ${e.message}`)
+  }
+  console.log()
+
   // Phase 5: Remove stale files
   console.log('Phase 5: Cleaning stale files...')
   for (const file of REMOVE_STALE) {
