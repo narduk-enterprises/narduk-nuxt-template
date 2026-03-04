@@ -40,8 +40,14 @@ run_quality() {
   EXIT_CODE=$?
 
   if [ $EXIT_CODE -eq 0 ]; then
-    WARNS=$(echo "$OUTPUT" | grep -c "warning" 2>/dev/null || echo 0)
-    echo "PASS | $repo | $WARNS warnings" > "$result_file"
+    WARNS=$(echo "$OUTPUT" | grep -ci "warning" 2>/dev/null || echo 0)
+    if [ "$WARNS" -ne 0 ]; then
+      ERRS=$(echo "$OUTPUT" | grep "warning " | head -5)
+      echo "FAIL | $repo | $WARNS warnings" > "$result_file"
+      echo "$ERRS" >> "$result_file"
+    else
+      echo "PASS | $repo | 0" > "$result_file"
+    fi
   else
     ERRS=$(echo "$OUTPUT" | grep "error " | grep -v "node_modules" | head -5)
     echo "FAIL | $repo" > "$result_file"
