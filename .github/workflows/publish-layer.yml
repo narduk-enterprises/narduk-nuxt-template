@@ -79,9 +79,28 @@ jobs:
         working-directory: layers/narduk-nuxt-layer
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm publish --no-git-checks
+        run: |
+          PKG_NAME=$(node -p "require('./package.json').name")
+          PKG_VERSION=$(node -p "require('./package.json').version")
+
+          # Check if this version already exists on the registry
+          if npm view "${PKG_NAME}@${PKG_VERSION}" version --registry https://npm.pkg.github.com 2>/dev/null; then
+            echo "⏭️ v${PKG_VERSION} already published — skipping"
+            echo "ALREADY_PUBLISHED=true" >> "$GITHUB_ENV"
+          else
+            pnpm publish --no-git-checks || {
+              # Handle race condition: 409 means another run published first
+              if [ $? -eq 1 ]; then
+                echo "⚠️ Publish failed — likely a race condition (409). Skipping."
+                echo "ALREADY_PUBLISHED=true" >> "$GITHUB_ENV"
+              else
+                exit 1
+              fi
+            }
+          fi
 
       - name: Commit version bump and changelog
+        if: env.ALREADY_PUBLISHED != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
