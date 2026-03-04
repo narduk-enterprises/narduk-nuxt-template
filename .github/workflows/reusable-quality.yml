@@ -67,13 +67,18 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: |
+            node_modules
+            apps/*/node_modules
+            layers/*/node_modules
+            packages/*/node_modules
+            packages/eslint-config/*/node_modules
             apps/*/.nuxt
             layers/*/.nuxt
             packages/eslint-config/*/dist
             packages/eslint-config/eslint-plugin-nuxt-guardrails/dist
             packages/eslint-config/eslint-plugin-nuxt-ui/dist
             packages/eslint-config/eslint-plugin-vue-official-best-practices/dist
-          key: prepared-${{ github.sha }}
+          key: workspace-${{ github.sha }}
 
   # ── Parallel quality jobs ──
 
@@ -91,21 +96,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node-version }}
-          cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
-
-      - name: Restore prepared workspace
+      - name: Restore workspace
         uses: actions/cache/restore@v4
         with:
           path: |
+            node_modules
+            apps/*/node_modules
+            layers/*/node_modules
+            packages/*/node_modules
+            packages/eslint-config/*/node_modules
             apps/*/.nuxt
             layers/*/.nuxt
             packages/eslint-config/*/dist
             packages/eslint-config/eslint-plugin-nuxt-guardrails/dist
             packages/eslint-config/eslint-plugin-nuxt-ui/dist
             packages/eslint-config/eslint-plugin-vue-official-best-practices/dist
-          key: prepared-${{ github.sha }}
+          key: workspace-${{ github.sha }}
 
       - name: Lint
         run: pnpm -r run lint
@@ -124,21 +131,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node-version }}
-          cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
-
-      - name: Restore prepared workspace
+      - name: Restore workspace
         uses: actions/cache/restore@v4
         with:
           path: |
+            node_modules
+            apps/*/node_modules
+            layers/*/node_modules
+            packages/*/node_modules
+            packages/eslint-config/*/node_modules
             apps/*/.nuxt
             layers/*/.nuxt
             packages/eslint-config/*/dist
             packages/eslint-config/eslint-plugin-nuxt-guardrails/dist
             packages/eslint-config/eslint-plugin-nuxt-ui/dist
             packages/eslint-config/eslint-plugin-vue-official-best-practices/dist
-          key: prepared-${{ github.sha }}
+          key: workspace-${{ github.sha }}
 
       - name: Typecheck
         run: pnpm -r run typecheck
@@ -157,21 +166,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node-version }}
-          cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
-
-      - name: Restore prepared workspace
+      - name: Restore workspace
         uses: actions/cache/restore@v4
         with:
           path: |
+            node_modules
+            apps/*/node_modules
+            layers/*/node_modules
+            packages/*/node_modules
+            packages/eslint-config/*/node_modules
             apps/*/.nuxt
             layers/*/.nuxt
             packages/eslint-config/*/dist
             packages/eslint-config/eslint-plugin-nuxt-guardrails/dist
             packages/eslint-config/eslint-plugin-nuxt-ui/dist
             packages/eslint-config/eslint-plugin-vue-official-best-practices/dist
-          key: prepared-${{ github.sha }}
+          key: workspace-${{ github.sha }}
 
       - name: Unit Tests
         run: pnpm -r --if-present test:unit
