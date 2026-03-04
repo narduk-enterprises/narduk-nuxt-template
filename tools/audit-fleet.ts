@@ -14,6 +14,7 @@
  * 10. pnpm configuration alignment (overrides and onlyBuiltDependencies)
  * 11. Wrangler compatibility flag validation (nodejs_compat vs nodejs_compat_v2)
  * 12. Doppler hub reference verification (shared secrets should reference hub)
+ * 13. GA4 property accessibility (GA_MEASUREMENT_ID presence in Doppler)
  *
  * Usage:
  *   npx tsx tools/audit-fleet.ts [--apps-dir ~/new-code/template-apps] [--json]
@@ -140,6 +141,7 @@ interface AppAudit {
     pnpmMismatch: string[]
     wranglerIssues: string[]
     dopplerHubIssues: string[]
+    gaMeasurementId: string | null
 }
 
 // ── Main ──
@@ -327,6 +329,16 @@ function main() {
             }
         } catch { }
 
+        // GA4 property check (GA_MEASUREMENT_ID in Doppler)
+        let gaMeasurementId: string | null = null
+        try {
+            const mid = execSync(
+                `doppler secrets get GA_MEASUREMENT_ID --project "${appName}" --config prd --plain`,
+                { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+            ).trim()
+            gaMeasurementId = mid || null
+        } catch { }
+
         results.push({
             name: appName,
             templateSha: appSha,
@@ -346,6 +358,7 @@ function main() {
             pnpmMismatch,
             wranglerIssues,
             dopplerHubIssues,
+            gaMeasurementId,
         })
     }
 
@@ -394,6 +407,7 @@ function main() {
         if (app.pnpmMismatch.length) notes.push(`pnpm: ${app.pnpmMismatch.join(',')}`)
         if (app.wranglerIssues.length) notes.push(`wrangler: ${app.wranglerIssues.join(',')}`)
         if (app.dopplerHubIssues.length) notes.push(`hub: ${app.dopplerHubIssues.join(',')}`)
+        if (!app.gaMeasurementId) notes.push('no GA_MEASUREMENT_ID')
 
         if (notes.length) issues++
 
