@@ -19,8 +19,42 @@ on:
         required: true
 
 jobs:
+  check-changes:
+    name: Check for deployable changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      should-deploy: ${{ steps.changes.outputs.should-deploy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect app-relevant changes
+        id: changes
+        run: |
+          # Files that do NOT require a deploy
+          INFRA_ONLY_PATTERNS='\.github/|\.agents/|tools/|\.template-version|renovate\.json|turbo\.json|doppler\.yaml|\.gitignore|README|LICENSE|packages/eslint-config/'
+
+          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "FORCE_DEPLOY")
+
+          if [ "$CHANGED" = "FORCE_DEPLOY" ]; then
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+            echo "⚡ Force deploy (no parent commit or workflow_dispatch)"
+          elif echo "$CHANGED" | grep -qvE "$INFRA_ONLY_PATTERNS"; then
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+            echo "✅ App-relevant changes detected:"
+            echo "$CHANGED" | grep -vE "$INFRA_ONLY_PATTERNS" | head -10
+          else
+            echo "should-deploy=false" >> $GITHUB_OUTPUT
+            echo "⏭️ Only infra/tooling changes — skipping deploy"
+            echo "$CHANGED" | head -10
+          fi
+
   deploy:
     name: Deploy
+    needs: [check-changes]
+    if: needs.check-changes.outputs.should-deploy == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
