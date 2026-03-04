@@ -244,8 +244,6 @@ jobs:
     uses: narduk-enterprises/narduk-nuxt-template/.github/workflows/reusable-deploy.yml@main
     secrets:
       DOPPLER_TOKEN: \${{ secrets.DOPPLER_TOKEN }}
-      CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 `
 
   if (existsSync(ciPath)) {
