@@ -308,7 +308,7 @@ function main() {
 
         // Doppler hub reference check
         const dopplerHubIssues: string[] = []
-        const HUB_SECRETS = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN', 'POSTHOG_HOST', 'POSTHOG_PERSONAL_API_KEY', 'POSTHOG_PROJECT_ID', 'POSTHOG_PUBLIC_KEY', 'GA_ACCOUNT_ID', 'GSC_SERVICE_ACCOUNT_JSON', 'GSC_USER_EMAIL']
+        const HUB_SECRETS = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN', 'POSTHOG_HOST', 'POSTHOG_PERSONAL_API_KEY', 'POSTHOG_PROJECT_ID', 'POSTHOG_PUBLIC_KEY', 'POSTHOG_PROJECT_TOKEN', 'GA_ACCOUNT_ID', 'GSC_SERVICE_ACCOUNT_JSON', 'GSC_USER_EMAIL']
         try {
             const token = execSync(
                 `doppler configs tokens create audit-${Date.now()} --project "${appName}" --config prd --plain`,
