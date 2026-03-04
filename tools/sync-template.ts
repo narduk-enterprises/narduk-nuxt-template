@@ -147,6 +147,8 @@ function main() {
   let skipped = 0
   let added = 0
   let removed = 0
+  let packageJsonChanged = false
+  let npmrcChanged = false
 
   // Phase 1: Copy verbatim files
   console.log('Phase 1: Syncing critical infrastructure files...')
@@ -311,6 +313,7 @@ jobs:
         appPkg.scripts = appPkg.scripts || {}
         appPkg.scripts[name] = expected
         changed = true
+        packageJsonChanged = true
       }
     }
     if (changed && !dryRun) {
@@ -375,9 +378,15 @@ jobs:
     let patched = false
 
     if (!npmrc.includes('strict-peer-dependencies')) {
-      console.log('  ADD: strict-peer-dependencies=true')
-      npmrc += '\nstrict-peer-dependencies=true\n'
+      console.log('  ADD: strict-peer-dependencies=false')
+      npmrc += '\nstrict-peer-dependencies=false\n'
       patched = true
+      npmrcChanged = true
+    } else if (npmrc.includes('strict-peer-dependencies=true')) {
+      console.log('  UPDATE: strict-peer-dependencies=true → false')
+      npmrc = npmrc.replace('strict-peer-dependencies=true', 'strict-peer-dependencies=false')
+      patched = true
+      npmrcChanged = true
     }
 
     if (npmrc.includes('@loganrenz:registry')) {
@@ -400,9 +409,10 @@ jobs:
       writeFileSync(npmrcPath, [
         '@narduk-enterprises:registry=https://npm.pkg.github.com',
         '',
-        'strict-peer-dependencies=true',
+        'strict-peer-dependencies=false',
         '',
       ].join('\n'), 'utf-8')
+      npmrcChanged = true
     }
   }
   console.log()
@@ -441,6 +451,7 @@ jobs:
       console.log(`  SET packageManager: "${templatePkg.packageManager}"`)
       pkg.packageManager = templatePkg.packageManager
       patchCount++
+      packageJsonChanged = true
     }
 
     const devDeps = pkg.devDependencies || {}
@@ -453,6 +464,7 @@ jobs:
         console.log(`  ADD devDependency: "${name}@${version}"`)
         devDeps[name] = version
         patchCount++
+        packageJsonChanged = true
       }
     }
     pkg.devDependencies = devDeps
@@ -483,6 +495,7 @@ jobs:
         pkg.pnpm = pkg.pnpm || {}
         pkg.pnpm.overrides = templatePkg.pnpm.overrides
         changed = true
+        packageJsonChanged = true
       }
 
       if (JSON.stringify(pkg.pnpm?.onlyBuiltDependencies) !== JSON.stringify(templatePkg.pnpm?.onlyBuiltDependencies)) {
@@ -490,6 +503,7 @@ jobs:
         pkg.pnpm = pkg.pnpm || {}
         pkg.pnpm.onlyBuiltDependencies = templatePkg.pnpm.onlyBuiltDependencies
         changed = true
+        packageJsonChanged = true
       }
 
       if (changed && !dryRun) {
@@ -682,6 +696,22 @@ jobs:
     }
   }
   console.log()
+
+  // Phase 13: Sync lockfile
+  if ((packageJsonChanged || npmrcChanged) && !dryRun) {
+    console.log('Phase 13: Syncing pnpm-lock.yaml...')
+    try {
+      execSync('pnpm install --no-frozen-lockfile', {
+        cwd: appDir,
+        stdio: 'inherit',
+      })
+      console.log('  ✅ Lockfile synchronized.')
+    } catch (e: any) {
+      console.warn(`  ⚠️ Failed to sync lockfile: ${e.message}`)
+    }
+  } else if (packageJsonChanged || npmrcChanged) {
+    console.log('Phase 13: Would sync pnpm-lock.yaml (dry run).')
+  }
 
   // Summary
   console.log('═══════════════════════════════════════════════════════════════')
