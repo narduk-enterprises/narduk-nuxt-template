@@ -8,6 +8,9 @@
  *  4. CI standardization (ci.yml matches canonical, extra workflows)
  *  5. Site reachability (HTTP check on SITE_URL)
  *  6. doppler.yaml presence + correctness
+ *  7. D1 database name consistency (wrangler config vs package.json scripts)
+ *  8. DOPPLER_TOKEN GitHub secret presence
+ *  9. Critical package.json script alignment with template
  *
  * Usage:
  *   npx tsx tools/audit-fleet.ts [--apps-dir ~/new-code/template-apps] [--json]
@@ -101,6 +104,22 @@ function httpCheck(url: string): number {
     } catch { return 0 }
 }
 
+const CRITICAL_SCRIPTS: Record<string, string> = {
+    'postinstall': "node -e \"if(!require('fs').existsSync('.setup-complete'))console.log('\\n⚠️  Run pnpm run setup before doing anything else! See AGENTS.md.\\n')\"",
+    'build:plugins': 'pnpm --filter @narduk/eslint-config build',
+    'prelint': 'pnpm run build:plugins',
+}
+
+function hasGitHubSecret(repo: string, secretName: string): boolean {
+    try {
+        const out = execSync(
+            `gh secret list --repo narduk-enterprises/${repo}`,
+            { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+        )
+        return out.includes(secretName)
+    } catch { return false }
+}
+
 interface AppAudit {
     name: string
     templateSha: string
@@ -114,6 +133,9 @@ interface AppAudit {
     extraWorkflows: string[]
     siteUrl: string | null
     siteStatus: number
+    d1Mismatch: string | null
+    hasDopplerToken: boolean
+    staleScripts: string[]
 }
 
 // ── Main ──
@@ -207,6 +229,51 @@ function main() {
         }
         const siteStatus = siteUrl ? httpCheck(siteUrl) : 0
 
+        // D1 database name consistency
+        let d1Mismatch: string | null = null
+        const webDir = join(appDir, 'apps/web')
+        const wranglerJson = join(webDir, 'wrangler.json')
+        const wranglerToml = join(webDir, 'wrangler.toml')
+        const webPkgPath = join(webDir, 'package.json')
+        let wranglerDbName: string | null = null
+        if (existsSync(wranglerJson)) {
+            try {
+                const wrangler = JSON.parse(readFileSync(wranglerJson, 'utf-8'))
+                wranglerDbName = wrangler.d1_databases?.[0]?.database_name || null
+            } catch { }
+        } else if (existsSync(wranglerToml)) {
+            try {
+                const content = readFileSync(wranglerToml, 'utf-8')
+                const match = content.match(/database_name\s*=\s*"([^"]+)"/)
+                wranglerDbName = match?.[1] || null
+            } catch { }
+        }
+        if (wranglerDbName && existsSync(webPkgPath)) {
+            try {
+                const webPkg = JSON.parse(readFileSync(webPkgPath, 'utf-8'))
+                const migrateScript = webPkg.scripts?.['db:migrate'] || ''
+                if (migrateScript.includes('web-db') && wranglerDbName !== 'web-db') {
+                    d1Mismatch = `script uses 'web-db' but wrangler has '${wranglerDbName}'`
+                } else if (migrateScript && !migrateScript.includes(wranglerDbName)) {
+                    d1Mismatch = `db:migrate doesn't reference '${wranglerDbName}'`
+                }
+            } catch { }
+        }
+
+        // DOPPLER_TOKEN GitHub secret
+        const hasDopplerToken = hasGitHubSecret(appName, 'DOPPLER_TOKEN')
+
+        // Stale package.json scripts
+        const staleScripts: string[] = []
+        try {
+            const rootPkg = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf-8'))
+            for (const [name, expected] of Object.entries(CRITICAL_SCRIPTS)) {
+                if (rootPkg.scripts?.[name] && rootPkg.scripts[name] !== expected) {
+                    staleScripts.push(name)
+                }
+            }
+        } catch { }
+
         results.push({
             name: appName,
             templateSha: appSha,
@@ -220,6 +287,9 @@ function main() {
             extraWorkflows,
             siteUrl,
             siteStatus,
+            d1Mismatch,
+            hasDopplerToken,
+            staleScripts,
         })
     }
 
@@ -262,6 +332,9 @@ function main() {
         if (app.dopplerYaml.exists && app.dopplerYaml.project !== app.name) notes.push(`yaml project mismatch`)
         if (app.ciDiffs.length) notes.push(app.ciDiffs.join(', '))
         if (app.extraWorkflows.length) notes.push(`+${app.extraWorkflows.join(',')}`)
+        if (app.d1Mismatch) notes.push(`D1: ${app.d1Mismatch}`)
+        if (!app.hasDopplerToken) notes.push('no GH DOPPLER_TOKEN')
+        if (app.staleScripts.length) notes.push(`stale: ${app.staleScripts.join(',')}`)
 
         if (notes.length) issues++
 
