@@ -165,6 +165,7 @@ async function main() {
   // 6. pnpm install
   console.log('\n📦 Running pnpm install to sync dependencies...')
   run('pnpm install')
+  run('git add pnpm-lock.yaml')
 
   console.log('\n🎉 Layer update complete!')
   console.log('⚠️  Note: Local layer customizations (if any) have been overwritten.')
