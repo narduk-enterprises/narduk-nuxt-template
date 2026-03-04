@@ -15,8 +15,8 @@ export default defineNuxtConfig({
     hooks: {
       'vite:extendConfig'(config) {
         /* eslint-disable @typescript-eslint/no-explicit-any */
-        ;(config as any).server ??= {}
-        ;(config as any).server.hmr = { port: hmrPort++ }
+        ; (config as any).server ??= {}
+          ; (config as any).server.hmr = { port: hmrPort++ }
         /* eslint-enable @typescript-eslint/no-explicit-any */
       },
     },
@@ -37,8 +37,6 @@ export default defineNuxtConfig({
   },
 
   ogImage: {
-    defaults: {
-      component: 'OgPlaygroundTakumi',
-    },
+    defaults: {},
   },
 })
