@@ -20,7 +20,6 @@ jobs:
     timeout-minutes: 10
     strategy:
       fail-fast: false
-      max-parallel: 4
       matrix:
         repo:
           - ai-media-gen
@@ -58,7 +57,15 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Sync layer from template
-        run: npx tsx tools/update-layer.ts
+        id: sync
+        run: |
+          npx tsx tools/update-layer.ts
+
+          # Fail hard if there are merge conflicts
+          if grep -rq "<<<<<<< " layers/narduk-nuxt-layer/ 2>/dev/null; then
+            echo "::error::Merge conflicts detected in ${{ matrix.repo }}"
+            exit 1
+          fi
 
       - name: Check for changes
         id: changes
