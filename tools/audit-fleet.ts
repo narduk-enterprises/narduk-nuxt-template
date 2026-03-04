@@ -12,6 +12,8 @@
  *  8. DOPPLER_TOKEN GitHub secret presence
  *  9. Critical package.json script alignment with template
  * 10. pnpm configuration alignment (overrides and onlyBuiltDependencies)
+ * 11. Wrangler compatibility flag validation (nodejs_compat vs nodejs_compat_v2)
+ * 12. Doppler hub reference verification (shared secrets should reference hub)
  *
  * Usage:
  *   npx tsx tools/audit-fleet.ts [--apps-dir ~/new-code/template-apps] [--json]
@@ -136,6 +138,8 @@ interface AppAudit {
     hasDopplerToken: boolean
     staleScripts: string[]
     pnpmMismatch: string[]
+    wranglerIssues: string[]
+    dopplerHubIssues: string[]
 }
 
 // ── Main ──
@@ -287,6 +291,42 @@ function main() {
             }
         } catch { }
 
+        // Wrangler compatibility flags
+        const wranglerIssues: string[] = []
+        if (existsSync(wranglerJson)) {
+            try {
+                const wrangler = JSON.parse(readFileSync(wranglerJson, 'utf-8'))
+                const flags: string[] = wrangler.compatibility_flags || []
+                if (flags.includes('nodejs_compat_v2')) {
+                    wranglerIssues.push('nodejs_compat_v2 (use nodejs_compat)')
+                }
+                if (!flags.includes('nodejs_compat') && !flags.includes('nodejs_compat_v2')) {
+                    wranglerIssues.push('missing nodejs_compat flag')
+                }
+            } catch { }
+        }
+
+        // Doppler hub reference check
+        const dopplerHubIssues: string[] = []
+        const HUB_SECRETS = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN', 'POSTHOG_HOST', 'POSTHOG_PERSONAL_API_KEY', 'POSTHOG_PROJECT_ID', 'POSTHOG_PUBLIC_KEY', 'GA_ACCOUNT_ID', 'GSC_SERVICE_ACCOUNT_JSON', 'GSC_USER_EMAIL']
+        try {
+            const token = execSync(
+                `doppler configs tokens create audit-${Date.now()} --project "${appName}" --config prd --plain`,
+                { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+            ).trim()
+            const resp = execSync(
+                `curl -s -H "Authorization: Bearer ${token}" "https://api.doppler.com/v3/configs/config/secrets"`,
+                { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+            )
+            const data = JSON.parse(resp)
+            const secrets = data.secrets || {}
+            for (const key of HUB_SECRETS) {
+                if (secrets[key]?.raw && !secrets[key].raw.includes('${')) {
+                    dopplerHubIssues.push(key)
+                }
+            }
+        } catch { }
+
         results.push({
             name: appName,
             templateSha: appSha,
@@ -304,6 +344,8 @@ function main() {
             hasDopplerToken,
             staleScripts,
             pnpmMismatch,
+            wranglerIssues,
+            dopplerHubIssues,
         })
     }
 
@@ -350,6 +392,8 @@ function main() {
         if (!app.hasDopplerToken) notes.push('no GH DOPPLER_TOKEN')
         if (app.staleScripts.length) notes.push(`stale: ${app.staleScripts.join(',')}`)
         if (app.pnpmMismatch.length) notes.push(`pnpm: ${app.pnpmMismatch.join(',')}`)
+        if (app.wranglerIssues.length) notes.push(`wrangler: ${app.wranglerIssues.join(',')}`)
+        if (app.dopplerHubIssues.length) notes.push(`hub: ${app.dopplerHubIssues.join(',')}`)
 
         if (notes.length) issues++
 
