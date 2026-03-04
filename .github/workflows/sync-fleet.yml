@@ -1,0 +1,90 @@
+name: Sync Fleet
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Preview changes without pushing'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: sync-fleet
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync ${{ matrix.repo }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        repo:
+          - ai-media-gen
+          - austin-texas-net
+          - circuit-breaker-online
+          - clawdle
+          - control-plane
+          - drift-map
+          - enigma-box
+          - flashcard-pro
+          - imessage-dictionary
+          - nagolnagemluapleira
+          - neon-sewer-raid
+          - ogpreview-app
+          - old-austin-grouch
+          - papa-everetts-pizza
+          - sailing-passage-map
+          - tiny-invoice
+          - video-grab
+    steps:
+      - name: Checkout fleet app
+        uses: actions/checkout@v4
+        with:
+          repository: narduk-enterprises/${{ matrix.repo }}
+          token: ${{ secrets.FLEET_SYNC_TOKEN }}
+          fetch-depth: 1
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Sync layer from template
+        run: npx tsx tools/update-layer.ts
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "⏭️ ${{ matrix.repo }} is already up to date"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "✅ Changes detected:"
+            git diff --stat
+            git diff --cached --stat
+          fi
+
+      - name: Commit and push
+        if: steps.changes.outputs.changed == 'true' && inputs.dry-run == false
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: sync layer from narduk-nuxt-template"
+          git push origin main
+
+      - name: Dry run summary
+        if: steps.changes.outputs.changed == 'true' && inputs.dry-run == true
+        run: |
+          echo "🔍 DRY RUN — would commit and push:"
+          git diff --stat
+          git diff --cached --stat
