@@ -11,6 +11,7 @@
  *  7. D1 database name consistency (wrangler config vs package.json scripts)
  *  8. DOPPLER_TOKEN GitHub secret presence
  *  9. Critical package.json script alignment with template
+ * 10. pnpm configuration alignment (overrides and onlyBuiltDependencies)
  *
  * Usage:
  *   npx tsx tools/audit-fleet.ts [--apps-dir ~/new-code/template-apps] [--json]
@@ -136,6 +137,7 @@ interface AppAudit {
     d1Mismatch: string | null
     hasDopplerToken: boolean
     staleScripts: string[]
+    pnpmMismatch: string[]
 }
 
 // ── Main ──
@@ -274,6 +276,19 @@ function main() {
             }
         } catch { }
 
+        // Pnpm configuration
+        const pnpmMismatch: string[] = []
+        try {
+            const rootPkg = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf-8'))
+            const templatePkg = JSON.parse(readFileSync(join(TEMPLATE_DIR, 'package.json'), 'utf-8'))
+            if (JSON.stringify(rootPkg.pnpm?.overrides) !== JSON.stringify(templatePkg.pnpm?.overrides)) {
+                pnpmMismatch.push('overrides')
+            }
+            if (JSON.stringify(rootPkg.pnpm?.onlyBuiltDependencies) !== JSON.stringify(templatePkg.pnpm?.onlyBuiltDependencies)) {
+                pnpmMismatch.push('onlyBuiltDependencies')
+            }
+        } catch { }
+
         results.push({
             name: appName,
             templateSha: appSha,
@@ -290,6 +305,7 @@ function main() {
             d1Mismatch,
             hasDopplerToken,
             staleScripts,
+            pnpmMismatch,
         })
     }
 
@@ -335,6 +351,7 @@ function main() {
         if (app.d1Mismatch) notes.push(`D1: ${app.d1Mismatch}`)
         if (!app.hasDopplerToken) notes.push('no GH DOPPLER_TOKEN')
         if (app.staleScripts.length) notes.push(`stale: ${app.staleScripts.join(',')}`)
+        if (app.pnpmMismatch.length) notes.push(`pnpm: ${app.pnpmMismatch.join(',')}`)
 
         if (notes.length) issues++
 
