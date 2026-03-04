@@ -19,23 +19,43 @@ if (process.env.FLEET_DOPPLER_TOKEN) {
 }
 
 const FLEET_PROJECTS = [
-  'neon-sewer-raid',
-  'old-austin-grouch',
-  'ogpreview-app',
-  'imessage-dictionary',
-  'narduk-enterprises-portfolio',
-  'drift-map',
-  'tiny-invoice',
-  'enigma-box',
-  'papa-everetts-pizza',
-  'flashcard-pro',
-  'clawdle',
-  'circuit-breaker-online',
-  'nagolnagemluapleira',
+  'ai-media-gen',
   'austin-texas-net',
+  'circuit-breaker-online',
+  'clawdle',
+  'control-plane',
+  'drift-map',
+  'enigma-box',
+  'flashcard-pro',
+  'imessage-dictionary',
+  'nagolnagemluapleira',
+  'neon-sewer-raid',
+  'ogpreview-app',
+  'old-austin-grouch',
+  'papa-everetts-pizza',
+  'sailing-passage-map',
+  'tiny-invoice',
+  'video-grab',
 ]
 
-const REQUIRED_SECRETS = ['SITE_URL'] as const
+/** Secrets that every app MUST have to deploy and function. */
+const REQUIRED_SECRETS = [
+  'SITE_URL',
+  'CLOUDFLARE_API_TOKEN',
+  'CLOUDFLARE_ACCOUNT_ID',
+  'POSTHOG_PUBLIC_KEY',
+] as const
+
+/** Secrets that are strongly recommended for full analytics/SEO. */
+const RECOMMENDED_SECRETS = [
+  'GA_MEASUREMENT_ID',
+  'GSC_SERVICE_ACCOUNT_JSON',
+  'INDEXNOW_KEY',
+  'GSC_USER_EMAIL',
+  'GA_ACCOUNT_ID',
+  'POSTHOG_HOST',
+  'POSTHOG_PROJECT_ID',
+] as const
 
 function isDopplerAvailable(): boolean {
   try {
@@ -65,37 +85,46 @@ function main() {
   }
 
   console.log('')
-  console.log('Fleet Doppler validation (required secrets in prd)')
-  console.log('────────────────────────────────────────────────')
+  console.log('Fleet Doppler Validation')
+  console.log('════════════════════════════════════════════════════')
   let failed = 0
+  let warned = 0
   let noAccess = 0
   for (const project of FLEET_PROJECTS) {
     const names = getSecretNames(project, 'prd')
     if (names === null) {
-      console.log(`  ⚠️ ${project.padEnd(28)} unable to read (no Doppler access to this project)`)
+      console.log(`  ⚠️ ${project.padEnd(28)} unable to read (no Doppler access)`)
       noAccess++
       continue
     }
-    const missing = REQUIRED_SECRETS.filter((s) => !names.has(s))
-    if (missing.length > 0) {
-      console.log(`  ❌ ${project.padEnd(28)} missing: ${missing.join(', ')}`)
+    const missingRequired = REQUIRED_SECRETS.filter((s) => !names.has(s))
+    const missingRecommended = RECOMMENDED_SECRETS.filter((s) => !names.has(s))
+
+    if (missingRequired.length > 0) {
+      console.log(`  ❌ ${project.padEnd(28)} MISSING: ${missingRequired.join(', ')}`)
       failed++
+    } else if (missingRecommended.length > 0) {
+      console.log(`  🟠 ${project.padEnd(28)} optional: ${missingRecommended.join(', ')}`)
+      warned++
     } else {
       console.log(`  ✅ ${project}`)
     }
   }
-  console.log('────────────────────────────────────────────────')
+  console.log('════════════════════════════════════════════════════')
   if (noAccess > 0) {
-    console.error(`\n⚠️ ${noAccess} project(s) could not be read. Use a Doppler token with access to all fleet projects`)
-    console.error('   (e.g. run from a directory with doppler setup for a project that has access, or use a service token).')
-    process.exit(1)
+    console.error(`\n⚠️ ${noAccess} project(s) could not be read. Use a Doppler token with access to all fleet projects.`)
   }
   if (failed > 0) {
-    console.error(`\n❌ ${failed} project(s) missing required Doppler secrets (prd).`)
-    console.error('   Fix: doppler secrets set SITE_URL="https://..." --project <name> --config prd')
+    console.error(`\n❌ ${failed} project(s) missing REQUIRED Doppler secrets (prd).`)
+    console.error('   Fix: doppler secrets set <KEY>="<value>" --project <name> --config prd')
     process.exit(1)
   }
-  console.log('\n✅ All fleet projects have required secrets.')
+  if (warned > 0) {
+    console.log(`\n🟠 ${warned} project(s) missing recommended secrets. Run setup-analytics.ts to fill gaps.`)
+  }
+  if (failed === 0 && noAccess === 0) {
+    console.log('\n✅ All fleet projects have required secrets.')
+  }
   console.log('')
 }
 

@@ -1,0 +1,284 @@
+/**
+ * Fleet Audit Tool — single-command audit of all fleet apps.
+ *
+ * Checks:
+ *  1. Template sync status (.template-version SHA vs current template HEAD)
+ *  2. Doppler secret completeness (required + recommended)
+ *  3. Layer version currency
+ *  4. CI standardization (ci.yml matches canonical, extra workflows)
+ *  5. Site reachability (HTTP check on SITE_URL)
+ *  6. doppler.yaml presence + correctness
+ *
+ * Usage:
+ *   npx tsx tools/audit-fleet.ts [--apps-dir ~/new-code/template-apps] [--json]
+ */
+
+import { execSync } from 'node:child_process'
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
+import { join, basename } from 'node:path'
+
+// ── Config ──
+
+const args = process.argv.slice(2)
+const jsonMode = args.includes('--json')
+const appsArg = args.find(a => a.startsWith('--apps-dir='))?.split('=')[1]
+    || args[args.indexOf('--apps-dir') + 1]
+    || join(process.env.HOME || '~', 'new-code/template-apps')
+const APPS_DIR = appsArg.replace(/^~/, process.env.HOME || '')
+const TEMPLATE_DIR = join(process.env.HOME || '~', 'new-code/narduk-nuxt-template')
+
+const REQUIRED_SECRETS = ['SITE_URL', 'CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'POSTHOG_PUBLIC_KEY']
+const RECOMMENDED_SECRETS = ['GA_MEASUREMENT_ID', 'GSC_SERVICE_ACCOUNT_JSON', 'INDEXNOW_KEY', 'GSC_USER_EMAIL', 'GA_ACCOUNT_ID', 'POSTHOG_HOST', 'POSTHOG_PROJECT_ID']
+const ALL_SECRETS = [...REQUIRED_SECRETS, ...RECOMMENDED_SECRETS]
+
+const CANONICAL_WORKFLOWS = new Set(['ci.yml', 'version-bump.yml', 'weekly-drift-check.yml'])
+
+// ── Helpers ──
+
+function getTemplateSha(): string {
+    try {
+        return execSync('git rev-parse HEAD', { encoding: 'utf-8', stdio: 'pipe', cwd: TEMPLATE_DIR }).trim()
+    } catch { return 'unknown' }
+}
+
+function getTemplateLayerVersion(): string {
+    const pkgPath = join(TEMPLATE_DIR, 'layers/narduk-nuxt-layer/package.json')
+    try {
+        return JSON.parse(readFileSync(pkgPath, 'utf-8')).version || 'unknown'
+    } catch { return 'unknown' }
+}
+
+function getCanonicalCi(): string {
+    // Generate the same canonical ci.yml that sync-template.ts Phase 3 writes
+    return `name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-\${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    uses: narduk-enterprises/narduk-nuxt-template/.github/workflows/reusable-quality.yml@main
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: [quality]
+    permissions:
+      contents: read
+      deployments: write
+    uses: narduk-enterprises/narduk-nuxt-template/.github/workflows/reusable-deploy.yml@main
+    secrets:
+      DOPPLER_TOKEN: \${{ secrets.DOPPLER_TOKEN }}
+      CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+`
+}
+
+function getDopplerSecrets(project: string): Set<string> | null {
+    try {
+        const out = execSync(
+            `doppler secrets download --project "${project}" --config prd --no-file --format env`,
+            { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+        )
+        return new Set(out.split('\n').map(l => l.split('=')[0]).filter(Boolean))
+    } catch { return null }
+}
+
+function httpCheck(url: string): number {
+    try {
+        const code = execSync(
+            `curl -s -o /dev/null -w "%{http_code}" --max-time 5 "${url}"`,
+            { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+        ).trim()
+        return parseInt(code, 10) || 0
+    } catch { return 0 }
+}
+
+interface AppAudit {
+    name: string
+    templateSha: string
+    templateSynced: boolean
+    layerVersion: string
+    layerCurrent: boolean
+    dopplerSecrets: { found: number; total: number; missing: string[] } | null
+    dopplerYaml: { exists: boolean; project: string | null }
+    ciStandard: boolean
+    ciDiffs: string[]
+    extraWorkflows: string[]
+    siteUrl: string | null
+    siteStatus: number
+}
+
+// ── Main ──
+
+function main() {
+    if (!existsSync(APPS_DIR)) {
+        console.error(`Apps directory not found: ${APPS_DIR}`)
+        process.exit(1)
+    }
+
+    const templateSha = getTemplateSha()
+    const templateLayer = getTemplateLayerVersion()
+    const canonicalCi = getCanonicalCi()
+    const apps = readdirSync(APPS_DIR)
+        .filter(d => statSync(join(APPS_DIR, d)).isDirectory())
+        .sort()
+
+    const results: AppAudit[] = []
+
+    for (const appName of apps) {
+        const appDir = join(APPS_DIR, appName)
+
+        // Template sync
+        let appSha = ''
+        const versionPath = join(appDir, '.template-version')
+        if (existsSync(versionPath)) {
+            const content = readFileSync(versionPath, 'utf-8')
+            const match = content.match(/sha=(.+)/)
+            appSha = match?.[1] || ''
+        }
+
+        // Layer version
+        const layerPkgPath = join(appDir, 'layers/narduk-nuxt-layer/package.json')
+        let layerVersion = 'missing'
+        if (existsSync(layerPkgPath)) {
+            try { layerVersion = JSON.parse(readFileSync(layerPkgPath, 'utf-8')).version || 'missing' } catch { }
+        }
+
+        // Doppler secrets
+        const secrets = getDopplerSecrets(appName)
+        let dopplerResult: AppAudit['dopplerSecrets'] = null
+        if (secrets) {
+            const missing = ALL_SECRETS.filter(s => !secrets.has(s))
+            dopplerResult = { found: ALL_SECRETS.length - missing.length, total: ALL_SECRETS.length, missing }
+        }
+
+        // doppler.yaml
+        const dopplerYamlPath = join(appDir, 'doppler.yaml')
+        let dopplerYaml: AppAudit['dopplerYaml'] = { exists: false, project: null }
+        if (existsSync(dopplerYamlPath)) {
+            const content = readFileSync(dopplerYamlPath, 'utf-8')
+            const match = content.match(/project:\s*(.+)/)
+            dopplerYaml = { exists: true, project: match?.[1]?.trim() || null }
+        }
+
+        // CI standardization
+        const ciPath = join(appDir, '.github/workflows/ci.yml')
+        let ciStandard = false
+        const ciDiffs: string[] = []
+        if (existsSync(ciPath)) {
+            const current = readFileSync(ciPath, 'utf-8')
+            if (current.trimEnd() === canonicalCi.trimEnd()) {
+                ciStandard = true
+            } else {
+                if (!current.includes('needs: [quality]')) ciDiffs.push('missing needs:[quality]')
+                if (!current.includes('reusable-quality.yml')) ciDiffs.push('not using reusable workflow')
+                if (ciDiffs.length === 0) ciDiffs.push('minor differences')
+            }
+        } else {
+            ciDiffs.push('ci.yml missing')
+        }
+
+        // Extra workflows
+        const workflowDir = join(appDir, '.github/workflows')
+        let extraWorkflows: string[] = []
+        if (existsSync(workflowDir)) {
+            extraWorkflows = readdirSync(workflowDir)
+                .filter(f => f.endsWith('.yml') && !CANONICAL_WORKFLOWS.has(f))
+        }
+
+        // Site reachability
+        let siteUrl: string | null = null
+        if (secrets?.has('SITE_URL')) {
+            try {
+                const out = execSync(
+                    `doppler secrets get SITE_URL --project "${appName}" --config prd --plain`,
+                    { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+                ).trim()
+                siteUrl = out || null
+            } catch { }
+        }
+        const siteStatus = siteUrl ? httpCheck(siteUrl) : 0
+
+        results.push({
+            name: appName,
+            templateSha: appSha,
+            templateSynced: appSha === templateSha,
+            layerVersion,
+            layerCurrent: layerVersion === templateLayer,
+            dopplerSecrets: dopplerResult,
+            dopplerYaml,
+            ciStandard,
+            ciDiffs,
+            extraWorkflows,
+            siteUrl,
+            siteStatus,
+        })
+    }
+
+    if (jsonMode) {
+        console.log(JSON.stringify({ templateSha, templateLayer, apps: results }, null, 2))
+        return
+    }
+
+    // Pretty print
+    console.log()
+    console.log('Fleet Audit Report')
+    console.log(`Template SHA: ${templateSha.slice(0, 12)}  |  Layer: ${templateLayer}`)
+    console.log('═'.repeat(90))
+
+    const col = (s: string, w: number) => s.padEnd(w)
+
+    console.log(
+        col('App', 28)
+        + col('Layer', 8)
+        + col('Doppler', 10)
+        + col('YAML', 6)
+        + col('CI', 10)
+        + col('Site', 6)
+        + 'Notes'
+    )
+    console.log('─'.repeat(90))
+
+    let issues = 0
+    for (const app of results) {
+        const layerIcon = app.layerCurrent ? '✅' : '🔴'
+        const dopplerIcon = !app.dopplerSecrets ? '❌' : app.dopplerSecrets.missing.length === 0 ? '✅' : '🟠'
+        const dopplerCount = app.dopplerSecrets ? `${app.dopplerSecrets.found}/${app.dopplerSecrets.total}` : 'N/A'
+        const yamlIcon = app.dopplerYaml.exists ? '✅' : '❌'
+        const ciIcon = app.ciStandard ? '✅' : '⚠️'
+        const siteIcon = app.siteStatus === 200 ? '✅' : app.siteStatus > 0 ? `${app.siteStatus}` : '❌'
+
+        const notes: string[] = []
+        if (!app.layerCurrent) notes.push(`layer=${app.layerVersion}`)
+        if (app.dopplerSecrets?.missing.length) notes.push(`miss: ${app.dopplerSecrets.missing.join(',')}`)
+        if (app.dopplerYaml.exists && app.dopplerYaml.project !== app.name) notes.push(`yaml project mismatch`)
+        if (app.ciDiffs.length) notes.push(app.ciDiffs.join(', '))
+        if (app.extraWorkflows.length) notes.push(`+${app.extraWorkflows.join(',')}`)
+
+        if (notes.length) issues++
+
+        console.log(
+            col(app.name, 28)
+            + col(`${layerIcon} ${app.layerVersion}`, 8)
+            + col(`${dopplerIcon} ${dopplerCount}`, 10)
+            + col(yamlIcon, 6)
+            + col(ciIcon, 10)
+            + col(siteIcon, 6)
+            + notes.join(' | ')
+        )
+    }
+
+    console.log('═'.repeat(90))
+    console.log(`${results.length} apps audited  |  ${issues} with issues  |  ${results.length - issues} clean`)
+    console.log()
+}
+
+main()

@@ -59,6 +59,7 @@ const COPY_VERBATIM = [
 
   // CI/CD
   '.github/workflows/version-bump.yml',
+  '.github/workflows/weekly-drift-check.yml',
 
   // Build orchestration
   'turbo.json',
@@ -249,11 +250,11 @@ jobs:
 
   if (existsSync(ciPath)) {
     const current = readFileSync(ciPath, 'utf-8')
-    if (current.includes('reusable-quality.yml') && !current.includes('app-directory')) {
-      console.log('  Already using reusable workflows (monorepo).')
+    if (current.trimEnd() === slimCi.trimEnd()) {
+      console.log('  ci.yml matches canonical version.')
     }
     else {
-      console.log('  REPLACE: .github/workflows/ci.yml')
+      console.log('  REPLACE: .github/workflows/ci.yml (standardizing)')
       if (!dryRun) {
         writeFileSync(ciPath, slimCi, 'utf-8')
       }
@@ -524,7 +525,25 @@ jobs:
     } catch { /* project doesn't exist */ }
 
     if (!projectExists) {
-      console.log(`  ⏭ Doppler project "${projectName}" not found; skipping.`)
+      console.log(`  Doppler project "${projectName}" not found — creating...`)
+      if (!dryRun) {
+        try {
+          execSync(
+            `doppler projects create ${projectName} --description "${appName} auto-provisioned by sync-template"`,
+            { encoding: 'utf-8', stdio: 'pipe' },
+          )
+          console.log(`  ✅ Created Doppler project: ${projectName}`)
+          projectExists = true
+        } catch (e: any) {
+          console.warn(`  ⚠️ Failed to create Doppler project: ${e.message}`)
+        }
+      } else {
+        console.log(`  Would create Doppler project: ${projectName}`)
+      }
+    }
+
+    if (!projectExists) {
+      console.log(`  ⏭ Cannot proceed without Doppler project; skipping hub ref check.`)
     } else {
       const hubRefs: Record<string, string> = {
         CLOUDFLARE_API_TOKEN: '${narduk-nuxt-template.prd.CLOUDFLARE_API_TOKEN}',
@@ -577,6 +596,23 @@ jobs:
           }
         }
       }
+    }
+  }
+  console.log()
+
+  // Phase 12: Ensure doppler.yaml exists
+  console.log('Phase 12: Checking doppler.yaml...')
+  const dopplerYamlPath = join(appDir, 'doppler.yaml')
+  if (existsSync(dopplerYamlPath)) {
+    console.log('  doppler.yaml already exists.')
+  }
+  else {
+    // Always use the directory name as the Doppler project name — this matches
+    // the fleet convention (Doppler project = repo/directory name, not package.json name).
+    const dopplerYamlContent = `setup:\n  project: ${appName}\n  config: prd\n`
+    console.log(`  ADD: doppler.yaml (project=${appName}, config=prd)`)
+    if (!dryRun) {
+      writeFileSync(dopplerYamlPath, dopplerYamlContent, 'utf-8')
     }
   }
   console.log()
