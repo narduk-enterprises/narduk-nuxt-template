@@ -431,6 +431,8 @@ jobs:
       'predeploy': 'node tools/check-setup.cjs',
       'update-layer': 'npx tsx tools/update-layer.ts',
       'generate:favicons': 'npx tsx tools/generate-favicons.ts',
+      // Fleet apps only run quality on their own code, not layer/eslint packages
+      'quality': "turbo run quality --filter='./apps/*'",
     }
 
     for (const [name, cmd] of Object.entries(requiredScripts)) {
