@@ -15,6 +15,7 @@
  * 11. Wrangler compatibility flag validation (nodejs_compat vs nodejs_compat_v2)
  * 12. Doppler hub reference verification (shared secrets should reference hub)
  * 13. GA4 property accessibility (GA_MEASUREMENT_ID presence in Doppler)
+ * 14. GSC accessibility (service account can access sc-domain: or URL-prefix property)
  *
  * Usage:
  *   npx tsx tools/audit-fleet.ts [--apps-dir ~/new-code/template-apps] [--json]
@@ -142,6 +143,7 @@ interface AppAudit {
     wranglerIssues: string[]
     dopplerHubIssues: string[]
     gaMeasurementId: string | null
+    gscAccess: 'ok' | 'no-access' | 'unknown'
 }
 
 // ── Main ──
@@ -155,6 +157,44 @@ function main() {
     const templateSha = getTemplateSha()
     const templateLayer = getTemplateLayerVersion()
     const canonicalCi = getCanonicalCi()
+
+    // Pre-fetch GSC accessible sites (once, shared across all apps)
+    const gscSites = new Set<string>()
+    try {
+        const gscRaw = execSync(
+            'doppler secrets get GSC_SERVICE_ACCOUNT_JSON --project narduk-nuxt-template --config prd --plain',
+            { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+        ).trim()
+        const gscJson = gscRaw.startsWith('{') ? gscRaw : Buffer.from(gscRaw, 'base64').toString('utf-8')
+        const gscCreds = JSON.parse(gscJson)
+        const now = Math.floor(Date.now() / 1000)
+        const hdr = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url')
+        const pld = Buffer.from(JSON.stringify({
+            iss: gscCreds.client_email,
+            scope: 'https://www.googleapis.com/auth/webmasters.readonly',
+            aud: 'https://oauth2.googleapis.com/token',
+            iat: now, exp: now + 300,
+        })).toString('base64url')
+        const { createSign } = require('node:crypto')
+        const s = createSign('RSA-SHA256')
+        s.update(`${hdr}.${pld}`)
+        const sig = s.sign(gscCreds.private_key, 'base64url')
+        const tResp = execSync(
+            `curl -s -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${hdr}.${pld}.${sig}" https://oauth2.googleapis.com/token`,
+            { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+        )
+        const at = JSON.parse(tResp).access_token
+        if (at) {
+            const sResp = execSync(
+                `curl -s -H "Authorization: Bearer ${at}" https://www.googleapis.com/webmasters/v3/sites`,
+                { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+            )
+            for (const entry of (JSON.parse(sResp).siteEntry || [])) {
+                gscSites.add(entry.siteUrl)
+            }
+        }
+    } catch { }
+
     const apps = readdirSync(APPS_DIR)
         .filter(d => statSync(join(APPS_DIR, d)).isDirectory())
         .sort()
@@ -339,6 +379,17 @@ function main() {
             gaMeasurementId = mid || null
         } catch { }
 
+        // GSC accessibility check
+        let gscAccess: 'ok' | 'no-access' | 'unknown' = 'unknown'
+        if (gscSites.size > 0 && siteUrl) {
+            try {
+                const hostname = new URL(siteUrl).hostname
+                const scDomain = `sc-domain:${hostname}`
+                const urlPfx = `${siteUrl.replace(/\/$/, '')}/`
+                gscAccess = (gscSites.has(scDomain) || gscSites.has(urlPfx)) ? 'ok' : 'no-access'
+            } catch { }
+        }
+
         results.push({
             name: appName,
             templateSha: appSha,
@@ -359,6 +410,7 @@ function main() {
             wranglerIssues,
             dopplerHubIssues,
             gaMeasurementId,
+            gscAccess,
         })
     }
 
@@ -408,6 +460,7 @@ function main() {
         if (app.wranglerIssues.length) notes.push(`wrangler: ${app.wranglerIssues.join(',')}`)
         if (app.dopplerHubIssues.length) notes.push(`hub: ${app.dopplerHubIssues.join(',')}`)
         if (!app.gaMeasurementId) notes.push('no GA_MEASUREMENT_ID')
+        if (app.gscAccess === 'no-access') notes.push('no GSC access')
 
         if (notes.length) issues++
 
