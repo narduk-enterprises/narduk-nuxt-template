@@ -118,7 +118,7 @@ jobs:
           git config user.email "template-sync-bot@users.noreply.github.com"
           git checkout -b "$BRANCH"
           git add -A
-          git commit -m "chore: sync with template infra (${TEMPLATE_SHA:0:12})"
+          git commit --no-verify -m "chore: sync with template infra (${TEMPLATE_SHA:0:12})"
           git push -u origin "$BRANCH" --force
 
           # Check if a PR already exists for any template-sync/ branch
