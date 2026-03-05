@@ -4,11 +4,11 @@ export default defineNuxtPlugin(() => {
   const runtimeConfig = useRuntimeConfig()
   const posthogApiKey = runtimeConfig.public.posthogPublicKey
   const posthogHost = runtimeConfig.public.posthogHost
-  const appName = runtimeConfig.public.appName || 'Unknown App'
+  const appName = (runtimeConfig.public.appName as string) || 'Unknown App'
 
   if (!posthogApiKey || import.meta.server) return
 
-  const posthogClient = posthog.init(posthogApiKey, {
+  const posthogClient = posthog.init(posthogApiKey as string, {
     api_host: (posthogHost as string) || 'https://us.i.posthog.com',
     capture_pageview: false, // We'll handle this manually for Nuxt SPA navigation
     capture_pageleave: true,
