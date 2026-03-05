@@ -35,6 +35,7 @@ export default defineNuxtConfig({
       mapkitToken: process.env.MAPKIT_TOKEN || '',
       buildVersion: process.env.GITHUB_SHA || process.env.CF_PAGES_COMMIT_SHA || '',
       buildTime: new Date().toISOString(),
+      gaMeasurementId: process.env.GA_MEASUREMENT_ID || '',
     },
   },
 
