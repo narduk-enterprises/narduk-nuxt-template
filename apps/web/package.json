@@ -5,7 +5,7 @@
   "version": "1.14.1",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "doppler run -- nuxt dev",
     "db:migrate": "wrangler d1 execute narduk-nuxt-template-db --local --file=drizzle/0000_initial_schema.sql",
     "db:seed": "wrangler d1 execute narduk-nuxt-template-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed.sql",
     "db:studio": "drizzle-kit studio",
