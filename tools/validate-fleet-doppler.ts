@@ -46,7 +46,7 @@ const REQUIRED_SECRETS = [
   'POSTHOG_PUBLIC_KEY',
 ] as const
 
-/** Secrets that are strongly recommended for full analytics/SEO. */
+/** Secrets that are strongly recommended for full analytics/SEO and cron. */
 const RECOMMENDED_SECRETS = [
   'GA_MEASUREMENT_ID',
   'GSC_SERVICE_ACCOUNT_JSON',
@@ -55,6 +55,7 @@ const RECOMMENDED_SECRETS = [
   'GA_ACCOUNT_ID',
   'POSTHOG_HOST',
   'POSTHOG_PROJECT_ID',
+  'CRON_SECRET',
 ] as const
 
 function isDopplerAvailable(): boolean {

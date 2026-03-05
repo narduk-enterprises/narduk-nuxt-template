@@ -1,4 +1,7 @@
-name: Reusable Deploy
+# ⚠️ DEPRECATED — Deployment is now done locally via `pnpm run deploy`.
+# This workflow is kept as a no-op so downstream apps referencing it don't fail.
+# See .agents/workflows/deploy.md for the local deploy workflow.
+name: Reusable Deploy (DISABLED)
 
 on:
   workflow_call:
@@ -23,7 +26,8 @@ on:
 
 jobs:
   check-changes:
-    name: Check for deployable changes
+    name: Check for deployable changes (DISABLED)
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 2
     outputs:
@@ -55,9 +59,9 @@ jobs:
           fi
 
   deploy:
-    name: Deploy
+    name: Deploy (DISABLED)
     needs: [check-changes]
-    if: needs.check-changes.outputs.should-deploy == 'true'
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

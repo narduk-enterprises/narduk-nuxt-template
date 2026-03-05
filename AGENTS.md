@@ -30,6 +30,8 @@ This is a **minimal Nuxt 4 + Nuxt UI 4** boilerplate deployed to **Cloudflare Wo
 
 For full-featured example implementations, see the **Showcase** apps in `apps/showcase/`, `apps/example-auth/`, `apps/example-blog/`, `apps/example-marketing/`, `apps/example-og-image/`, and `apps/example-apple-maps/`.
 
+> **📌 Note:** After running `pnpm run setup`, all example and showcase apps are **deleted** (Step 9). The references to them throughout this document are for the **template repository only**. If you are working in a derived project, these directories no longer exist — rely on the recipes and inline code samples below instead.
+
 ## Project Structure (PNPM Workspace)
 
 This repository functions as a single **PNPM Workspace** managing the web application, showcase examples, and supporting packages. The shared layer is consumed as an npm dependency.
@@ -299,12 +301,15 @@ Sitemap and robots.txt are automatic. OG image templates live in `app/components
 
 ## Architecture Patterns
 
-- **Commit often** — make small, focused commits after each meaningful change (new feature, bug fix, refactor). Do not accumulate large uncommitted changesets. Each commit message should follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, etc.).
+- **Commit often** — make small, focused commits after each meaningful change (new feature, bug fix, refactor). Do not accumulate large uncommitted changesets. Each commit message should follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, etc.). Push regularly as good practice — but deployment is a **separate local action** via `pnpm run deploy` (see the Deploy recipe below).
 - **Thin Components, Thick Composables** — components subscribe to composables, pass props down, emit events up. No inline fetch or complex logic in templates.
 - **SSR-safe state** — use `useState()` or Pinia stores. Never use bare `ref()` at module scope (causes cross-request leaks).
 - **Data fetching** — always use `useAsyncData` or `useFetch`, never raw `$fetch` in `<script setup>`.
 - **Client-only code** — wrap `window`/`document` access in `onMounted` or `<ClientOnly>`.
 - **Server imports** — when importing files inside `server/` (e.g., from `server/api/` to `server/database/schema.ts`), **use the `#server/` alias** (e.g., `import { ... } from '#server/database/schema'`) instead of relative paths like `../../../database/schema`. Relative imports cross the boundary between standard app code and server code, causing `nuxt typecheck` modules to lose resolution context.
+- **Extending the database schema** — the layer provides base `users` and `sessions` tables via its own `useDatabase` helper. If your app adds tables, you **must** create your own `useAppDatabase(event)` in `apps/web/server/utils/database.ts` that includes your full schema (re-exported layer tables + app tables). Using the layer's `useDatabase` will miss your app tables. **Do NOT name your helper `useDatabase`** — Nitro will warn about "Duplicated imports" and favor the layer's version. See the Auth recipe below for full details.
+- **Quality scope** — when building an app, always run `pnpm --filter <app-name> run quality` (not workspace-root `pnpm run quality`). The layer and shared packages may have pre-existing warnings that are not your app's concern.
+- **Migration files** — the `db:migrate` script runs all `drizzle/*.sql` files in alphabetical order. To add a new migration, create `drizzle/0001_your_migration.sql` — no script edits needed.
 
 ## Starting a New Project from This Template
 
@@ -325,23 +330,17 @@ Follow these steps **in order** — the init script handles renaming, D1 provisi
    ```bash
    pnpm run setup -- --name="your-app-name" --display="Your Display Name" --url="https://yoururl.com"
    ```
-5. **Configure Local D1 (Critical Step):** If your app uses the database, you MUST add `nitro-cloudflare-dev` to your app to proxy D1 to the dev server:
-   - `pnpm --filter your-app-name add -D nitro-cloudflare-dev`
-   - In your app's `nuxt.config.ts`, add:
-     ```ts
-     modules: ['nitro-cloudflare-dev'],
-     nitro: { cloudflareDev: { configPath: resolve(__dirname, 'wrangler.json') } }
-     ```
+5. **Validate and apply migrations:**
+   ```bash
+   pnpm run validate
+   pnpm run db:migrate
+   ```
 6. Wire up Doppler locally: `doppler setup --project your-app-name --config dev`
 7. Start dev: `doppler run -- pnpm run dev`
-8. Verify infrastructure: `pnpm run validate`
 
 > **🛡️ Bootstrap Guard:** `pnpm dev`, `pnpm build`, and `pnpm deploy` are **blocked** until `pnpm run setup` has been completed. The setup script writes a `.setup-complete` sentinel file; the `pre*` hooks in `package.json` check for it. If you see a "PROJECT SETUP NOT COMPLETE" error, follow steps 1–4 above.
 
-> **❌ GitHub Actions CI Preflight Failures:**
-> The `ci.yml` deploy job requires a `DOPPLER_TOKEN` (recommended) or `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` in your GitHub repository secrets. If they are missing, the deploy will fail at the "preflight" step.
-> The `pnpm run setup` script tries to create the `DOPPLER_TOKEN` in GitHub automatically (Step 6), but it **will skip this step if you have not set up your git remote** (Step 2).
-> **Fix:** Check your GitHub repository secrets. If `DOPPLER_TOKEN` is missing, ensure your git remote is set up (`git remote add origin ...`), then run `pnpm run setup -- --name="your-app-name" --display="Your Display Name" --url="https://yoururl.com" --repair` to inject the secret.
+> **ℹ️ CI is quality-only.** GitHub Actions runs lint, typecheck, and tests — but does NOT deploy. Deployment is done locally via `pnpm run deploy` (which runs `wrangler deploy`). See the Deploy recipe below.
 
 ## 🚨 CRITICAL RULE: NEVER COMMIT TO THIS REPOSITORY 🚨
 
@@ -451,25 +450,32 @@ These are opt-in feature recipes. Follow them when the project needs a specific 
 
 **When:** You are ready to deploy your application to Cloudflare Workers and need to manage your D1 database schema.
 
+> **⚠️ Deployment is LOCAL ONLY.** GitHub Actions CI runs quality checks (lint, typecheck, tests) but does NOT deploy. All deploys are done from your local machine via `wrangler deploy`. This is faster and saves GitHub Actions minutes.
+
 **Local vs. Remote D1:**
 
 - **Local Dev:** Handled via `pnpm run db:migrate`. This applies schema changes to the local `.wrangler/` SQLite file used during `pnpm dev`.
-- **Production (Remote):** Must be migrated against the actual Cloudflare D1 database.
+- **Production (Remote):** Must be migrated against the actual Cloudflare D1 database before deploying.
 
-**How Remote Migrations Work in this Template:**
-The template's GitHub Actions CI workflow (`.github/workflows/ci.yml`) is configured to **automatically run remote D1 migrations** during the deploy job. It does this by reading your app's `db:migrate` script and replacing the `--local` flag with `--remote` right before running `wrangler deploy`.
+**Deploy Workflow (use `/deploy`):**
 
-- If your app has a `"db:migrate": "wrangler d1 execute ..."` script in its `package.json`, CI runs it for you safely.
-- **Smoke Tests:** The CI workflow also runs an automated "smoke test" after deploying the main web app. It dynamically fetches your newly deployed URL and makes a `curl` request to the `/api/users` endpoint to verify the D1 database bindings and migrations were successful. If the request fails (e.g., 500 error due to missing tables), the CI step fails.
+1. **Ensure the working tree is clean** — all changes must be committed. The `/deploy` workflow refuses to deploy a dirty repo.
+2. **Run remote D1 migrations** (if your app uses D1):
+   ```bash
+   cd apps/web && pnpm exec wrangler d1 execute <DB_NAME> --remote --file=drizzle/0000_initial_schema.sql
+   ```
+   _(Replace `<DB_NAME>` with your database name from `wrangler.json`, and repeat for each `.sql` file in order.)_
+3. **Build & deploy** from the repo root:
+   ```bash
+   pnpm run deploy
+   ```
+   This runs `doppler run -- pnpm --filter web run deploy`, which builds and deploys via `wrangler deploy`.
+4. **Push to remote** as good practice (but this does NOT trigger a deploy):
+   ```bash
+   git push
+   ```
 
-**Manual Remote Migrations (Optional):**
-If you ever need to apply migrations manually outside of CI, you can run:
-
-```bash
-cd apps/web && pnpm exec wrangler d1 execute <DB_NAME> --remote --file=drizzle/0000_initial_schema.sql
-```
-
-_(Replace `<DB_NAME>` with your database name from `wrangler.json`, and repeat for each `.sql` file in order)._
+> **💡 Good Practice:** Never deploy uncommitted code. Commit and push regularly, but treat deployment as a deliberate local action.
 
 ---
 
@@ -494,7 +500,7 @@ _(Replace `<DB_NAME>` with your database name from `wrangler.json`, and repeat f
 3. **Remove template-only GitHub Actions workflows:**
    - Delete `.github/workflows/deploy-showcase.yml` (showcase deployment)
    - Delete `.github/workflows/publish-layer.yml` (layer publishing — only needed by the template repo itself)
-   - Keep `ci.yml`, `deploy.yml`, and `version-bump.yml`
+   - Keep `ci.yml` and `deploy.yml`
 
 4. **Update `playwright.config.ts`** at the repo root — remove example app projects, keep only `apps/web/` if you add E2E tests.
 
@@ -576,6 +582,7 @@ doppler secrets set CLOUDFLARE_API_TOKEN='${narduk-nuxt-template.prd.CLOUDFLARE_
 | `GA_PROPERTY_ID`        | Per-app (auto-generated)                         | `prd`  | GA4 property identifier                         |
 | `APPLE_MAPKIT_TOKEN`    | Per-app                                          | `prd`  | MapKit JS JWT token (runtime, client-safe)      |
 | `GSC_USER_EMAIL`        | Per-app                                          | `prd`  | Google account email for GSC access             |
+| `CRON_SECRET`           | Per-app (set by `init.ts` when missing)          | `prd`  | Secret for cron routes (e.g. cache warming)     |
 
 #### Dev vs. Prd Configs
 
@@ -585,16 +592,16 @@ doppler secrets set CLOUDFLARE_API_TOKEN='${narduk-nuxt-template.prd.CLOUDFLARE_
 
 #### CI/CD Flow
 
-**Deploy will fail until:**
+**CI is quality-only** — GitHub Actions runs lint, typecheck, and tests on push/PR but does NOT deploy.
 
-1. GitHub must have either the `DOPPLER_TOKEN` secret (recommended) or both `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
-2. If setup was run without a git remote, add the remote and re-run with `--repair` to set `DOPPLER_TOKEN`.
-3. The app's Doppler `prd` config must expose `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` (via hub sync or direct) so the deploy job can run `wrangler deploy`.
+**Deployment is local** — run `pnpm run deploy` from your machine. This uses Doppler to inject secrets and runs `wrangler deploy`.
 
-4. `init.ts` creates a Doppler service token (`ci-deploy`) scoped to `<app-name>/prd`
-5. The token is stored as `DOPPLER_TOKEN` GitHub Actions secret
-6. On push to `main`, `deploy.yml` uses the `dopplerhq/secrets-fetch-action` to securely fetch **all resolved secrets** (hub refs are resolved server-side) and inject them into `$GITHUB_ENV`
-7. `pnpm build` and `wrangler deploy` run with full access to all secrets
+**Doppler setup for local deploy:**
+
+1. `init.ts` creates the Doppler project and provisions hub references
+2. Run `doppler setup --project <app-name> --config prd` to wire up locally
+3. `pnpm run deploy` runs `doppler run -- pnpm --filter web run deploy`, injecting all secrets
+4. `wrangler deploy` uses `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` from Doppler
 
 **Reference:** See `apps/example-auth/nuxt.config.ts` for the full runtimeConfig block.
 

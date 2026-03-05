@@ -87,6 +87,8 @@ pnpm wrangler d1 execute <app-name>-db --remote --file=drizzle/0000_initial_sche
 
 ### 3. Deploy
 
+> **Deployment is local only** — CI runs quality checks but does NOT deploy. This saves GitHub Actions minutes and is faster.
+
 ```bash
 pnpm run deploy
 ```

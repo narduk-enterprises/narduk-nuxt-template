@@ -25,6 +25,9 @@ logs
 # Cloudflare
 .wrangler/
 
+# Drizzle local SQLite (created by drizzle-kit push)
+**/drizzle/*.sqlite
+
 # Build artifacts
 *.bak
 

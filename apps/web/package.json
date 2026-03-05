@@ -6,7 +6,8 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "doppler run -- nuxt dev",
-    "db:migrate": "wrangler d1 execute narduk-nuxt-template-db --local --file=drizzle/0000_initial_schema.sql",
+    "quality": "pnpm run lint && pnpm run typecheck",
+    "db:migrate": "for f in drizzle/*.sql; do wrangler d1 execute narduk-nuxt-template-db --local --file=\"$f\"; done",
     "db:seed": "wrangler d1 execute narduk-nuxt-template-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed.sql",
     "db:studio": "drizzle-kit studio",
     "generate": "nuxt generate",
@@ -33,7 +34,8 @@
     "vitest": "^4.0.18",
     "vue-tsc": "^3.2.5",
     "wrangler": "^4.20.0",
-    "@cloudflare/workers-types": "^4.20250303.0"
+    "@cloudflare/workers-types": "^4.20250303.0",
+    "@iconify-json/lucide": "^1.2.94"
   },
   "overrides": {
     "@cloudflare/unenv-preset": "2.12.1",

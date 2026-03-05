@@ -27,6 +27,8 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    /** Optional: secret for cron routes (e.g. cache warming). Set CRON_SECRET in Doppler; init.ts provisions it. */
+    cronSecret: process.env.CRON_SECRET || '',
     appleTeamId: process.env.APPLE_TEAM_ID || '',
     appleKeyId: process.env.APPLE_KEY_ID || '',
     appleSecretKey: process.env.APPLE_SECRET_KEY || '',
