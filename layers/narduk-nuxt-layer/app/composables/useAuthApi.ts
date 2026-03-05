@@ -1,8 +1,8 @@
 /**
- * Auth API composable — wraps all auth-related mutations.
- * Pages call these instead of $fetch directly (satisfies no-fetch-in-component).
+ * useAuthApi — Auth API wrapper composable with CSRF headers.
  *
- * All mutations include `X-Requested-With` header for CSRF protection middleware.
+ * For pages/components that need to call auth endpoints directly
+ * without going through useAuth's state management.
  */
 export function useAuthApi() {
   const csrfHeaders = { 'X-Requested-With': 'XMLHttpRequest' } as const
@@ -23,6 +23,13 @@ export function useAuthApi() {
     })
   }
 
+  async function logout() {
+    return $fetch<{ success: boolean }>('/api/auth/logout', {
+      method: 'POST',
+      headers: csrfHeaders,
+    })
+  }
+
   async function loginAsTestUser() {
     return $fetch<{ user: { id: string; name: string; email: string } }>('/api/auth/login-test', {
       method: 'POST',
@@ -30,5 +37,5 @@ export function useAuthApi() {
     })
   }
 
-  return { login, register, loginAsTestUser }
+  return { login, register, logout, loginAsTestUser }
 }

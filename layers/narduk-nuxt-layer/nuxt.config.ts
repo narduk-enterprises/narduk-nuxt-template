@@ -38,6 +38,9 @@ export default defineNuxtConfig({
       buildVersion: process.env.GITHUB_SHA || process.env.CF_PAGES_COMMIT_SHA || '',
       buildTime: new Date().toISOString(),
       gaMeasurementId: process.env.GA_MEASUREMENT_ID || '',
+      posthogHost: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',
+      cspScriptSrc: process.env.CSP_SCRIPT_SRC || '',
+      cspConnectSrc: process.env.CSP_CONNECT_SRC || '',
     },
   },
 

@@ -48,7 +48,9 @@
     "test:e2e:showcase": "pnpm --filter showcase test:e2e",
     "dev:apple-maps": "pnpm --filter example-apple-maps dev",
     "test:e2e:apple-maps": "pnpm --filter example-apple-maps test:e2e",
-    "generate:favicons": "npx tsx tools/generate-favicons.ts"
+    "generate:favicons": "npx tsx tools/generate-favicons.ts",
+    "format": "prettier --write \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path .gitignore"
   },
   "pnpm": {
     "overrides": {
@@ -79,6 +81,7 @@
     "@types/node": "^22.19.13",
     "concurrently": "^9.2.1",
     "googleapis": "^171.4.0",
+    "prettier": "^3.8.1",
     "sharp": "^0.34.5",
     "tsx": "^4.21.0",
     "turbo": "^2.8.12"

@@ -1,3 +1,8 @@
+/**
+ * Auth middleware — redirects unauthenticated users to login.
+ *
+ * Usage: `definePageMeta({ middleware: ['auth'] })`
+ */
 export default defineNuxtRouteMiddleware(() => {
   const { loggedIn } = useUserSession()
 
