@@ -99,6 +99,7 @@ const REPLACEMENTS = [
   { from: /narduk-nuxt-template-db/g, to: `${APP_NAME}-db` },
   { from: /narduk-nuxt-template/g, to: APP_NAME },
   { from: /https:\/\/narduk-nuxt-template\.workers\.dev/g, to: SITE_URL },
+  { from: /https:\/\/nard\.uk/g, to: SITE_URL },
   // Display names: replace both variants so SEO metadata, OG images, and manifest
   // all reflect the new project name from the first deploy.
   { from: /Nuxt 4 Template/g, to: DISPLAY_NAME },
@@ -375,7 +376,11 @@ async function main() {
 
       // Provision a dedicated D1 database for this app using its declared database_name
       if (parsedWrangler.d1_databases && parsedWrangler.d1_databases.length > 0) {
-        const declaredDbName = parsedWrangler.d1_databases[0].database_name
+        let declaredDbName = parsedWrangler.d1_databases[0].database_name
+
+        // Force explicit rename in case string-replacement failed or hasn't run
+        parsedWrangler.name = appDir === 'web' ? APP_NAME : `${APP_NAME}-${appDir}`
+
         if (declaredDbName) {
           const dbId = provisionD1(declaredDbName)
           if (dbId) {
@@ -772,17 +777,39 @@ Pushes to \`main\` are automatically built and deployed via the GitHub Actions C
       const rootPkgContent = await fs.readFile(rootPkgPath, 'utf-8')
       const rootPkg = JSON.parse(rootPkgContent)
       if (rootPkg.scripts) {
-        const scriptsToRemove = [
-          'dev:showcase', 'dev:auth', 'dev:blog', 'dev:marketing', 'dev:og-image', 'dev:apple-maps',
-          'db:ready:all', 'db:ready:auth', 'db:ready:blog', 'db:migrate:auth', 'db:seed:auth',
-          'build:showcase', 'deploy:showcase',
-          'test:e2e:auth', 'test:e2e:blog', 'test:e2e:marketing', 'test:e2e:showcase', 'test:e2e:apple-maps'
-        ]
+        const scriptsToRemove = Object.keys(rootPkg.scripts).filter(s =>
+          s.includes('showcase') ||
+          s.includes('auth') ||
+          s.includes('blog') ||
+          s.includes('marketing') ||
+          s.includes('og-image') ||
+          s.includes('apple-maps') ||
+          s === 'dev:all' ||
+          s === 'db:ready:all'
+        )
         for (const script of scriptsToRemove) {
           delete rootPkg.scripts[script]
         }
+        
+        // Update web filter scripts to target APP_NAME
+        for (const [key, value] of Object.entries(rootPkg.scripts)) {
+          if (typeof value === 'string') {
+            rootPkg.scripts[key] = value.replace(/--filter web\b/g, `--filter ${APP_NAME}`)
+          }
+        }
+        
         await fs.writeFile(rootPkgPath, JSON.stringify(rootPkg, null, 2) + '\n', 'utf-8')
       }
+
+      // Explicitly rename apps/web/package.json
+      const webPkgPath = path.join(ROOT_DIR, 'apps', 'web', 'package.json')
+      try {
+        const webPkgContent = await fs.readFile(webPkgPath, 'utf-8')
+        const webPkg = JSON.parse(webPkgContent)
+        webPkg.name = APP_NAME
+        await fs.writeFile(webPkgPath, JSON.stringify(webPkg, null, 2) + '\n', 'utf-8')
+        console.log(`  ✅ Updated apps/web/package.json name to ${APP_NAME}`)
+      } catch { /* ignore */ }
 
       // Strip test and quality scripts from all eslint packages so implementing repositories
       // don't run internal template tests or lint the linters.
