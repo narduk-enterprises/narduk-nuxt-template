@@ -301,7 +301,7 @@ Sitemap and robots.txt are automatic. OG image templates live in `app/components
 
 ## Architecture Patterns
 
-- **Commit often** — make small, focused commits after each meaningful change (new feature, bug fix, refactor). Do not accumulate large uncommitted changesets. Each commit message should follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, etc.). Push regularly as good practice — but deployment is a **separate local action** via `pnpm run deploy` (see the Deploy recipe below).
+- **Commit often** — make small, focused commits after each meaningful change (new feature, bug fix, refactor). Do not accumulate large uncommitted changesets. Each commit message should follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, etc.). Push regularly as good practice — but deployment is a **separate local action** via `pnpm run ship` (see the Deploy recipe below).
 - **Thin Components, Thick Composables** — components subscribe to composables, pass props down, emit events up. No inline fetch or complex logic in templates.
 - **SSR-safe state** — use `useState()` or Pinia stores. Never use bare `ref()` at module scope (causes cross-request leaks).
 - **Data fetching** — always use `useAsyncData` or `useFetch`, never raw `$fetch` in `<script setup>`.
@@ -340,7 +340,7 @@ Follow these steps **in order** — the init script handles renaming, D1 provisi
 
 > **🛡️ Bootstrap Guard:** `pnpm dev`, `pnpm build`, and `pnpm deploy` are **blocked** until `pnpm run setup` has been completed. The setup script writes a `.setup-complete` sentinel file; the `pre*` hooks in `package.json` check for it. If you see a "PROJECT SETUP NOT COMPLETE" error, follow steps 1–4 above.
 
-> **ℹ️ CI is quality-only.** GitHub Actions runs lint, typecheck, and tests — but does NOT deploy. Deployment is done locally via `pnpm run deploy` (which runs `wrangler deploy`). See the Deploy recipe below.
+> **ℹ️ CI is quality-only.** GitHub Actions runs lint, typecheck, and tests — but does NOT deploy. Deployment is done locally via `pnpm run ship` (which runs `wrangler deploy`). See the Deploy recipe below.
 
 ## 🚨 CRITICAL RULE: NEVER COMMIT TO THIS REPOSITORY 🚨
 
@@ -467,7 +467,7 @@ These are opt-in feature recipes. Follow them when the project needs a specific 
    _(Replace `<DB_NAME>` with your database name from `wrangler.json`, and repeat for each `.sql` file in order.)_
 3. **Build & deploy** from the repo root:
    ```bash
-   pnpm run deploy
+   pnpm run ship
    ```
    This runs `doppler run -- pnpm --filter web run deploy`, which builds and deploys via `wrangler deploy`.
 4. **Push to remote** as good practice (but this does NOT trigger a deploy):
@@ -594,13 +594,13 @@ doppler secrets set CLOUDFLARE_API_TOKEN='${narduk-nuxt-template.prd.CLOUDFLARE_
 
 **CI is quality-only** — GitHub Actions runs lint, typecheck, and tests on push/PR but does NOT deploy.
 
-**Deployment is local** — run `pnpm run deploy` from your machine. This uses Doppler to inject secrets and runs `wrangler deploy`.
+**Deployment is local** — run `pnpm run ship` from your machine. This uses Doppler to inject secrets and runs `wrangler deploy`.
 
 **Doppler setup for local deploy:**
 
 1. `init.ts` creates the Doppler project and provisions hub references
 2. Run `doppler setup --project <app-name> --config prd` to wire up locally
-3. `pnpm run deploy` runs `doppler run -- pnpm --filter web run deploy`, injecting all secrets
+3. `pnpm run ship` runs `doppler run -- pnpm --filter web run deploy`, injecting all secrets
 4. `wrangler deploy` uses `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` from Doppler
 
 **Reference:** See `apps/example-auth/nuxt.config.ts` for the full runtimeConfig block.

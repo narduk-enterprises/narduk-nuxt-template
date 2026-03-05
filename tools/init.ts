@@ -446,7 +446,7 @@ async function main() {
 
 ## Deployment
 
-Pushes to \`main\` are automatically built and deployed via the GitHub Actions CI/CD workflows utilizing \`pnpm run deploy\`.
+Deployment is done locally via \`pnpm run ship\` (see AGENTS.md).
 `
     await fs.writeFile(path.join(ROOT_DIR, 'README.md'), readmeContent, 'utf-8')
     console.log(`  ✅ Generated fresh README.`)
@@ -883,19 +883,6 @@ concurrency:
 jobs:
   quality:
     uses: narduk-enterprises/narduk-nuxt-template/.github/workflows/reusable-quality.yml@main
-
-  deploy:
-    if: github.event_name != 'pull_request'
-    needs: [quality]
-    permissions:
-      contents: read
-      deployments: write
-    uses: narduk-enterprises/narduk-nuxt-template/.github/workflows/reusable-deploy.yml@main
-    secrets:
-      DOPPLER_TOKEN: \${{ secrets.DOPPLER_TOKEN }}
-      CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      CONTROL_PLANE_URL: \${{ secrets.CONTROL_PLANE_URL }}
 `
         await fs.writeFile(ciYamlPath, slimCi, 'utf-8')
       } catch (ciErr: any) {

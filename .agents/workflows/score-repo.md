@@ -74,9 +74,9 @@ Audit GitHub Actions workflows for correctness and completeness.
    - Should run: test (if tests exist)
 
 3. **Deploy (local only)**
-   - CI does NOT deploy — deployment is done locally via `pnpm run deploy` (wrangler deploy)
+   - CI does NOT deploy — deployment is done locally via `pnpm run ship` (wrangler deploy)
    - The `/deploy` agent workflow must refuse to deploy a dirty repo (uncommitted changes)
-   - `pnpm run deploy` script must exist in root package.json
+   - `pnpm run ship` script must exist in root package.json
 
 4. **Layer publishing**
    - Must auto-bump version and publish on layer changes (template repo only)
