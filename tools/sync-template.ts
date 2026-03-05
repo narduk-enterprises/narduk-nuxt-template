@@ -19,7 +19,7 @@
  */
 
 import { execSync } from 'node:child_process'
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -67,12 +67,11 @@ const COPY_VERBATIM = [
   // Renovate
   'renovate.json',
 
-  // ESLint shared config
-  'packages/eslint-config/eslint.config.mjs',
-  'packages/eslint-config/eslint-plugins/index.mjs',
-
   // Copilot/agent infra
   '.github/copilot-instructions.md',
+
+  // ESLint (canonical config — app overrides go in eslint.overrides.mjs)
+  'apps/web/eslint.config.mjs',
 ]
 
 /** Agent workflow files — copy if missing, don't overwrite customizations. */
@@ -98,9 +97,9 @@ const COPY_IF_MISSING = [
   '.agents/workflows/standardize-app.md',
 ]
 
-/** Directories where ALL files must be synced (new files added, existing files updated). */
-const SYNC_DIRECTORIES = [
-  'packages/eslint-config/eslint-plugins/rules',
+/** Directories where ALL files recursively must be synced (new files added, existing updated). */
+const SYNC_DIRECTORIES_RECURSIVE = [
+  'packages/eslint-config',
 ]
 
 /** Files that should be removed from derived apps. */
@@ -131,6 +130,34 @@ function filesIdentical(a: string, b: string): boolean {
   catch {
     return false
   }
+}
+
+function copyRecursiveSync(src: string, dest: string, ignores: RegExp[] = [/\/node_modules$/, /\/dist$/, /\/\.turbo$/]): { copied: number, skipped: number } {
+  const result = { copied: 0, skipped: 0 }
+  if (ignores.some(regex => regex.test(src))) return result
+
+  const stat = statSync(src)
+  if (stat.isDirectory()) {
+    if (!existsSync(dest)) mkdirSync(dest, { recursive: true })
+    for (const child of readdirSync(src)) {
+      const childRes = copyRecursiveSync(join(src, child), join(dest, child), ignores)
+      result.copied += childRes.copied
+      result.skipped += childRes.skipped
+    }
+  } else {
+    if (existsSync(dest) && filesIdentical(src, dest)) {
+      result.skipped++
+    } else {
+      const action = existsSync(dest) ? 'UPDATE' : 'ADD'
+      console.log(`  ${action}: ${relative(TEMPLATE_DIR, src)}`)
+      if (!dryRun) {
+        ensureDir(dest)
+        copyFileSync(src, dest)
+      }
+      result.copied++
+    }
+  }
+  return result
 }
 
 // ─── Main ────────────────────────────────────────────────────
@@ -171,29 +198,14 @@ function main() {
     }
     copied++
   }
-  // Also sync entire directories (e.g., ESLint rule files)
-  for (const dir of SYNC_DIRECTORIES) {
+  // Also sync entire directories (e.g., ESLint plugins)
+  for (const dir of SYNC_DIRECTORIES_RECURSIVE) {
     const srcDir = join(TEMPLATE_DIR, dir)
     const destDir = join(appDir, dir)
     if (!existsSync(srcDir)) continue
-
-    for (const file of readdirSync(srcDir)) {
-      const src = join(srcDir, file)
-      const dest = join(destDir, file)
-
-      if (existsSync(dest) && filesIdentical(src, dest)) {
-        skipped++
-        continue
-      }
-
-      const action = existsSync(dest) ? 'UPDATE' : 'ADD'
-      console.log(`  ${action}: ${join(dir, file)}`)
-      if (!dryRun) {
-        ensureDir(dest)
-        copyFileSync(src, dest)
-      }
-      copied++
-    }
+    const res = copyRecursiveSync(srcDir, destDir)
+    copied += res.copied
+    skipped += res.skipped
   }
 
   console.log(`  ${copied} files synced, ${skipped} already up to date.`)
@@ -324,6 +336,40 @@ jobs:
     }
   } catch (e: any) {
     console.warn(`  ⚠️ Failed to sync scripts: ${e.message}`)
+  }
+  console.log()
+
+  // Phase 4.6: Sync apps/web/package.json critical scripts
+  console.log('Phase 4.6: Syncing apps/web/package.json scripts...')
+  const webPkgPath = join(appDir, 'apps/web/package.json')
+  if (existsSync(webPkgPath)) {
+    try {
+      const webPkg = JSON.parse(readFileSync(webPkgPath, 'utf-8'))
+      let changed = false
+
+      // quality must be a no-op — turbo's dependsOn handles lint + typecheck
+      const WEB_CRITICAL_SCRIPTS: Record<string, string> = {
+        'quality': "echo 'quality pass'",
+        'lint': 'eslint . --max-warnings 0',
+      }
+
+      for (const [name, expected] of Object.entries(WEB_CRITICAL_SCRIPTS)) {
+        if (webPkg.scripts?.[name] !== expected) {
+          console.log(`  FIX: apps/web scripts.${name}`)
+          webPkg.scripts = webPkg.scripts || {}
+          webPkg.scripts[name] = expected
+          changed = true
+        }
+      }
+      if (changed && !dryRun) {
+        writeFileSync(webPkgPath, JSON.stringify(webPkg, null, 2) + '\n', 'utf-8')
+        console.log('  ✅ Updated apps/web/package.json')
+      } else if (!changed) {
+        console.log('  All apps/web critical scripts match.')
+      }
+    } catch (e: any) {
+      console.warn(`  ⚠️ Failed to sync apps/web scripts: ${e.message}`)
+    }
   }
   console.log()
 
@@ -459,6 +505,7 @@ jobs:
     const devDeps = pkg.devDependencies || {}
     const requiredDevDeps: Record<string, string> = {
       'tsx': '^4.21.0',
+      'turbo': '^2.8.12',
     }
 
     for (const [name, version] of Object.entries(requiredDevDeps)) {

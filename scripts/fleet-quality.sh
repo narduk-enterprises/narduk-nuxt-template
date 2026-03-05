@@ -3,7 +3,7 @@
 # Usage: pnpm quality:fleet [--fix] [--no-pull] [--filter=NAME]
 
 
-set -o pipefail
+# Note: no set -e/pipefail here — run_quality handles errors manually
 
 FLEET_DIR="${FLEET_DIR:-/Users/narduk/new-code/template-apps}"
 RESULTS_DIR="/tmp/fleet-quality-results"
@@ -46,6 +46,7 @@ echo "🚀 Running quality on ${#REPOS[@]} fleet apps..."
 [ "$DO_PULL" = false ] && echo "⏸️  Skipping git pull (--no-pull)"
 
 run_quality() {
+  set +e  # Allow non-zero exits — we capture exit codes manually
   local repo=$1
   local result_file="$RESULTS_DIR/$repo.txt"
   local app_path="$FLEET_DIR/$repo"
@@ -73,36 +74,60 @@ run_quality() {
     pnpm run build:plugins 2>&1 >/dev/null || true
   fi
 
+  # Run lint + typecheck directly from apps/web (not via turbo — its TUI swallows output when piped)
   if [ -d "apps/web" ]; then
     cd apps/web
-  fi
 
-  # Auto-fix lint issues first if requested
-  if [ "$DO_FIX" = true ]; then
-    pnpm run lint --fix 2>&1 >/dev/null || true
-  fi
-
-  # Run quality (lint + typecheck) to capture remaining issues
-  OUTPUT=$(pnpm run quality 2>&1)
-  EXIT_CODE=$?
-
-  # Extract relevant lines (errors/warnings/TS errors)
-  DETAILS=$(echo "$OUTPUT" | grep -Ei "error |warning |TS[0-9]+:" | grep -vE "node_modules|max-warnings" | head -n 8)
-
-  if [ $EXIT_CODE -eq 0 ]; then
-    WARNS=$(echo "$OUTPUT" | grep -i "warning" | grep -vE "max-warnings" | wc -l | tr -d '[:space:]')
-    if [[ -n "$WARNS" && "$WARNS" -ne 0 ]]; then
-      echo "FAIL | $repo | $WARNS warnings" > "$result_file"
-      echo "$DETAILS" >> "$result_file"
-      echo "⚠️  Warnings: $repo ($WARNS warnings)"
-    else
-      echo "PASS | $repo | 0" > "$result_file"
-      echo "✅ Passed: $repo"
+    # Auto-fix lint issues first if requested
+    if [ "$DO_FIX" = true ]; then
+      pnpm run lint --fix 2>&1 >/dev/null || true
     fi
+
+    LINT_OUT=$(pnpm run lint 2>&1); LINT_EXIT=$?
+    TC_OUT=$(pnpm run typecheck 2>&1); TC_EXIT=$?
   else
-    echo "FAIL | $repo | Error" > "$result_file"
+    echo "FAIL | $repo | No apps/web directory" > "$result_file"
+    echo "❌ Failed: $repo (no apps/web)"
+    return
+  fi
+
+  COMBINED="$LINT_OUT"$'\n'"$TC_OUT"
+
+  # Match real ESLint lines: "line:col  warning|error  message  rule-name"
+  LINT_ISSUES=$(echo "$COMBINED" | grep -E '[0-9]+:[0-9]+\s+(warning|error)\s' | grep -vE 'node_modules|ELIFECYCLE|Command failed' || true)
+  # Match TypeScript errors: "TS[0-9]+:"
+  TS_ERRORS=$(echo "$COMBINED" | grep -E 'TS[0-9]+:' | grep -v 'node_modules' || true)
+  DETAILS=$(printf '%s\n%s' "$LINT_ISSUES" "$TS_ERRORS" | grep -v '^$' | head -n 8)
+
+  # Count issues
+  if [ -z "$LINT_ISSUES" ]; then
+    WARN_COUNT=0
+    ERR_COUNT=0
+  else
+    WARN_COUNT=$(echo "$LINT_ISSUES" | grep -c 'warning' 2>/dev/null | tr -d '[:space:]')
+    ERR_COUNT=$(echo "$LINT_ISSUES" | grep -c 'error' 2>/dev/null | tr -d '[:space:]')
+  fi
+  if [ -z "$TS_ERRORS" ]; then
+    TS_COUNT=0
+  else
+    TS_COUNT=$(echo "$TS_ERRORS" | grep -c 'TS[0-9]' 2>/dev/null | tr -d '[:space:]')
+  fi
+  TOTAL_ISSUES=$((WARN_COUNT + ERR_COUNT + TS_COUNT))
+
+  if [ "$TOTAL_ISSUES" -gt 0 ]; then
+    if [ "$ERR_COUNT" -gt 0 ] || [ "$TS_COUNT" -gt 0 ]; then
+      echo "FAIL | $repo | ${ERR_COUNT} errors, ${TS_COUNT} TS errors, ${WARN_COUNT} warnings" > "$result_file"
+    else
+      echo "FAIL | $repo | $WARN_COUNT warnings" > "$result_file"
+    fi
     echo "$DETAILS" >> "$result_file"
     echo "❌ Failed: $repo"
+  elif [ $LINT_EXIT -ne 0 ] || [ $TC_EXIT -ne 0 ]; then
+    echo "FAIL | $repo | Exit code lint=$LINT_EXIT tc=$TC_EXIT" > "$result_file"
+    echo "❌ Failed: $repo (exit lint=$LINT_EXIT tc=$TC_EXIT)"
+  else
+    echo "PASS | $repo | 0" > "$result_file"
+    echo "✅ Passed: $repo"
   fi
 }
 
