@@ -1,12 +1,19 @@
 ---
-description: Comprehensive UI/UX audit using Nuxt UI Pro components — checks adoption, consistency, responsiveness, and polish
+description: Comprehensive Nuxt UI Pro component adoption audit — checks Pro primitives, layout consistency, state handling, responsiveness, dark mode, and polish
 ---
 
-# UI/UX Audit
+# Nuxt UI Pro Audit
 
-This workflow performs a comprehensive audit of the app's user interface and experience. It validates that the app uses Nuxt UI Pro components correctly, maintains visual consistency, handles all states gracefully, and feels premium across devices and color modes.
+This workflow audits whether the app correctly leverages Nuxt UI Pro's page-building primitives instead of reinventing layout patterns with raw HTML. It validates component adoption, visual consistency, state handling, and premium feel across devices and color modes.
 
 > **Prerequisite:** All Nuxt UI Pro components (Dashboard\*, Page\*, Pricing\*, Blog\*, Auth\*, Chat\*, Editor\*) are included in `@nuxt/ui` v4. No separate package needed.
+
+> **Related workflows:**
+>
+> - `/build-landing-page` — Step-by-step Pro landing page builder
+> - `/build-dashboard` — Dashboard scaffolding with Pro Dashboard components
+> - `/enhance-design-system` — Design system generation using uipro skill
+> - `/enhance-ui-ux` — UX enhancement & polish using uipro skill
 
 ---
 
@@ -195,3 +202,26 @@ Present findings grouped by severity:
 | 🟢 Nice-to-have | Motion polish, glassmorphism, micro-animations                      |
 
 Present as a table with specific recommendations. Ask the user for approval before making changes.
+
+---
+
+## Pro Component Quick Reference
+
+| Component           | Purpose                          | Key Props                            |
+| ------------------- | -------------------------------- | ------------------------------------ |
+| `UPageHero`         | Hero section                     | `title`, `description`, `links`      |
+| `UPageSection`      | Content section wrapper          | `title`, `description`, `headline`   |
+| `UPageFeature`      | Feature with image               | `title`, `description`, `icon`       |
+| `UPageCTA`          | Call to action                   | `title`, `description`, `links`      |
+| `UPageCard`         | Feature card                     | `title`, `description`, `icon`, `to` |
+| `UPageGrid`         | Responsive grid                  | Default slot                         |
+| `UPageColumns`      | Column layout                    | `columns` (number)                   |
+| `UPricingPlans`     | Pricing grid                     | Default slot for `UPricingPlan`      |
+| `UDashboardGroup`   | Outer wrapper with sidebar state | Default slot                         |
+| `UDashboardSidebar` | Collapsible sidebar              | `links`, `collapsible`               |
+| `UDashboardPanel`   | Content panel                    | `width`, `resizable`, `grow`         |
+| `UDashboardNavbar`  | Top navbar                       | `title`, left/right slots            |
+| `UDashboardToolbar` | Action toolbar                   | left/right slots                     |
+| `UDashboardSearch`  | Command palette modal            | `groups`                             |
+| `UHeader`           | Navigation bar                   | `links`, logo/right slots            |
+| `UFooter`           | Page footer                      | left/center/right slots              |

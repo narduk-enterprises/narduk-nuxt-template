@@ -43,3 +43,6 @@ packages/eslint-config/*/dist/
 doppler.json
 doppler.yaml
 lint-results.txt
+
+# Python cache (uipro skill)
+__pycache__/
