@@ -686,6 +686,9 @@ jobs:
         GA_ACCOUNT_ID: '${narduk-nuxt-template.prd.GA_ACCOUNT_ID}',
         GSC_SERVICE_ACCOUNT_JSON: '${narduk-nuxt-template.prd.GSC_SERVICE_ACCOUNT_JSON}',
         GSC_USER_EMAIL: '${narduk-nuxt-template.prd.GSC_USER_EMAIL}',
+        APPLE_KEY_ID: '${narduk-nuxt-template.prd.APPLE_KEY_ID}',
+        APPLE_SECRET_KEY: '${narduk-nuxt-template.prd.APPLE_SECRET_KEY}',
+        APPLE_TEAM_ID: '${narduk-nuxt-template.prd.APPLE_TEAM_ID}',
       }
 
       let hubTokenValue = ''
