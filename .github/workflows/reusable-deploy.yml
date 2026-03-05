@@ -17,6 +17,9 @@ on:
       DOPPLER_TOKEN:
         description: 'Doppler service token for secret resolution'
         required: true
+      CONTROL_PLANE_URL:
+        description: 'Control plane base URL for fleet sync (optional)'
+        required: false
 
 jobs:
   check-changes:
@@ -125,3 +128,19 @@ jobs:
         run: |
           pnpm build
           pnpm exec wrangler deploy
+
+      - name: Sync with control plane fleet registry
+        if: success()
+        env:
+          CONTROL_PLANE_URL: ${{ secrets.CONTROL_PLANE_URL }}
+        run: |
+          if [ -z "$CONTROL_PLANE_URL" ]; then
+            echo "⏭ CONTROL_PLANE_URL not set — skipping fleet sync."
+            exit 0
+          fi
+          curl -sf -X PUT \
+            "${CONTROL_PLANE_URL}/api/fleet/apps/${APP_NAME}" \
+            -H "Content-Type: application/json" \
+            -d "{\"url\": \"${SITE_URL}\", \"isActive\": true}" \
+            && echo "✅ Fleet registry synced." \
+            || echo "⚠️ Fleet sync failed (non-fatal)."

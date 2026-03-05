@@ -840,6 +840,7 @@ jobs:
       DOPPLER_TOKEN: \${{ secrets.DOPPLER_TOKEN }}
       CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CONTROL_PLANE_URL: \${{ secrets.CONTROL_PLANE_URL }}
 `
         await fs.writeFile(ciYamlPath, slimCi, 'utf-8')
       } catch (ciErr: any) {
@@ -889,6 +890,36 @@ export default defineConfig({
     } catch (error: any) {
       console.warn(`  ⚠️ Template cleanup failed: ${error.message}`)
     }
+  }
+
+  // 9.5. Register with control plane fleet registry
+  console.log('\nStep 9.5/10: Registering with control plane fleet registry...')
+  const CONTROL_PLANE_URL = 'https://control-plane.nard.uk'
+  try {
+    const res = await fetch(`${CONTROL_PLANE_URL}/api/fleet/apps`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: APP_NAME,
+        url: SITE_URL,
+        dopplerProject: APP_NAME,
+        githubRepo: `narduk-enterprises/${APP_NAME}`,
+        gaPropertyId: null,
+        posthogAppName: null,
+      }),
+    })
+    if (res.ok) {
+      console.log(`  ✅ Registered ${APP_NAME} with control plane fleet registry.`)
+    } else if (res.status === 409) {
+      console.log(`  ⏭ ${APP_NAME} already registered in fleet registry.`)
+    } else {
+      const text = await res.text().catch(() => '')
+      console.warn(`  ⚠️ Fleet registration returned ${res.status}: ${text}`)
+      console.warn(`     Register manually at ${CONTROL_PLANE_URL}/fleet/manage`)
+    }
+  } catch (err: any) {
+    console.warn(`  ⚠️ Could not register with control plane: ${err.message}`)
+    console.warn(`     Register manually at ${CONTROL_PLANE_URL}/fleet/manage`)
   }
 
   // Build ESLint plugins to ensure dist/ exists (required for linting)
