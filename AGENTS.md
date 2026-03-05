@@ -189,6 +189,84 @@ The layer includes `server/middleware/securityHeaders.ts` which sets protective 
 - Use design token colors (`primary`, `neutral`) not arbitrary color strings
 - Tailwind CSS 4 — configure via `@theme` in `main.css`, not `tailwind.config`
 
+## Lint Rule Quick Reference
+
+The template enforces 57+ rules across 4 ESLint plugins. The most common violations when writing new code are documented below.
+
+### Semantic Colors (`atx/no-raw-tailwind-colors`)
+
+**This rule causes ~80% of lint errors for new code.** Do NOT use raw Tailwind color utilities. Use semantic tokens:
+
+| ❌ Don't use              | ✅ Use instead   | Purpose            |
+| ------------------------- | ---------------- | ------------------ |
+| `text-neutral-900`        | `text-default`   | Primary text       |
+| `text-neutral-600`        | `text-muted`     | Secondary text     |
+| `text-neutral-400`        | `text-dimmed`    | Tertiary/subtle    |
+| `text-neutral-300`        | `text-toned`     | Even more subtle   |
+| `text-neutral-200`        | `text-faint`     | Nearly invisible   |
+| `bg-neutral-100`          | `bg-muted`       | Subtle background  |
+| `bg-neutral-50`           | `bg-elevated`    | Elevated surface   |
+| `bg-white`/`bg-neutral-*` | `bg-default`     | Default background |
+| `border-neutral-200`      | `border-default` | Default borders    |
+| `text-red-500`            | `text-error`     | Error text         |
+| `text-green-500`          | `text-success`   | Success text       |
+| `text-blue-500`           | `text-info`      | Info text          |
+| `text-yellow-500`         | `text-warning`   | Warning text       |
+
+### Required Nuxt UI Replacements (`atx/no-native-*`)
+
+Do NOT use native HTML elements where Nuxt UI provides components:
+
+| ❌ Native HTML       | ✅ Nuxt UI Component             | Rule                                 |
+| -------------------- | -------------------------------- | ------------------------------------ |
+| `<button>`           | `<UButton>`                      | `atx/no-native-button`               |
+| `<form>`             | `<UForm>`                        | `atx/no-native-form`                 |
+| `<input>`            | `<UInput>`                       | `atx/no-native-input`                |
+| `<table>`            | `<UTable>`                       | `atx/no-native-table`                |
+| `<details>`          | `<UAccordion>`                   | `atx/no-native-details`              |
+| `<dialog>`           | `<UModal>`                       | `atx/no-native-dialog`               |
+| `<hr>`               | `<USeparator>`                   | `atx/no-native-hr`                   |
+| `<kbd>`              | `<UKbd>`                         | `atx/no-native-kbd`                  |
+| `<progress>`         | `<UProgress>`                    | `atx/no-native-progress`             |
+| `<select>`           | `<USelect>`                      | (use `<USelectMenu>` for searchable) |
+| `<main>`, `<footer>` | `<div>` or `<UMain>`/`<UFooter>` | `atx/no-native-layout`               |
+
+### Tailwind v4 Syntax (`atx/no-tailwind-v3-deprecated`)
+
+| ❌ Tailwind v3     | ✅ Tailwind v4         |
+| ------------------ | ---------------------- |
+| `bg-gradient-to-r` | `bg-linear-to-r`       |
+| `bg-gradient-to-b` | `bg-linear-to-b`       |
+| `decoration-clone` | `box-decoration-clone` |
+| `decoration-slice` | `box-decoration-slice` |
+
+### Thin Component Pattern (`atx/no-fetch-in-component`, `nuxt-guardrails/no-raw-fetch`)
+
+- **Never** use `$fetch` or `useFetch` directly in page `<script setup>`. Extract data-fetching logic into composables in `app/composables/`.
+- In stores, use `useAppFetch` (not raw `$fetch`) per `nuxt-guardrails/no-raw-fetch-in-stores`.
+- On the server, avoid `Array.map(async ...)` patterns (N+1 queries) — use `Promise.all` with batched queries.
+
+### Other Common Rules
+
+| Rule                                       | What it enforces                                                                      |
+| ------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `atx/no-inline-hex`                        | No inline hex colors (`#ff0000`) — use Tailwind utilities or CSS variables            |
+| `atx/lucide-icons-only`                    | Only `i-lucide-*` icons are allowed (no heroicons, no phosphor)                       |
+| `atx/no-module-scope-ref`                  | No bare `ref()` at module scope in composables/utils (causes SSR cross-request leaks) |
+| `nuxt-guardrails/require-use-seo-on-pages` | Every page must call `useSeo()`                                                       |
+| `nuxt-guardrails/require-schema-on-pages`  | Every page must call a Schema.org helper                                              |
+
+### Suppressing False Positives
+
+In rare cases, a rule flags correct code. Use inline `eslint-disable` with a justification comment:
+
+```ts
+// eslint-disable-next-line nuxt-guardrails/no-map-async-in-server -- Promise.all batching, not N+1
+const results = await Promise.all(items.map(async (item) => fetchOne(item.id)));
+```
+
+> **⚠️ Do NOT suppress rules without a clear justification.** The correct fix is almost always to change the code, not silence the rule.
+
 ## Design Tokens
 
 The layer provides semantic design tokens via `@theme` in `main.css`. Use these instead of hardcoded values:

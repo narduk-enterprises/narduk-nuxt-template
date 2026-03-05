@@ -273,13 +273,13 @@ Validate the deployment pipeline against Cloudflare's monorepo CI/CD guide.
 
 This step ensures this review covers gaps not already handled by other workflows. Check off each existing workflow and note any overlap.
 
-| Workflow               | Covered by this review? | Overlap notes                                                                     |
-| ---------------------- | ----------------------- | --------------------------------------------------------------------------------- |
-| `/check-layer-health`  | Partially               | That workflow covers shadowing/config drift; this adds Cloudflare-specific checks |
-| `/audit-repo-hygiene`  | No overlap              | Run separately for secrets/junk files                                             |
-| `/check-nuxt-ssr`      | No overlap              | SSR safety is orthogonal to Cloudflare config                                     |
-| `/check-nuxt-ui-v4`    | No overlap              | UI component audit is orthogonal                                                  |
-| `/check-data-fetching` | No overlap              | Data fetching patterns are orthogonal                                             |
+| Workflow                      | Covered by this review? | Overlap notes                                                                     |
+| ----------------------------- | ----------------------- | --------------------------------------------------------------------------------- |
+| `/check-layer-health`         | Partially               | That workflow covers shadowing/config drift; this adds Cloudflare-specific checks |
+| `/audit-repo-hygiene`         | No overlap              | Run separately for secrets/junk files                                             |
+| `/check-ssr-hydration-safety` | No overlap              | SSR safety is orthogonal to Cloudflare config                                     |
+| `/check-ui-styling`           | No overlap              | UI component audit is orthogonal                                                  |
+| `/check-data-fetching`        | No overlap              | Data fetching patterns are orthogonal                                             |
 
 ---
 

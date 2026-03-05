@@ -2,7 +2,7 @@
 description: Audit plugin naming, lifecycle safety, and analytics patterns
 ---
 
-This workflow enforces safe Nuxt plugin naming conventions and lifecycle patterns derived from stonx-app-2026.
+This workflow enforces safe Nuxt plugin naming conventions and lifecycle patterns derived from the template's institutional standards.
 
 **ESLint (run first):** `nuxt-guardrails/prefer-import-meta-dev` flags `process.env.NODE_ENV` in server/ and app/ (use `import.meta.dev`). Plugins using browser APIs without `.client.ts` suffix are flagged by `nuxt-guardrails/plugin-suffix-for-browser-apis`. Run `pnpm run lint` before manual checks below.
 

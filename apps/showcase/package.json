@@ -19,7 +19,7 @@
   "dependencies": {
     "@narduk-enterprises/narduk-nuxt-template-layer": "workspace:*",
     "@narduk/eslint-config": "workspace:*",
-    "@takumi-rs/core": "^0.69.5",
+    "@takumi-rs/core": "^0.70.1",
     "nuxt": "^4.3.1"
   },
   "devDependencies": {

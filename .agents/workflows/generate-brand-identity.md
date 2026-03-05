@@ -37,7 +37,7 @@ Apply the approved direction to the Nuxt 4 configuration:
 
 ### 2a. Set Nuxt UI Colors
 
-Create or update `apps/<app-name>/app/app.config.ts`:
+Create or update `apps/web/app/app.config.ts`:
 
 ```ts
 export default defineAppConfig({
@@ -52,7 +52,7 @@ export default defineAppConfig({
 
 ### 2b. Set Tailwind v4 Theme Overrides
 
-Create or update `apps/<app-name>/app/assets/css/main.css`:
+Create or update `apps/web/app/assets/css/main.css`:
 
 ```css
 @import 'tailwindcss';
@@ -70,9 +70,17 @@ Create or update `apps/<app-name>/app/assets/css/main.css`:
 
 > _Note: `@nuxt/fonts` auto-resolves Google Fonts referenced in CSS._
 
-### 2c. Dark Mode & Color Fine-Tuning
+### 2c. Color Mode Configuration
 
-If the brand leans dark-first, ensure the dark palette feels intentional — not just Tailwind's default inversion. Consider overriding specific semantic tokens for backgrounds, borders, and text.
+**Institutional default: Light mode.** Apps should load in light mode by default. Set the preference in `nuxt.config.ts`:
+
+```ts
+colorMode: {
+  preference: 'light';
+}
+```
+
+Dark mode must still be polished and intentional — not just Tailwind's default inversion. Consider overriding specific semantic tokens for backgrounds, borders, and text. But light mode is the default experience users see first.
 
 ## Phase 3: Generate Visual Assets
 
@@ -87,7 +95,7 @@ Prompt guidance: "A [style] app icon for [APP]. [Describe the concept].
 [Color palette]. No text. No device frame. Square aspect ratio, suitable for a favicon."
 ```
 
-- Save to `apps/<app-name>/public/favicon.svg` (or convert a generated PNG to SVG).
+- Save to `apps/web/public/favicon.svg` (or convert a generated PNG to SVG).
 - The logo should work at 16×16 _and_ 180×180. Test both mentally before finalizing.
 
 ### 3b. Hero / Auth Background (if applicable)
@@ -99,7 +107,7 @@ Prompt guidance: "Abstract [mood] background. [Color palette], subtle [texture/g
 Widescreen, cinematic. No text, no UI elements."
 ```
 
-- Save to `apps/<app-name>/public/images/hero-bg.webp`.
+- Save to `apps/web/public/images/hero-bg.webp`.
 
 ### 3c. Content & Feature Imagery (if applicable)
 
@@ -108,7 +116,7 @@ If the app has empty states, onboarding flows, or feature sections, generate rea
 - Illustrations for empty states
 - Feature screenshots or conceptual images for marketing pages
 - Avatar sets for social apps
-- Save to `apps/<app-name>/public/images/`.
+- Save to `apps/web/public/images/`.
 
 ## Phase 4: Generate Favicons & Web Manifest
 
@@ -116,7 +124,7 @@ Run the favicon generator using the logo from Phase 3:
 
 ```bash
 pnpm generate:favicons -- \
-  --target=apps/<app-name>/public \
+  --target=apps/web/public \
   --name="<Display Name>" \
   --short-name="<Short Name>" \
   --color="<primary-hex>" \
@@ -149,24 +157,35 @@ schemaOrg: {
 
 This is where the brand comes alive. Don't just configure — **design**.
 
-### 5a. Surface Treatment
+### 5a. Pro Component Design System
+
+Nuxt UI v4 includes powerful page-building primitives. Use them instead of custom HTML:
+
+- **Landing Pages:** `UPageHero` for hero sections, `UPageSection` for content blocks, `UPageFeature` for feature showcases, `UPageCTA` for call-to-action blocks, `UPageGrid`/`UPageColumns` for responsive layouts
+- **Layout:** `UHeader` for navigation bars, `UFooter`/`UFooterColumns` for footers, `UMain` for the main content area, `UContainer` for width constraints
+- **Pricing:** `UPricingPlans`/`UPricingPlan` for pricing grids, `UPricingTable` for feature comparisons
+- **Blog:** `UBlogPosts`/`UBlogPost` for article listings
+- **Auth:** `UAuthForm` for login/register flows
+- **Dashboard:** `UDashboardGroup`, `UDashboardSidebar`, `UDashboardPanel`, `UDashboardNavbar` for admin interfaces
+
+### 5b. Surface Treatment
 
 Apply the brand's visual language to key surfaces:
 
-- **Glass & Depth:** Use `.glass`, `.glass-card`, `.shadow-card`, `.shadow-elevated` on navbars, auth cards, modals — but only if the brand calls for it. Not every app should be glassmorphic.
 - **Backgrounds:** The main `app.vue` or `layouts/default.vue` should set the stage. Consider gradient backgrounds, subtle patterns, or atmospheric imagery.
-- **Cards & Containers:** Ensure every card, panel, and container uses the brand's radius and shadow language consistently.
+- **Cards & Containers:** Ensure every `UCard`, `UPageCard`, and container uses the brand's radius and shadow language consistently via Tailwind v4 `@theme` tokens.
+- **Glass & Depth:** Use Tailwind backdrop-blur utilities for glassmorphism if the brand calls for it — e.g., `backdrop-blur-md bg-white/80 dark:bg-neutral-900/80`.
 
-### 5b. Motion & Micro-animation
+### 5c. Motion & Micro-animation
 
 An interface that moves with purpose feels premium:
 
-- **Entrances:** `.animate-count-in`, fade-ups, scale-ins on page load and route transitions.
-- **Interactions:** `.transition-base` on hover states. Buttons that respond. Cards that lift.
-- **Data:** Number counters, skeleton loaders, progress bars that animate smoothly.
+- **Entrances:** Vue `<Transition>` with fade-ups, scale-ins on page load and route transitions.
+- **Interactions:** Tailwind `transition-all duration-200` on hover states. Buttons that respond. Cards that lift.
+- **Data:** Number counters, `USkeleton` loaders, `UProgress` bars that animate smoothly.
 - **Restraint:** Motion should enhance, never distract. If an animation makes you notice the animation instead of the content, remove it.
 
-### 5c. Typography Hierarchy
+### 5d. Typography Hierarchy
 
 Verify that the type system creates clear visual hierarchy:
 
@@ -175,7 +194,7 @@ Verify that the type system creates clear visual hierarchy:
 - Captions and metadata should recede without disappearing
 - Check line heights, letter spacing, and font weights across both modes
 
-### 5d. Dark Mode Audit
+### 5e. Dark Mode Audit
 
 Switch to dark mode and verify:
 
@@ -186,7 +205,7 @@ Switch to dark mode and verify:
 
 ## Phase 6: Visual Verification
 
-1. Start the dev server: `pnpm run dev --filter <app-name>`
+1. Start the dev server: `pnpm run dev`
 2. Open the app in a browser — **take screenshots** for the user.
 3. Verify:
    - Favicon appears in browser tab

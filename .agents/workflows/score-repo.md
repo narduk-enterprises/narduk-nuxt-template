@@ -409,8 +409,8 @@ Audit for deprecated Nuxt UI syntax, old v2/v3 patterns, and common Nuxt UI v4 m
 3. **Legacy CSS imports**
    // turbo
    - Run `grep -rn "@nuxt/ui-pro\|@import.*ui-pro" apps/ layers/ --include='*.css' --include='*.ts' --include='*.vue' | grep -v 'node_modules' | head -10`
-   - `@import '@nuxt/ui-pro'` must be replaced with `@import '@nuxt/ui'`
-   - `@nuxt/ui-pro` module registration must be removed
+   - `@nuxt/ui-pro` is unified into `@nuxt/ui` in v4 — any `@import '@nuxt/ui-pro'` must be replaced with `@import '@nuxt/ui'`
+   - `@nuxt/ui-pro` module registration must be removed (all Pro components are included in `@nuxt/ui` v4)
 
 4. **CSS import order**
    // turbo
@@ -446,12 +446,17 @@ Audit for deprecated Nuxt UI syntax, old v2/v3 patterns, and common Nuxt UI v4 m
    - Passing `useAsyncData` `refresh` directly to `@click` causes TS errors (MouseEvent vs AsyncDataExecuteOptions)
    - Must wrap: `@click="() => refresh()"`
 
-10. **Duplicate `@nuxt/ui-pro` dependency**
+10. **Stale `@nuxt/ui-pro` dependency**
     // turbo
     - Run `grep -rn 'ui-pro' apps/ layers/ --include='package.json' | grep -v 'node_modules' | head -5`
-    - Having both `@nuxt/ui` and `@nuxt/ui-pro` causes module resolution conflicts and duplicate Vue instances
+    - `@nuxt/ui-pro` is unified into `@nuxt/ui` in v4 — a separate `@nuxt/ui-pro` dependency must be removed
 
-**Scoring:** 10 = all checks pass. -1 for each: deprecated component name, old prop syntax, legacy CSS import, wrong import order, legacy color tokens, `@apply` with semantic classes, stale model modifiers, old utility paths, unguarded refresh handler, duplicate ui-pro dependency.
+11. **Pro Component Adoption**
+    // turbo
+    - Run `grep -rnl 'PageHero\|PageSection\|PageFeature\|PageCTA\|DashboardGroup\|DashboardSidebar\|PricingPlan\|AuthForm\|BlogPost' apps/ layers/ --include='*.vue' | grep -v 'node_modules' | head -15`
+    - Nuxt UI v4 includes 110+ components including powerful Pro layout primitives (Dashboard*, Page*, Pricing*, Blog*, Auth\*). Landing pages should use `PageHero`, `PageSection`, `PageFeature`, `PageCTA`. Admin dashboards should use `DashboardGroup`, `DashboardSidebar`, `DashboardPanel`. Flag apps that build these patterns with custom divs.
+
+**Scoring:** 10 = all checks pass. -1 for each: deprecated component name, old prop syntax, legacy CSS import, wrong import order, legacy color tokens, `@apply` with semantic classes, stale model modifiers, old utility paths, unguarded refresh handler, stale ui-pro dependency, no Pro component adoption.
 
 ## 15. Accessibility (Target: 10/10)
 

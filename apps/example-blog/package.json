@@ -23,7 +23,7 @@
     "@narduk-enterprises/narduk-nuxt-template-layer": "workspace:*",
     "@narduk/eslint-config": "workspace:*",
     "@nuxt/content": "^3.0.0",
-    "@takumi-rs/core": "^0.69.5",
+    "@takumi-rs/core": "^0.70.1",
     "nuxt": "^4.3.1"
   },
   "devDependencies": {

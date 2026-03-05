@@ -28,3 +28,13 @@ This workflow ensures every page uses the template's standardized SEO composable
    - Ensure the `site` block has `url`, `name`, `description`, and `defaultLocale` set.
    - Ensure `ogImage.defaults.component` points to a valid OG image component.
    - Ensure `schemaOrg.identity` is configured with the correct organization or person type.
+
+5. **Check Pro landing page component SEO compliance**
+   - If the app uses `UPageHero`, `UPageSection`, or `UPageFeature`, verify:
+     - The hero has a clear `<h1>` (not just a styled `<span>`)
+     - Sections follow heading hierarchy (`h2` for section titles, `h3` for sub-items)
+     - `UPageFeature` items have descriptive text (not icon-only)
+     - `UPageCTA` has semantic link elements (not just styled buttons)
+       // turbo
+       `grep -rnl 'PageHero\|PageSection\|PageFeature\|PageCTA' app/pages/ 2>/dev/null | head -10 || echo "No Pro landing page components found"`
+   - If Pro components are used, verify they integrate with `useSeo()` on the same page.

@@ -9,7 +9,7 @@ This workflow helps you brainstorm app ideas that perfectly fit the template's a
 1. Consider what the `narduk-nuxt-template` provides:
    - **Full-stack SSR** (Nuxt 4 + Cloudflare Workers)
    - **SQL database** (Cloudflare D1 via Drizzle ORM)
-   - **Rich UI components** (Nuxt UI 4, Tailwind v4)
+   - **Rich UI components** (Nuxt UI 4 with Pro components — Dashboard, Page, Pricing, Blog, Auth, Chat, Editor)
    - **Monorepo architecture** (apps + shared packages)
 2. Generate **10** short, diverse app ideas. Each idea should be 1–2 sentences max. Aim for variety across categories like:
    - Dashboards & analytics
@@ -36,13 +36,11 @@ Once the user selects an app idea, **you** (the current agent) perform the boots
    ```
 2. Clone the template:
    ```bash
-   gh repo clone narduk-enterprises/narduk-nuxt-template ~/new-code/<app-name>
+   git clone https://github.com/narduk-enterprises/narduk-nuxt-template.git ~/new-code/<app-name>
    ```
-3. Set the new repo as origin:
+3. Clear the template's git history and set up your own repository:
    ```bash
-   cd ~/new-code/<app-name>
-   git remote remove origin
-   git remote add origin https://github.com/narduk-enterprises/<app-name>.git
+   cd ~/new-code/<app-name> && rm -rf .git && git init && git remote add origin https://github.com/narduk-enterprises/<app-name>.git
    ```
 4. Install dependencies:
    ```bash
@@ -62,14 +60,14 @@ The prompt **must** contain three sections:
 Instruct the agent to run `pnpm setup` with explicit parameters:
 
 ```
-pnpm setup -- --name="<app-name>" --display="<Display Name>" --url="https://<app-name>.narduk.workers.dev"
+pnpm setup -- --name="<app-name>" --display="<Display Name>" --url="https://<app-name>.nard.uk"
 ```
 
 - `--name`: lowercase kebab-case slug (must match `/^[a-z0-9][a-z0-9-]*$/`)
 - `--display`: human-readable name for SEO, favicons, and UI
 - `--url`: production URL for site config, OG tags, and Doppler
 
-Then instruct the agent to read `AGENTS.md` and `tools/BUILD_TEST_APP.md` (if they exist).
+Then instruct the agent to read `AGENTS.md` and `tools/AGENTS.md`.
 
 ### Section 2: Build the App
 
@@ -109,23 +107,24 @@ After copying the prompt to clipboard, tell the user:
 
 You are an expert Nuxt 4, Cloudflare Workers, and Vue developer. You have been dropped into a newly cloned monorepo based on `narduk-nuxt-template`.
 
-**You have a dual mission:**
+**You have a triple mission:**
 
 1. **Build "[App Name]"**: [app description] using Nuxt 4, Cloudflare D1, and Nuxt UI 4.
-2. **Template Audit**: Report any friction, broken types, or tooling failures.
+2. **Brand Identity & SEO Excellence**: Make it stunning and discoverable.
+3. **Template Audit**: Report any friction, broken types, or tooling failures.
 
 ---
 
 ## Step 0: Project Setup
 
-Run the setup script (the script is NOT interactive):
+Run the setup script (the script is NOT interactive). This handles ALL initialization including D1 provisioning, Doppler setup, example app cleanup, and favicon generation:
 ```
 
-pnpm setup -- --name="<app-name>" --display="<Display Name>" --url="https://<app-name>.narduk.workers.dev"
+pnpm setup -- --name="<app-name>" --display="<Display Name>" --url="https://<app-name>.nard.uk"
 
 ```
 
-Then read `AGENTS.md` and `tools/BUILD_TEST_APP.md` if they exist.
+Then read `AGENTS.md` and `tools/AGENTS.md`.
 
 ---
 
@@ -141,13 +140,43 @@ Build the app inside `apps/web`. Features:
 
 **3. Frontend (Nuxt UI 4)**
 - [UI requirements...]
-- **Requirement:** Use the `base` layer design tokens, Nuxt UI 4 components, and Tailwind v4.
+- **Requirement:** Use the inherited layer design tokens, Nuxt UI 4 components (including Pro components: `PageHero`, `PageSection`, `PageFeature`, `PageCTA` for landing pages; `DashboardGroup`, `DashboardSidebar`, `DashboardPanel` for admin interfaces), and Tailwind v4.
 
 ---
 
 ## Mission 1b: Brand Identity
 
 Once the app is built and functional, follow the `/generate-brand-identity` workflow (`.agents/workflows/generate-brand-identity.md`) end-to-end. **Do not ask any questions** — you are the creative director. Analyze the app, make all creative decisions yourself, and execute the full pipeline: theme colors, typography, visual assets (logo, hero imagery), favicons, and holistic design polish. The app should feel like a real product — not a template.
+
+Generate a **distinctive, memorable logo** using `/generate-brand-identity` Phase 3. The logo must work as a favicon at 16×16 and as an app icon at 180×180. Use the `generate_image` tool and the `pnpm generate:favicons` script to produce all required assets.
+
+### ⚠️ MANDATORY: Remove ALL Template Branding
+
+The template ships with default branding that **MUST** be replaced:
+
+1. **Remove the N4 icon.** The green "N4" Nuxt logo in the header/navbar is template branding. It must be deleted and replaced with the app's own logo. Do NOT ship an app with the N4 icon anywhere.
+2. **Remove or redesign the default navbar.** The template's default `UHeader` with a generic "Home" link and color mode toggle is lazy scaffolding. Either:
+   - **Remove it entirely** if the app doesn't need top navigation (most single-page tools, utilities, and simple apps don't), OR
+   - **Redesign it completely** with the app's own logo, meaningful navigation links, and intentional layout — only if navigation genuinely adds value to the user experience.
+   - A navbar with just "Home" and a color toggle is **unacceptable**. If that's all you'd put in it, remove it.
+3. **Replace all placeholder text.** Search for "Nuxt 4", "N4", "Demo", "Template" in the UI and replace with app-specific content.
+4. **Light theme by default.** Set `colorMode: { preference: 'light' }` in `nuxt.config.ts`. We prefer light mode as the default experience. Dark mode must still look polished, but light mode is what users see first.
+
+## Mission 1c: SEO Excellence
+
+This app must be **exceptionally SEO-friendly**. Go beyond the template defaults:
+
+- Every page MUST call `useSeo()` with rich, keyword-optimized titles and descriptions.
+- Every page MUST call `useWebPageSchema()` (or appropriate Schema.org type) for structured data.
+- Write compelling, unique meta descriptions for every route — not generic placeholders.
+- Ensure the landing page has a clear `<h1>` with proper heading hierarchy throughout.
+- Use semantic HTML5 elements (`<main>`, `<article>`, `<section>`, `<nav>`, etc.).
+- OG images must be customized per page with descriptive text and branding.
+- Verify that `sitemap.xml` and `robots.txt` are correctly generated.
+- IndexNow is already wired — ensure it fires on content changes.
+- Target relevant long-tail keywords in page content and headings.
+
+---
 
 ## Mission 2: Template Audit & Issue Reporting
 

@@ -7,6 +7,8 @@ alwaysApply: true
 - Nuxt 4 structure: all frontend code in `app/`, Nitro server in `server/`
 - Cloudflare Workers: NO Node.js modules (`fs`, `path`, `crypto`). Use Web Crypto API.
 - Nuxt UI 4: `USeparator` not `UDivider`. Icons use `i-` prefix. Use token colors.
+- Nuxt UI Pro: All Pro components are included in `@nuxt/ui` v4 (no separate package). Use `UPageHero`, `UPageSection`, `UPageFeature`, `UPageCTA` for landing pages. Use `UDashboardGroup`, `UDashboardSidebar`, `UDashboardPanel` for dashboards. Use `UHeader`/`UFooter` for layouts.
+- Color mode: Light theme by default (`colorMode: { preference: 'light' }` in nuxt.config.ts). Dark mode must still be polished.
 - Tailwind CSS 4: configure via `@theme` in `app/assets/css/main.css`
 - SEO: every page must call `useSeo()` + a `useSchemaOrg()` helper
 - Data fetching: use `useAsyncData`/`useFetch`, never raw `$fetch` in `<script setup>`
