@@ -19,6 +19,9 @@ on:
       - 'tools/generate-favicons.ts'
       - 'tools/check-setup.cjs'
       - 'tools/sync-template.ts'
+      - 'tools/validate.ts'
+      - 'tools/init.ts'
+      - '.github/workflows/weekly-drift-check.yml'
       - '.github/workflows/version-bump.yml'
       - '.github/workflows/reusable-quality.yml'
       - '.github/workflows/reusable-deploy.yml'
@@ -26,6 +29,7 @@ on:
       - 'turbo.json'
       - 'renovate.json'
       - 'packages/eslint-config/**'
+      - 'apps/web/eslint.config.mjs'
 
 concurrency:
   group: template-sync

@@ -347,9 +347,8 @@ jobs:
       const webPkg = JSON.parse(readFileSync(webPkgPath, 'utf-8'))
       let changed = false
 
-      // quality must be a no-op — turbo's dependsOn handles lint + typecheck
+      // Ensure apps/web lint is robust
       const WEB_CRITICAL_SCRIPTS: Record<string, string> = {
-        'quality': "echo 'quality pass'",
         'lint': 'eslint . --max-warnings 0',
       }
 
@@ -360,6 +359,13 @@ jobs:
           webPkg.scripts[name] = expected
           changed = true
         }
+      }
+
+      // Turborepo handles quality natively, so the old dummy script should be removed
+      if (webPkg.scripts?.quality) {
+        console.log(`  FIX: REMOVE apps/web scripts.quality`)
+        delete webPkg.scripts.quality
+        changed = true
       }
       if (changed && !dryRun) {
         writeFileSync(webPkgPath, JSON.stringify(webPkg, null, 2) + '\n', 'utf-8')

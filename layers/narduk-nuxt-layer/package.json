@@ -20,7 +20,7 @@
     "prepare": "nuxt prepare",
     "typecheck": "nuxt typecheck",
     "prelint": "test -f .nuxt/eslint.config.mjs || nuxt prepare",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "test:unit": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio"

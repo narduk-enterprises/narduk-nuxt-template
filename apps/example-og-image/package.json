@@ -13,7 +13,7 @@
     "deploy": "nuxt build && wrangler deploy",
     "prelint": "test -f .nuxt/eslint.config.mjs || nuxt prepare",
     "lint": "eslint . --max-warnings 0",
-    "quality": "echo 'quality pass'"
+    "quality": "pnpm run typecheck && pnpm run lint"
   },
   "dependencies": {
     "@narduk-enterprises/narduk-nuxt-template-layer": "workspace:*",
