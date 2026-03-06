@@ -806,15 +806,26 @@ jobs:
   // Phase 12: Ensure doppler.yaml exists
   console.log('Phase 12: Checking doppler.yaml...')
   const dopplerYamlPath = join(appDir, 'doppler.yaml')
-  if (existsSync(dopplerYamlPath)) {
-    console.log('  doppler.yaml already exists.')
-  } else {
-    // Always use the directory name as the Doppler project name — this matches
-    // the fleet convention (Doppler project = repo/directory name, not package.json name).
-    const dopplerYamlContent = `setup:\n  project: ${appName}\n  config: prd\n`
+  const dopplerYamlContent = `setup:\n  project: ${appName}\n  config: prd\n`
+  if (!existsSync(dopplerYamlPath)) {
     console.log(`  ADD: doppler.yaml (project=${appName}, config=prd)`)
     if (!dryRun) {
       writeFileSync(dopplerYamlPath, dopplerYamlContent, 'utf-8')
+    }
+  } else {
+    const currentDopplerYaml = readFileSync(dopplerYamlPath, 'utf-8')
+    const currentProject = currentDopplerYaml.match(/^\s*project:\s*(.+)\s*$/m)?.[1]?.trim() || null
+    const currentConfig = currentDopplerYaml.match(/^\s*config:\s*(.+)\s*$/m)?.[1]?.trim() || null
+
+    if (!currentProject || !currentConfig) {
+      console.log(`  REPAIR: doppler.yaml (project=${appName}, config=prd)`)
+      if (!dryRun) {
+        writeFileSync(dopplerYamlPath, dopplerYamlContent, 'utf-8')
+      }
+    } else {
+      console.log(
+        `  doppler.yaml already exists (project=${currentProject}, config=${currentConfig}).`,
+      )
     }
   }
   console.log()

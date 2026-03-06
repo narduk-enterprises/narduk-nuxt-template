@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import { fileURLToPath } from 'node:url'
@@ -17,6 +17,15 @@ interface CliOptions {
 interface FleetManifest {
   repos?: unknown
 }
+
+interface DopplerSetup {
+  path: string
+  exists: boolean
+  project: string | null
+  config: string | null
+}
+
+const FLEET_DOPPLER_CONFIG = 'prd'
 
 function parseListArg(name: string): string[] {
   const value = process.argv
@@ -112,6 +121,61 @@ function resolveTargets(options: CliOptions): string[] {
   return targets
 }
 
+function readDopplerSetup(repoDir: string): DopplerSetup {
+  const dopplerYamlPath = join(repoDir, 'doppler.yaml')
+  if (!existsSync(dopplerYamlPath)) {
+    return {
+      path: dopplerYamlPath,
+      exists: false,
+      project: null,
+      config: null,
+    }
+  }
+
+  const content = readFileSync(dopplerYamlPath, 'utf8')
+  const project = content.match(/^\s*project:\s*(.+)\s*$/m)?.[1]?.trim() || null
+  const config = content.match(/^\s*config:\s*(.+)\s*$/m)?.[1]?.trim() || null
+
+  return {
+    path: dopplerYamlPath,
+    exists: true,
+    project,
+    config,
+  }
+}
+
+function ensureDopplerYaml(repoName: string, repoDir: string, dryRun: boolean) {
+  const setup = readDopplerSetup(repoDir)
+  const resolvedProject = setup.project || repoName
+
+  if (!setup.exists || !setup.project || !setup.config) {
+    const nextContent = `setup:\n  project: ${resolvedProject}\n  config: ${FLEET_DOPPLER_CONFIG}\n`
+    const action = setup.exists ? 'REPAIR' : 'ADD'
+    console.log(
+      `[${repoName}] ${action}: doppler.yaml (project=${resolvedProject}, config=${FLEET_DOPPLER_CONFIG})`,
+    )
+
+    if (!dryRun) {
+      writeFileSync(setup.path, nextContent, 'utf8')
+    }
+  } else {
+    console.log(
+      `[${repoName}] doppler.yaml present (project=${setup.project}, config=${setup.config})`,
+    )
+
+    if (setup.config !== FLEET_DOPPLER_CONFIG) {
+      console.log(
+        `[${repoName}] Fleet ship will override Doppler config to ${FLEET_DOPPLER_CONFIG}.`,
+      )
+    }
+  }
+
+  return {
+    project: resolvedProject,
+    config: FLEET_DOPPLER_CONFIG,
+  }
+}
+
 function prefixStream(
   repoName: string,
   stream: NodeJS.ReadableStream | null,
@@ -137,8 +201,12 @@ function runShip(repoName: string, repoDir: string, dryRun: boolean): Promise<nu
     return Promise.resolve(2)
   }
 
+  const doppler = ensureDopplerYaml(repoName, repoDir, dryRun)
+
   if (dryRun) {
-    console.log(`[${repoName}] DRY RUN: pnpm ship`)
+    console.log(
+      `[${repoName}] DRY RUN: DOPPLER_PROJECT=${doppler.project} DOPPLER_CONFIG=${doppler.config} pnpm ship`,
+    )
     return Promise.resolve(0)
   }
 
@@ -147,6 +215,8 @@ function runShip(repoName: string, repoDir: string, dryRun: boolean): Promise<nu
       cwd: repoDir,
       env: {
         ...process.env,
+        DOPPLER_CONFIG: doppler.config,
+        DOPPLER_PROJECT: doppler.project,
         FORCE_COLOR: process.env.FORCE_COLOR ?? '1',
       },
       shell: process.platform === 'win32',
