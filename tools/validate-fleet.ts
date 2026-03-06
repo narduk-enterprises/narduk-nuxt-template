@@ -169,6 +169,7 @@ const CRITICAL_FILES = [
   'tools/validate.ts',
   'tools/update-layer.ts',
   'tools/check-drift-ci.ts',
+  'tools/check-sync-health.ts',
   'turbo.json',
   'pnpm-workspace.yaml',
   'renovate.json',
@@ -375,6 +376,44 @@ const shipScript: Validator = {
   },
 }
 
+const syncHealth: Validator = {
+  name: 'sync-health',
+  async run(ctx) {
+    const appsDir = process.env.FLEET_APPS_DIR || `${ctx.templateRoot}/../template-apps`
+    const appRoot = `${appsDir}/${ctx.project}`
+
+    try {
+      execSync(`test -d "${appRoot}"`, { stdio: 'pipe' })
+    } catch {
+      return { status: 'warn', message: 'no local clone' }
+    }
+
+    try {
+      execSync(`pnpm exec tsx tools/check-sync-health.ts --root="${appRoot}"`, {
+        cwd: ctx.templateRoot,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      })
+      return { status: 'pass', message: 'clean' }
+    } catch (error) {
+      const detail =
+        error instanceof Error && 'stdout' in error
+          ? String((error as { stdout?: string }).stdout || '').trim()
+          : ''
+
+      return {
+        status: 'fail',
+        message: 'failed',
+        detail: detail
+          ? detail
+              .split('\n')
+              .slice(-8)
+              .map((line) => `  ${line}`)
+          : ['  Run `pnpm exec tsx tools/check-sync-health.ts` in the app clone.'],
+      }
+    }
+  },
+}
+
 /** All built-in validators, in display order. */
 const BUILTIN_VALIDATORS: Validator[] = [
   dopplerRequired,
@@ -385,6 +424,7 @@ const BUILTIN_VALIDATORS: Validator[] = [
   gitRemote,
   layerFreshness,
   shipScript,
+  syncHealth,
 ]
 
 // ──────────────────────────────────────────────────────────────

@@ -61,6 +61,7 @@ const COPY_VERBATIM = [
   // Tooling
   'tools/update-layer.ts',
   'tools/check-drift-ci.ts',
+  'tools/check-sync-health.ts',
   'tools/generate-favicons.ts',
   'tools/check-setup.cjs',
   'tools/validate.ts',
@@ -501,9 +502,11 @@ jobs:
       predev: 'node tools/check-setup.cjs',
       prebuild: 'node tools/check-setup.cjs',
       predeploy: 'node tools/check-setup.cjs',
-      preship: 'node tools/check-setup.cjs && pnpm run quality',
+      preship:
+        'node tools/check-setup.cjs && pnpm install --frozen-lockfile && npx tsx tools/check-drift-ci.ts && npx tsx tools/check-sync-health.ts && pnpm run quality',
       ship: 'git add -A && git diff --cached --quiet || git commit -m "chore: ship $(date -u +%Y-%m-%dT%H:%M:%SZ)" && git fetch && (git merge-base --is-ancestor @{u} HEAD || (echo \'\\\\n❌ Remote has changes not in local branch. Run: git pull --rebase && pnpm ship\\\\n\' && false)) && git push && doppler run -- pnpm --filter web run deploy',
       'update-layer': 'npx tsx tools/update-layer.ts',
+      'check:sync-health': 'npx tsx tools/check-sync-health.ts',
       'generate:favicons': 'npx tsx tools/generate-favicons.ts',
       tail: 'npx tsx tools/tail.ts',
       // Fleet apps only run quality on their own code, not layer/eslint packages
