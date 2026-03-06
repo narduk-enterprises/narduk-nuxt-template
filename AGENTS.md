@@ -805,60 +805,68 @@ block.
 
 **When:** You need unit tests for composables or E2E tests for user flows.
 
-**Steps:**
+### Shared E2E Architecture
 
-1. Install dependencies:
+The template now ships with a **layer-owned E2E baseline**:
 
-   ```bash
-   pnpm install -D vitest @nuxt/test-utils happy-dom playwright @playwright/test
-   npx playwright install chromium
-   ```
+- Shared Playwright helpers and auth contract live in
+  `layers/narduk-nuxt-layer/testing/e2e/`
+- Each app keeps a local `tests/e2e/` folder with thin wrapper specs
+- Local `fixtures.ts` files should re-export the shared layer fixtures instead
+  of duplicating hydration/readiness logic
+- App-specific behaviors stay in app-local specs on top of the shared baseline
 
-2. Create `vitest.config.ts`:
+This is the intended split:
 
-   ```ts
-   import { defineVitestConfig } from '@nuxt/test-utils/config'
-   export default defineVitestConfig({})
-   ```
+- **Layer owns:** reusable fixtures, auth contract, stable auth hooks/selectors
+- **Apps own:** wrapper specs, app-specific flows, custom assertions
 
-3. Create `playwright.config.ts`:
+### Template Repo Layout
 
-   ```ts
-   import { defineConfig, devices } from '@playwright/test'
-   export default defineConfig({
-     testDir: './tests/e2e',
-     fullyParallel: true,
-     forbidOnly: !!process.env.CI,
-     retries: process.env.CI ? 2 : 0,
-     reporter: 'html',
-     use: { baseURL: 'http://localhost:3000', trace: 'on-first-retry' },
-     webServer: {
-       command: 'npx nuxi dev --port 3000',
-       url: 'http://localhost:3000',
-       reuseExistingServer: !process.env.CI,
-       timeout: 120_000,
-     },
-     projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-   })
-   ```
+- `playwright.config.ts` at repo root runs one project per shipped app
+- `apps/web/tests/e2e/` is the baseline that survives `pnpm run setup`
+- Example apps add their own smoke checks on top of the shared layer infra
 
-4. Add npm scripts to `package.json`:
+### Derived App Layout
 
-   ```json
-   "test:unit": "vitest run",
-   "test:e2e": "playwright test"
-   ```
+After `pnpm run setup`, example apps are removed and the root Playwright config
+is rewritten to a single `web` project. The generated app still keeps:
 
-5. Place unit tests in `tests/composables/`, E2E tests in `tests/e2e/`.
+- `apps/web/tests/e2e/fixtures.ts`
+- `apps/web/tests/e2e/smoke.spec.ts`
+- `apps/web/tests/e2e/auth.spec.ts`
 
-**Reference:** Tests can be added to any example app under `tests/composables/`
-and `tests/e2e/`.
+That gives every derived app a working smoke/auth baseline immediately. Add
+your own app-specific specs alongside those files.
+
+### How To Extend E2E Coverage
+
+1. Import shared fixtures from your local `tests/e2e/fixtures.ts`.
+2. Keep the inherited smoke/auth baseline intact unless your app intentionally
+   replaces that shared behavior.
+3. Add new local specs for app-specific flows such as onboarding, billing,
+   dashboards, or admin tools.
+4. If a test relies on reusable auth primitives or readiness helpers, add that
+   helper to the layer test infra instead of copying it into multiple apps.
+
+### Running E2E Tests
+
+- Run the full template suite: `pnpm test:e2e`
+- Run the main app baseline only: `pnpm test:e2e:web`
+- Run a specific example project: `pnpm test:e2e:auth`,
+  `pnpm test:e2e:blog`, `pnpm test:e2e:marketing`,
+  `pnpm test:e2e:showcase`, `pnpm test:e2e:og-image`,
+  `pnpm test:e2e:apple-maps`
+
+For more detail on the baseline-vs-extension model, see
+`docs/e2e-testing.md`.
 
 ### Test Explorer: enabling Playwright projects
 
 E2E tests use a **single root config** (`playwright.config.ts` at repo root)
-with one project per app (showcase, example-auth, example-blog,
-example-marketing). In the IDE Test Explorer, those projects can appear as
+with one project per app (`web`, `showcase`, `example-auth`, `example-blog`,
+`example-marketing`, `example-og-image`, `example-apple-maps`). In the IDE Test
+Explorer, those projects can appear as
 **disabled** (greyed out) until you enable them: open the **Playwright** sidebar
 (below the Test Explorer), find **PROJECTS**, and **check the boxes** for the
 apps you want. After that you can run or debug tests from the Test Explorer as
