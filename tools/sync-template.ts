@@ -65,6 +65,7 @@ const COPY_VERBATIM = [
   'tools/check-setup.cjs',
   'tools/validate.ts',
   'tools/init.ts',
+  'tools/tail.ts',
 
   // CI/CD
   '.github/workflows/weekly-drift-check.yml',
@@ -495,6 +496,7 @@ jobs:
       ship: 'git add -A && git diff --cached --quiet || git commit -m "chore: ship $(date -u +%Y-%m-%dT%H:%M:%SZ)" && git fetch && (git merge-base --is-ancestor @{u} HEAD || (echo \'\\\\n❌ Remote has changes not in local branch. Run: git pull --rebase && pnpm ship\\\\n\' && false)) && git push && doppler run -- pnpm --filter web run deploy',
       'update-layer': 'npx tsx tools/update-layer.ts',
       'generate:favicons': 'npx tsx tools/generate-favicons.ts',
+      tail: 'npx tsx tools/tail.ts',
       // Fleet apps only run quality on their own code, not layer/eslint packages
       quality: "turbo run quality --filter='./apps/*'",
       // Formatting — must match template exactly so all apps have consistent formatting tooling
@@ -861,7 +863,7 @@ jobs:
     console.log(' Next steps:')
     console.log(`   cd ${appDir}`)
     console.log('   pnpm install')
-    console.log('   pnpm run update-layer          # pull latest layer')
+    console.log('   pnpm run update-layer          # (Optional if you used a unified sync script)')
     console.log('   pnpm run quality                # verify nothing broke')
     console.log('   git add -A && git diff --cached # review changes')
     console.log('   git commit -m "chore: sync with template infra"')

@@ -16,14 +16,10 @@ export async function ensureDefaultTestUser(event: H3Event) {
   const db = useDatabase(event)
   const defaultUser = getDefaultTestUser()
 
-  let user = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, defaultUser.email))
-    .get()
+  let user = await db.select().from(users).where(eq(users.email, defaultUser.email)).get()
 
   if (!user) {
-    const passwordHash = await hashPassword(defaultUser.password)
+    const passwordHash = await hashUserPassword(defaultUser.password)
     const userId = crypto.randomUUID()
 
     await db.insert(users).values({
@@ -33,11 +29,7 @@ export async function ensureDefaultTestUser(event: H3Event) {
       name: defaultUser.name,
     })
 
-    user = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .get()
+    user = await db.select().from(users).where(eq(users.id, userId)).get()
   }
 
   if (!user) {
@@ -48,8 +40,7 @@ export async function ensureDefaultTestUser(event: H3Event) {
   }
 
   if (!user.passwordHash) {
-    const passwordHash = await hashPassword(defaultUser.password)
-
+    const passwordHash = await hashUserPassword(defaultUser.password)
     await db
       .update(users)
       .set({
@@ -58,11 +49,7 @@ export async function ensureDefaultTestUser(event: H3Event) {
       })
       .where(eq(users.id, user.id))
 
-    user = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, user.id))
-      .get()
+    user = await db.select().from(users).where(eq(users.id, user.id)).get()
   }
 
   if (!user) {

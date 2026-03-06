@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const hashedPassword = await hashPassword(body.password)
+  const hashedPassword = await hashUserPassword(body.password)
   const newUserId = crypto.randomUUID()
 
   await db.insert(users).values({

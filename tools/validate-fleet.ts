@@ -176,6 +176,7 @@ const CRITICAL_FILES = [
   'packages/eslint-config/eslint.config.mjs',
   'packages/eslint-config/package.json',
   'packages/eslint-config/eslint-plugins/index.mjs',
+  'tools/tail.ts',
 ]
 
 const drift: Validator = {
