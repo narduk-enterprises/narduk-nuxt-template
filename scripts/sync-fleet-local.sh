@@ -12,7 +12,6 @@
 #   bash scripts/sync-fleet-local.sh --jobs 8              # 8 parallel workers
 #   bash scripts/sync-fleet-local.sh --apps "tide-check,flashcard-pro"
 #   bash scripts/sync-fleet-local.sh --sequential          # disable parallelism
-#   bash scripts/sync-fleet-local.sh --verbose             # stream full worker output live
 #
 # Uses --from to sync the layer directly from the local template directory.
 # No need to push to GitHub first. Safe to Ctrl+C — all workers are killed cleanly.
@@ -27,7 +26,6 @@ SKIP_QUALITY=""
 AUTO_COMMIT=""
 FILTER_APPS=""
 MAX_JOBS=4
-VERBOSE=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -37,7 +35,6 @@ while [[ $# -gt 0 ]]; do
     --apps)         FILTER_APPS="$2"; shift 2 ;;
     --jobs)         MAX_JOBS="$2"; shift 2 ;;
     --sequential)   MAX_JOBS=1; shift ;;
-    --verbose)      VERBOSE="1"; shift ;;
     --)             shift; break ;;
     *)              echo "Unknown option: $1"; exit 1 ;;
   esac
@@ -53,31 +50,27 @@ fi
 TEMPLATE_SHA=$(git rev-parse --short HEAD)
 LOG_DIR=$(mktemp -d)
 RESULT_DIR=$(mktemp -d)
-PROGRESS_PIPE=$(mktemp -u)
-mkfifo "$PROGRESS_PIPE"
+PROGRESS_FILE="$LOG_DIR/_progress.log"
+touch "$PROGRESS_FILE"
 
-# Track all worker PIDs for cleanup
 WORKER_PIDS=()
-INTERRUPTED=0
 
 cleanup() {
-  INTERRUPTED=1
-  # Kill all worker processes and their entire process trees
+  # Kill all worker processes and their children
   for pid in "${WORKER_PIDS[@]}"; do
     if kill -0 "$pid" 2>/dev/null; then
-      # Kill the process tree: find all descendants via pgrep, then kill
       pkill -TERM -P "$pid" 2>/dev/null || true
       kill -TERM "$pid" 2>/dev/null || true
     fi
   done
-  # Kill the progress reader
-  [ -n "${READER_PID:-}" ] && kill "$READER_PID" 2>/dev/null || true
-  # Clean up temp files
+  # Kill the progress tailer
+  [ -n "${TAIL_PID:-}" ] && kill "$TAIL_PID" 2>/dev/null || true
+  wait 2>/dev/null
   rm -rf "$LOG_DIR" "$RESULT_DIR"
-  rm -f "$PROGRESS_PIPE"
 }
 
-trap cleanup EXIT INT TERM
+trap cleanup INT TERM
+trap 'rm -rf "$LOG_DIR" "$RESULT_DIR"' EXIT
 
 echo "╔══════════════════════════════════════════════════════════════╗"
 echo "║  Fleet Sync — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -121,12 +114,11 @@ echo ""
 
 START_TIME=$(date +%s)
 
-# Background progress reader — prints status lines from workers in real-time
-cat "$PROGRESS_PIPE" &
-READER_PID=$!
+# Background tailer — streams progress to terminal in real-time
+tail -f "$PROGRESS_FILE" &
+TAIL_PID=$!
 
 # Worker function — runs in a subshell per app
-# Writes detailed log to file, sends short progress lines to the FIFO
 sync_one_app() {
   local app_name="$1"
   local app_path="$APPS_DIR/$app_name"
@@ -134,8 +126,8 @@ sync_one_app() {
   local app_start
   app_start=$(date +%s)
 
-  # Short progress messages go to the FIFO (atomic writes for lines < PIPE_BUF)
-  progress() { echo "$1" > "$PROGRESS_PIPE"; }
+  # Atomic append to shared progress file (short lines are atomic under PIPE_BUF)
+  progress() { echo "$1" >> "$PROGRESS_FILE"; }
 
   progress "  ▶  $app_name — started"
 
@@ -145,7 +137,7 @@ sync_one_app() {
     echo ""
 
     # Phase 1: Sync template config files
-    progress "  ⚙  $app_name — syncing config files..."
+    progress "     $app_name — syncing config..."
     cd "$TEMPLATE_DIR"
     if ! npx tsx tools/sync-template.ts "$app_path" $DRY_RUN 2>&1; then
       echo ""
@@ -158,7 +150,7 @@ sync_one_app() {
     fi
 
     # Phase 2: Update layer from local template
-    progress "  ⚙  $app_name — updating layer..."
+    progress "     $app_name — updating layer..."
     cd "$app_path"
     local update_args="--from $TEMPLATE_DIR"
     [ -n "$DRY_RUN" ]      && update_args="$update_args --dry-run"
@@ -178,7 +170,7 @@ sync_one_app() {
     if [ -n "$AUTO_COMMIT" ] && [ -z "$DRY_RUN" ]; then
       cd "$app_path"
       if [ -n "$(git status --porcelain)" ]; then
-        progress "  ⚙  $app_name — committing..."
+        progress "     $app_name — committing..."
         git add -A
         git commit -m "chore: sync with template $TEMPLATE_SHA" --no-verify 2>&1 || true
         echo "  ✅ Committed"
@@ -197,21 +189,6 @@ sync_one_app() {
 
   } > "$log_file" 2>&1
 }
-
-# In verbose mode, also tail the log files live
-if [ -n "$VERBOSE" ]; then
-  (
-    # Wait for log files to appear, then tail them all
-    sleep 1
-    while [ "$INTERRUPTED" -eq 0 ]; do
-      for f in "$LOG_DIR"/*.log; do
-        [ -f "$f" ] && tail -f "$f" 2>/dev/null &
-      done
-      sleep 2
-    done
-  ) &
-  TAIL_PID=$!
-fi
 
 # Launch workers with throttling
 RUNNING=0
@@ -233,21 +210,10 @@ for pid in "${WORKER_PIDS[@]}"; do
   wait "$pid" 2>/dev/null || true
 done
 
-# Signal the progress reader to stop (close the write end)
-exec 4>"$PROGRESS_PIPE"
-echo "" >&4
-exec 4>&-
-
-# Give the reader a moment to drain, then stop it
-sleep 0.2
-kill "$READER_PID" 2>/dev/null || true
-wait "$READER_PID" 2>/dev/null || true
-
-# Stop verbose tailing
-if [ -n "$VERBOSE" ] && [ -n "${TAIL_PID:-}" ]; then
-  kill "$TAIL_PID" 2>/dev/null || true
-  pkill -P "$TAIL_PID" 2>/dev/null || true
-fi
+# Stop the progress tailer
+sleep 0.3
+kill "$TAIL_PID" 2>/dev/null || true
+wait "$TAIL_PID" 2>/dev/null || true
 
 END_TIME=$(date +%s)
 TOTAL_DURATION=$((END_TIME - START_TIME))
@@ -289,9 +255,8 @@ if [ ${#FAILED_APPS[@]} -gt 0 ]; then
     fi
   done
   echo ""
-  echo "Full logs: $LOG_DIR/<app>.log"
+  echo "Full logs preserved at: $LOG_DIR/"
   # Don't clean up log dir on failure so user can inspect
   trap - EXIT
-  rm -f "$PROGRESS_PIPE"
   exit 1
 fi

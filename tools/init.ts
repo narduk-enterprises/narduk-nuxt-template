@@ -1101,6 +1101,9 @@ export default defineConfig({
       console.warn(`     Register manually at ${CONTROL_PLANE_URL}/fleet/manage`)
     }
   }
+  console.log(
+    '     If this repo should receive fleet sync PRs, also add it to control-plane/apps/web/server/data/managed-repos.ts.',
+  )
 
   // Build ESLint plugins to ensure dist/ exists (required for linting)
   // .gitignore excludes dist/, so this must run after every fresh clone/init.
