@@ -1,121 +1,14 @@
-name: Sync Fleet
+name: Sync Fleet (Deprecated)
 
 on:
   workflow_dispatch:
-    inputs:
-      dry-run:
-        description: "Preview changes without pushing"
-        required: false
-        type: boolean
-        default: false
-
-concurrency:
-  group: sync-fleet
-  cancel-in-progress: false
 
 jobs:
-  sync:
-    name: Sync ${{ matrix.repo }}
+  deprecated:
+    name: Deprecated entrypoint
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        repo:
-          - ai-media-gen
-          - austin-texas-net
-          - circuit-breaker-online
-          - clawdle
-          - control-plane
-          - drift-map
-          - enigma-box
-          - flashcard-pro
-          - imessage-dictionary
-          - nagolnagemluapleira
-          - narduk-enterprises-portfolio
-          - neon-sewer-raid
-          - ogpreview-app
-          - old-austin-grouch
-          - papa-everetts-pizza
-          - sailing-passage-map
-          - tiny-invoice
-          - video-grab
     steps:
-      - name: Checkout fleet app
-        uses: actions/checkout@v4
-        with:
-          repository: narduk-enterprises/${{ matrix.repo }}
-          token: ${{ secrets.FLEET_SYNC_TOKEN }}
-          fetch-depth: 1
-          path: app
-
-      - name: Checkout template
-        uses: actions/checkout@v4
-        with:
-          path: template
-
-      - uses: pnpm/action-setup@v4
-        with:
-          package_json_file: app/package.json
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: app/pnpm-lock.yaml
-
-      - name: Install dependencies
-        working-directory: app
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Sync template infrastructure
-        working-directory: template
-        run: npx tsx tools/sync-template.ts ${{ github.workspace }}/app
-
-      - name: Copy latest update-layer from template
-        run: cp template/tools/update-layer.ts app/tools/update-layer.ts
-
-      - name: Sync layer from template
-        id: sync
-        working-directory: app
+      - name: Fail with migration guidance
         run: |
-          npx tsx tools/update-layer.ts
-
-          # Fail hard if there are merge conflicts
-          if grep -rq "<<<<<<< " layers/narduk-nuxt-layer/ 2>/dev/null; then
-            echo "::error::Merge conflicts detected in ${{ matrix.repo }}"
-            exit 1
-          fi
-
-      - name: Check for changes
-        id: changes
-        working-directory: app
-        run: |
-          if git diff --quiet && git diff --cached --quiet; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "⏭️ ${{ matrix.repo }} is already up to date"
-          else
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "✅ Changes detected:"
-            git diff --stat
-            git diff --cached --stat
-          fi
-
-      - name: Commit and push
-        if: steps.changes.outputs.changed == 'true' && inputs.dry-run == false
-        working-directory: app
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "chore: sync template + layer from narduk-nuxt-template"
-          git pull --rebase origin main || true
-          git push origin main
-
-      - name: Dry run summary
-        if: steps.changes.outputs.changed == 'true' && inputs.dry-run == true
-        working-directory: app
-        run: |
-          echo "🔍 DRY RUN — would commit and push:"
-          git diff --stat
-          git diff --cached --stat
+          echo "::error::sync-fleet.yml is deprecated. Dispatch template-sync-bot.yml instead."
+          exit 1

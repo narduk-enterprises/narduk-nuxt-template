@@ -21,7 +21,7 @@
  *   3. Run sync-template.ts to standardize infra
  *   4. Replace loganrenz → narduk-enterprises across all app files
  *   5. Regenerate pnpm-lock.yaml
- *   6. Add repo to template sync bot fleet
+ *   6. Update the control-plane managed repo catalog
  *   7. Commit and push
  */
 
@@ -233,26 +233,13 @@ function main() {
     console.log('  Would run pnpm install --no-frozen-lockfile')
   }
 
-  // ── Step 7: Add to sync bot fleet ──
+  // ── Step 7: Control-plane managed repo follow-up ──
   console.log()
-  console.log('Step 7: Adding to template sync bot fleet...')
-  const botPath = join(TEMPLATE_DIR, '.github/workflows/template-sync-bot.yml')
-  if (existsSync(botPath)) {
-    const botContent = readFileSync(botPath, 'utf-8')
-    if (botContent.includes(repoName)) {
-      console.log(`  ⏭ ${repoName} already in fleet.`)
-    } else {
-      const updated = botContent.replace(/(\s+- neon-sewer-raid\n)/, `$1          - ${repoName}\n`)
-      if (updated !== botContent) {
-        if (!dryRun) {
-          writeFileSync(botPath, updated, 'utf-8')
-        }
-        console.log(`  ✅ Added ${repoName} to sync bot matrix.`)
-      } else {
-        console.log(`  ⚠️ Could not auto-add to fleet — add manually to template-sync-bot.yml`)
-      }
-    }
-  }
+  console.log('Step 7: Updating control-plane managed repo catalog...')
+  console.log(`  ℹ️ Sync membership is now owned by control-plane, not template-sync-bot.yml.`)
+  console.log(
+    '  Add the repo to control-plane/apps/web/server/data/managed-repos.ts and re-export config/fleet-sync-repos.json.',
+  )
 
   // ── Step 8: Commit and push ──
   console.log()

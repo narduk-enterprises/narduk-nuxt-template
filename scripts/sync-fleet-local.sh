@@ -62,10 +62,12 @@ INTERRUPTED=0
 
 cleanup() {
   INTERRUPTED=1
-  # Kill all worker processes and their children
+  # Kill all worker processes and their entire process trees
   for pid in "${WORKER_PIDS[@]}"; do
     if kill -0 "$pid" 2>/dev/null; then
-      kill -TERM -- -"$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+      # Kill the process tree: find all descendants via pgrep, then kill
+      pkill -TERM -P "$pid" 2>/dev/null || true
+      kill -TERM "$pid" 2>/dev/null || true
     fi
   done
   # Kill the progress reader
@@ -215,8 +217,7 @@ fi
 RUNNING=0
 
 for app_name in "${APP_LIST[@]}"; do
-  # Start worker in its own process group (setsid) for clean cleanup
-  setsid bash -c "$(declare -f sync_one_app); APPS_DIR='$APPS_DIR' TEMPLATE_DIR='$TEMPLATE_DIR' LOG_DIR='$LOG_DIR' RESULT_DIR='$RESULT_DIR' PROGRESS_PIPE='$PROGRESS_PIPE' DRY_RUN='$DRY_RUN' SKIP_QUALITY='$SKIP_QUALITY' AUTO_COMMIT='$AUTO_COMMIT' TEMPLATE_SHA='$TEMPLATE_SHA' sync_one_app '$app_name'" &
+  sync_one_app "$app_name" &
   WORKER_PIDS+=($!)
   RUNNING=$((RUNNING + 1))
 

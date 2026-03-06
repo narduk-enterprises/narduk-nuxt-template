@@ -10,10 +10,16 @@ on:
         required: false
         type: boolean
         default: false
+      repos:
+        description: "Optional comma-separated repo subset"
+        required: false
+        type: string
+        default: ""
   push:
     branches: [main]
     paths:
       - "package.json"
+      - "config/fleet-sync-repos.json"
       - "prettier.config.mjs"
       - ".editorconfig"
       - ".vscode/settings.json"
@@ -26,6 +32,7 @@ on:
       - "tools/validate.ts"
       - "tools/init.ts"
       - "tools/tail.ts"
+      - "tools/resolve-fleet-sync-repos.cjs"
       - ".github/workflows/weekly-drift-check.yml"
       - ".github/workflows/reusable-quality.yml"
       - ".github/workflows/reusable-deploy.yml"
@@ -42,34 +49,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  prepare:
+    name: Resolve sync targets
+    runs-on: ubuntu-latest
+    outputs:
+      repos: ${{ steps.resolve.outputs.repos }}
+      repo-count: ${{ steps.resolve.outputs.repo-count }}
+    steps:
+      - name: Checkout template
+        uses: actions/checkout@v4
+
+      - name: Resolve repo list
+        id: resolve
+        env:
+          REQUESTED_REPOS: ${{ github.event.inputs.repos || '' }}
+        run: node tools/resolve-fleet-sync-repos.cjs >> "$GITHUB_OUTPUT"
+
   sync:
     name: Sync → ${{ matrix.repo }}
+    needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
-      matrix:
-        repo:
-          - ai-media-gen
-          - austin-texas-net
-          - circuit-breaker-online
-          - clawdle
-          - control-plane
-          - drift-map
-          - enigma-box
-          - favicon-checker
-          - flashcard-pro
-          - imessage-dictionary
-          - nagolnagemluapleira
-          - narduk-enterprises-portfolio
-          - neon-sewer-raid
-          - ogpreview-app
-          - old-austin-grouch
-          - papa-everetts-pizza
-          - sailing-passage-map
-          - tide-check
-          - tiny-invoice
-          - video-grab
       fail-fast: false
+      matrix:
+        repo: ${{ fromJson(needs.prepare.outputs.repos) }}
 
     steps:
       - name: Checkout template
