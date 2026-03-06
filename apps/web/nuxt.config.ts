@@ -21,6 +21,10 @@ export default defineNuxtConfig({
     compatibilityVersion: 4,
   },
 
+  devServer: {
+    port: Number(process.env.NUXT_PORT || 3000),
+  },
+
   runtimeConfig: {
     // Server-only (admin API routes)
     googleServiceAccountKey: process.env.GSC_SERVICE_ACCOUNT_JSON || '',

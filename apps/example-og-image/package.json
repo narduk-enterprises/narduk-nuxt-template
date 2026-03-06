@@ -14,6 +14,7 @@
     "prelint": "test -f .nuxt/eslint.config.mjs || nuxt prepare",
     "lint": "eslint . --max-warnings 0",
     "quality": "echo 'Turbo dependsOn handles lint + typecheck + format:check'",
+    "test:e2e": "playwright test --project=example-og-image --config=../../playwright.config.ts",
     "format:check": "prettier --check \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path ../../.gitignore"
   },
   "dependencies": {
