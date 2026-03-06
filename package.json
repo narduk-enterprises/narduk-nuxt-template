@@ -10,6 +10,7 @@
     "build": "doppler run -- pnpm -r build",
     "preship": "node tools/check-setup.cjs && pnpm install --frozen-lockfile && npx tsx tools/check-drift-ci.ts && pnpm run quality && pnpm -r --if-present test:unit",
     "ship": "npx tsx tools/ship.ts",
+    "ship:fleet": "npx tsx tools/ship-fleet.ts",
     "postinstall": "node -e \"if(!require('fs').existsSync('.setup-complete'))console.log('\\n⚠️  Run pnpm run setup before doing anything else! See AGENTS.md.\\n')\"",
     "build:plugins": "pnpm --filter @narduk/eslint-config build",
     "prelint": "pnpm run build:plugins",
