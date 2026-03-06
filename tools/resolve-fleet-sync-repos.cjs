@@ -19,4 +19,4 @@ if (unknownRepos.length > 0) {
 }
 
 process.stdout.write(`repos=${JSON.stringify(repos)}\n`)
-process.stdout.write(`repo-count=${String(repos.length)}\n`)
+process.stdout.write(`repo_count=${String(repos.length)}\n`)

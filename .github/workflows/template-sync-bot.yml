@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       repos: ${{ steps.resolve.outputs.repos }}
-      repo-count: ${{ steps.resolve.outputs.repo-count }}
+      repo_count: ${{ steps.resolve.outputs.repo_count }}
     steps:
       - name: Checkout template
         uses: actions/checkout@v4
