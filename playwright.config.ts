@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test'
 /**
  * Root Playwright config so the Test Explorer shows all example app E2E tests.
  * Each project points to one app's tests and baseURL. Run from repo root.
- * Starts all apps via `pnpm dev:showcase` (or reuse existing servers).
+ * Starts all apps via `pnpm run dev:e2e` (or reuse existing servers).
  */
 export default defineConfig({
   fullyParallel: true,
@@ -20,12 +20,18 @@ export default defineConfig({
     navigationTimeout: 5_000,
   },
   webServer: {
-    command: 'pnpm run dev:showcase',
-    url: 'http://localhost:3010',
-    reuseExistingServer: true,
-    timeout: 30_000,
+    command: 'pnpm run dev:e2e',
+    url: 'http://localhost:3004',
+    reuseExistingServer: false,
+    timeout: 120_000,
   },
   projects: [
+    {
+      name: 'web',
+      testDir: 'apps/web/tests/e2e',
+      timeout: 30_000,
+      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:3004' },
+    },
     {
       name: 'showcase',
       testDir: 'apps/showcase/tests/e2e',
