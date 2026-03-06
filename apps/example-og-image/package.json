@@ -13,7 +13,7 @@
     "deploy": "nuxt build && wrangler deploy",
     "prelint": "test -f .nuxt/eslint.config.mjs || nuxt prepare",
     "lint": "eslint . --max-warnings 0",
-    "quality": "pnpm run typecheck && pnpm run lint",
+    "quality": "echo 'Turbo dependsOn handles lint + typecheck + format:check'",
     "format:check": "prettier --check \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path ../../.gitignore"
   },
   "dependencies": {
