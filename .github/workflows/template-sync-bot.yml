@@ -2,11 +2,11 @@ name: Template Sync Bot
 
 on:
   schedule:
-    - cron: '0 9 * * 1' # Weekly Monday 9am UTC
+    - cron: "0 9 * * 1" # Weekly Monday 9am UTC
   workflow_dispatch:
     inputs:
       dry-run:
-        description: 'Preview changes without creating PRs'
+        description: "Preview changes without creating PRs"
         required: false
         type: boolean
         default: false
@@ -14,22 +14,21 @@ on:
     branches: [main]
     paths:
       # Verbatim-synced files
-      - 'tools/update-layer.ts'
-      - 'tools/check-drift-ci.ts'
-      - 'tools/generate-favicons.ts'
-      - 'tools/check-setup.cjs'
-      - 'tools/sync-template.ts'
-      - 'tools/validate.ts'
-      - 'tools/init.ts'
-      - '.github/workflows/weekly-drift-check.yml'
-      - '.github/workflows/version-bump.yml'
-      - '.github/workflows/reusable-quality.yml'
-      - '.github/workflows/reusable-deploy.yml'
-      - '.github/copilot-instructions.md'
-      - 'turbo.json'
-      - 'renovate.json'
-      - 'packages/eslint-config/**'
-      - 'apps/web/eslint.config.mjs'
+      - "tools/update-layer.ts"
+      - "tools/check-drift-ci.ts"
+      - "tools/generate-favicons.ts"
+      - "tools/check-setup.cjs"
+      - "tools/sync-template.ts"
+      - "tools/validate.ts"
+      - "tools/init.ts"
+      - ".github/workflows/weekly-drift-check.yml"
+      - ".github/workflows/reusable-quality.yml"
+      - ".github/workflows/reusable-deploy.yml"
+      - ".github/copilot-instructions.md"
+      - "turbo.json"
+      - "renovate.json"
+      - "packages/eslint-config/**"
+      - "apps/web/eslint.config.mjs"
 
 concurrency:
   group: template-sync
@@ -140,7 +139,7 @@ jobs:
 
           ### What gets synced
           - Tool scripts (update-layer, check-drift-ci, generate-favicons, check-setup)
-          - CI/CD workflows (version-bump, reusable-quality, reusable-deploy)
+          - CI/CD workflows (reusable-quality, reusable-deploy)
           - Build orchestration (turbo.json)
           - Dependency management (renovate.json)
           - ESLint shared config and rules

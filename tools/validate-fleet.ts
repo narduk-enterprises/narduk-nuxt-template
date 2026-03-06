@@ -166,7 +166,6 @@ const dopplerHubSync: Validator = {
 
 const CRITICAL_FILES = [
   '.github/workflows/ci.yml',
-  '.github/workflows/version-bump.yml',
   'tools/init.ts',
   'tools/validate.ts',
   'tools/update-layer.ts',

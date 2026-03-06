@@ -67,7 +67,6 @@ const COPY_VERBATIM = [
   'tools/init.ts',
 
   // CI/CD
-  '.github/workflows/version-bump.yml',
   '.github/workflows/weekly-drift-check.yml',
 
   // Build orchestration
@@ -120,6 +119,7 @@ const REMOVE_STALE = [
   '.github/workflows/publish-layer.yml',
   '.github/workflows/deploy-showcase.yml',
   '.github/workflows/deploy.yml',
+  '.github/workflows/version-bump.yml',
   'tools/check-setup.js',
   '.github/workflows/reusable-quality.yml',
   '.github/workflows/template-sync-bot.yml',
