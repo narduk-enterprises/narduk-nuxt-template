@@ -5,31 +5,48 @@
 
 <br />
 
-Built exclusively for the edge. This template combines the power of **Nuxt 4**, the aesthetics of **Nuxt UI 4 (Tailwind CSS 4)**, and the global low-latency of **Cloudflare Workers** with **D1 SQLite databases**.
+Built exclusively for the edge. This template combines the power of **Nuxt 4**,
+the aesthetics of **Nuxt UI 4 (Tailwind CSS 4)**, and the global low-latency of
+**Cloudflare Workers** with **D1 SQLite databases**.
 
-> **⚠️ ARCHITECTURE:** This repository is a **PNPM Workspace Monorepo**. Your application lives in `apps/web/` and consumes the shared layer at `layers/narduk-nuxt-layer/` (linked via `workspace:*` in `package.json`).
+> **⚠️ ARCHITECTURE:** This repository is a **PNPM Workspace Monorepo**. Your
+> application lives in `apps/web/` and consumes the shared layer at
+> `layers/narduk-nuxt-layer/` (linked via `workspace:*` in `package.json`).
 
-> **Looking for examples?** Check out the companion repo **[`narduk-nuxt-template-examples`](https://github.com/narduk-enterprises/narduk-nuxt-template-examples)** for full-featured implementations of auth, analytics, blog, dashboard layouts, and more.
+> **Looking for examples?** Check out the companion repo
+> **[`narduk-nuxt-template-examples`](https://github.com/narduk-enterprises/narduk-nuxt-template-examples)**
+> for full-featured implementations of auth, analytics, blog, dashboard layouts,
+> and more.
 
 ---
 
 ## 🚀 Features
 
-- ⚡️ **Nuxt 4** — Configured for the future with `compatibilityVersion: 4` and the new `app/` structure.
-- 🎨 **Nuxt UI 4** — Gorgeous, accessible UI components with built-in dark mode and Tailwind CSS 4 (`@theme`).
+- ⚡️ **Nuxt 4** — Configured for the future with `compatibilityVersion: 4` and
+  the new `app/` structure.
+- 🎨 **Nuxt UI 4** — Gorgeous, accessible UI components with built-in dark mode
+  and Tailwind CSS 4 (`@theme`).
 - 🦾 **TypeScript** — Full end-to-end type safety out of the box.
-- 🌐 **Cloudflare Workers** — True edge deployment running on V8 isolates (no Node.js cold starts).
-- 🗄️ **Cloudflare D1** — Edge SQLite database integrated seamlessly with **Drizzle ORM**.
-- 🔍 **Advanced SEO System** — Powered by `@nuxtjs/seo`: auto sitemap, robots.txt, Schema.org structured data, dynamic OG images, and `useSeo()` / `useSchemaOrg()` composables.
-- 📊 **Analytics-Ready** — PostHog and GA4 client plugins wired up; just add your keys via Doppler.
-- 🛡️ **Hardened Security** — Built-in CSRF protection and per-isolate IP rate limiting.
-- 🚦 **Health Checks & Error Handling** — Branded global error pages (404/500) and `/api/health` endpoint.
+- 🌐 **Cloudflare Workers** — True edge deployment running on V8 isolates (no
+  Node.js cold starts).
+- 🗄️ **Cloudflare D1** — Edge SQLite database integrated seamlessly with
+  **Drizzle ORM**.
+- 🔍 **Advanced SEO System** — Powered by `@nuxtjs/seo`: auto sitemap,
+  robots.txt, Schema.org structured data, dynamic OG images, and `useSeo()` /
+  `useSchemaOrg()` composables.
+- 📊 **Analytics-Ready** — PostHog and GA4 client plugins wired up; just add
+  your keys via Doppler.
+- 🛡️ **Hardened Security** — Built-in CSRF protection and per-isolate IP rate
+  limiting.
+- 🚦 **Health Checks & Error Handling** — Branded global error pages (404/500)
+  and `/api/health` endpoint.
 
 ---
 
 ## ⚠️ IMPORTANT: This is a Template Repository
 
-> **DO NOT push changes back to `narduk-enterprises/narduk-nuxt-template`.** This repository is a read-only template. Always create your own copy first.
+> **DO NOT push changes back to `narduk-enterprises/narduk-nuxt-template`.**
+> This repository is a read-only template. Always create your own copy first.
 
 ---
 
@@ -57,7 +74,8 @@ pnpm run dev
 
 ## 🔑 Secrets Management (Doppler)
 
-This template uses **Doppler** as the single source of truth for all secrets and environment variables. **No `.env` files.**
+This template uses **Doppler** as the single source of truth for all secrets and
+environment variables. **No `.env` files.**
 
 ```bash
 doppler projects create <app-name>
@@ -65,7 +83,8 @@ doppler setup --project <app-name> --config dev
 doppler run -- pnpm run dev
 ```
 
-All `runtimeConfig` keys in `nuxt.config.ts` are populated via direct `process.env.KEY` references mapped from Doppler.
+All `runtimeConfig` keys in `nuxt.config.ts` are populated via direct
+`process.env.KEY` references mapped from Doppler.
 
 ---
 
@@ -87,7 +106,8 @@ pnpm wrangler d1 execute <app-name>-db --remote --file=drizzle/0000_initial_sche
 
 ### 3. Deploy
 
-> **Deployment is local only** — CI runs quality checks but does NOT deploy. This saves GitHub Actions minutes and is faster.
+> **Deployment is local only** — CI runs quality checks but does NOT deploy.
+> This saves GitHub Actions minutes and is faster.
 
 ```bash
 pnpm run deploy
@@ -97,7 +117,8 @@ pnpm run deploy
 
 ## 🧩 Project Structure (PNPM Workspace)
 
-This repository functions as a single **PNPM Workspace** managing both the web application and the shared layer.
+This repository functions as a single **PNPM Workspace** managing both the web
+application and the shared layer.
 
 ```text
 pnpm-workspace.yaml    # Workspace root config
@@ -124,7 +145,19 @@ tools/                 # Node.js automation scripts (init, validate, analytics)
 
 ### Updating the Layer
 
-Since the layer is a `workspace:*` link, changes to `layers/narduk-nuxt-layer/` are reflected immediately during development.
+Ensure your project uses the latest version of the layer by running the local
+update script:
+
+```bash
+pnpm run update-layer
+```
+
+> **⚠️ NOTE: Local Sync over CI** Layer syncing is intentionally
+> **local-first**. Automated CI workflows for syncing the layer have been
+> removed to prevent unpredictable breaking changes in production. Developers
+> must pull layer updates explicitly into their working tree via the
+> `update-layer` script, review the generated `pnpm-lock.yaml` and code diff,
+> and commit the update.
 
 ---
 
@@ -139,7 +172,7 @@ export default defineAppConfig({
       neutral: 'slate', // zinc, gray, stone...
     },
   },
-});
+})
 ```
 
 ---
@@ -150,18 +183,22 @@ See **[AGENTS.md](./AGENTS.md)** for complete agent instructions, including:
 
 - Hard constraints for Cloudflare Workers compatibility
 - Nuxt UI 4 rules and gotchas
-- **Recipes** — step-by-step guides for adding testing, auth, analytics, content, linting, and UI components
+- **Recipes** — step-by-step guides for adding testing, auth, analytics,
+  content, linting, and UI components
 - Quality audit workflows (`/check-nuxt-ui-v4`, `/check-nuxt-ssr`, etc.)
 
 ---
 
 ## 📖 Examples Application
 
-For full-featured reference implementations, explore the example apps in this workspace:
+For full-featured reference implementations, explore the example apps in this
+workspace:
 
-- 🔒 **example-auth/** — Authentication + Dashboard (Web Crypto PBKDF2, D1 sessions, sidebar layout)
+- 🔒 **example-auth/** — Authentication + Dashboard (Web Crypto PBKDF2, D1
+  sessions, sidebar layout)
 - 📊 **example-blog/** — Blog (Nuxt Content v3 with MDC rendering)
-- 🎨 **example-marketing/** — UI Components (Hero, Pricing, Testimonials, Contact Forms)
+- 🎨 **example-marketing/** — UI Components (Hero, Pricing, Testimonials,
+  Contact Forms)
 - 🖼️ **example-og-image/** — Dynamic OG image generation
 - 🗺️ **example-apple-maps/** — Apple Maps integration
 - 🧪 **Tests** — Vitest unit + Playwright E2E across example apps
