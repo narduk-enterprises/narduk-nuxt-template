@@ -101,6 +101,8 @@ const HUB_SPOKE_KEYS = [
   'GA_ACCOUNT_ID',
   'GSC_SERVICE_ACCOUNT_JSON',
   'GSC_USER_EMAIL',
+  'CSP_SCRIPT_SRC',
+  'CSP_CONNECT_SRC',
 ] as const
 
 const dopplerRequired: Validator = {

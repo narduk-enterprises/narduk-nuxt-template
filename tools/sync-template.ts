@@ -122,7 +122,6 @@ const REMOVE_STALE = [
   '.github/workflows/deploy.yml',
   'tools/check-setup.js',
   '.github/workflows/reusable-quality.yml',
-  '.github/workflows/reusable-deploy.yml',
   '.github/workflows/template-sync-bot.yml',
   '.env',
   '.env.local',
@@ -252,17 +251,13 @@ function main() {
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
 
 concurrency:
   group: ci-\${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# CI is disabled (workflow_dispatch only) to conserve GitHub Actions minutes.
 # Deploy is done locally via \`pnpm run deploy\` (wrangler deploy).
-# CI is quality-only to conserve GitHub Actions minutes.
 # See .agents/workflows/deploy.md for the local deploy workflow.
 
 jobs:
@@ -496,6 +491,8 @@ jobs:
       predev: 'node tools/check-setup.cjs',
       prebuild: 'node tools/check-setup.cjs',
       predeploy: 'node tools/check-setup.cjs',
+      preship: 'node tools/check-setup.cjs && pnpm run quality',
+      ship: 'git add -A && git diff --cached --quiet || git commit -m "chore: ship $(date -u +%Y-%m-%dT%H:%M:%SZ)" && git fetch && (git merge-base --is-ancestor @{u} HEAD || (echo \'\\\\n❌ Remote has changes not in local branch. Run: git pull --rebase && pnpm ship\\\\n\' && false)) && git push && doppler run -- pnpm --filter web run deploy',
       'update-layer': 'npx tsx tools/update-layer.ts',
       'generate:favicons': 'npx tsx tools/generate-favicons.ts',
       // Fleet apps only run quality on their own code, not layer/eslint packages
@@ -736,6 +733,8 @@ jobs:
         APPLE_KEY_ID: '${narduk-nuxt-template.prd.APPLE_KEY_ID}',
         APPLE_SECRET_KEY: '${narduk-nuxt-template.prd.APPLE_SECRET_KEY}',
         APPLE_TEAM_ID: '${narduk-nuxt-template.prd.APPLE_TEAM_ID}',
+        CSP_SCRIPT_SRC: '${narduk-nuxt-template.prd.CSP_SCRIPT_SRC}',
+        CSP_CONNECT_SRC: '${narduk-nuxt-template.prd.CSP_CONNECT_SRC}',
       }
 
       let hubTokenValue = ''
