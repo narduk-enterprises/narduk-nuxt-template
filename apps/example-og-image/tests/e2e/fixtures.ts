@@ -4,4 +4,4 @@ export {
   waitForBaseUrlReady,
   waitForHydration,
   warmUpApp,
-} from '../../../../layers/narduk-nuxt-layer/testing/e2e/fixtures'
+} from '../../../../layers/narduk-nuxt-layer/testing/e2e/fixtures.ts'
