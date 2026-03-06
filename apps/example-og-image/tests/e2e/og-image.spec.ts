@@ -1,11 +1,13 @@
-import { test, expect, waitForHydration } from './fixtures'
+import { test, expect, waitForBaseUrlReady, waitForHydration, warmUpApp } from './fixtures'
 
 test.describe('example-og-image', () => {
-  test.beforeAll(async ({ browser }) => {
-    const page = await browser.newPage()
-    await page.goto('/', { timeout: 60_000 })
-    await page.waitForLoadState('networkidle', { timeout: 20_000 })
-    await page.close()
+  test.beforeAll(async ({ browser, baseURL }) => {
+    if (!baseURL) {
+      throw new Error('example-og-image tests require Playwright baseURL to be configured.')
+    }
+
+    await waitForBaseUrlReady(baseURL)
+    await warmUpApp(browser, baseURL)
   })
   test('page loads without hydration errors', async ({ page }) => {
     await page.goto('/')

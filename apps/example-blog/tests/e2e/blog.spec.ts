@@ -1,24 +1,13 @@
-import { test, expect } from './fixtures'
-
-const BLOG_BASE = 'http://localhost:3012'
-
-async function waitForBlogReady(): Promise<void> {
-  const deadline = Date.now() + 60_000
-  while (Date.now() < deadline) {
-    try {
-      const res = await fetch(BLOG_BASE, { method: 'HEAD' })
-      if (res.ok) return
-    } catch {
-      // server not ready yet
-    }
-    await new Promise((r) => setTimeout(r, 1000))
-  }
-  throw new Error('Blog server at 3012 did not become ready in time')
-}
+import { test, expect, waitForBaseUrlReady, warmUpApp } from './fixtures'
 
 test.describe('example-blog', () => {
-  test.beforeAll(async () => {
-    await waitForBlogReady()
+  test.beforeAll(async ({ browser, baseURL }) => {
+    if (!baseURL) {
+      throw new Error('example-blog tests require Playwright baseURL to be configured.')
+    }
+
+    await waitForBaseUrlReady(baseURL)
+    await warmUpApp(browser, baseURL)
   })
 
   test('page loads without hydration errors on index', async ({ page }) => {

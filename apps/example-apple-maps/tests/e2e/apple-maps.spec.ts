@@ -1,11 +1,13 @@
-import { test, expect } from './fixtures'
+import { test, expect, waitForBaseUrlReady, warmUpApp } from './fixtures'
 
 test.describe('example-apple-maps', () => {
-  test.beforeAll(async ({ browser }) => {
-    const page = await browser.newPage()
-    await page.goto('/', { timeout: 60_000 })
-    await page.waitForLoadState('networkidle', { timeout: 20_000 })
-    await page.close()
+  test.beforeAll(async ({ browser, baseURL }) => {
+    if (!baseURL) {
+      throw new Error('example-apple-maps tests require Playwright baseURL to be configured.')
+    }
+
+    await waitForBaseUrlReady(baseURL)
+    await warmUpApp(browser, baseURL)
   })
   test('page loads and shows header', async ({ page }) => {
     await page.goto('/')
