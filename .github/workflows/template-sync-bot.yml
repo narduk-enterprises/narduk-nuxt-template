@@ -29,6 +29,8 @@ on:
       - "renovate.json"
       - "packages/eslint-config/**"
       - "apps/web/eslint.config.mjs"
+      # Layer changes (plugins, composables, components, etc.)
+      - "layers/narduk-nuxt-layer/**"
 
 concurrency:
   group: template-sync
@@ -89,6 +91,14 @@ jobs:
       - name: Run sync-template
         working-directory: template
         run: pnpm exec tsx tools/sync-template.ts ${{ github.workspace }}/app
+
+      - name: Update layer
+        working-directory: app
+        run: |
+          # Pull latest layer from template (uses the template remote already added by update-layer.ts)
+          # We copy the layer directly from the template checkout since we already have it
+          rm -rf layers/narduk-nuxt-layer
+          cp -R ${{ github.workspace }}/template/layers/narduk-nuxt-layer layers/narduk-nuxt-layer
 
       - name: Check for changes
         id: changes
