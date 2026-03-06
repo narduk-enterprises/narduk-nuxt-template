@@ -1,26 +1,67 @@
 #!/bin/bash
-# Fleet quality scan — runs quality on all local fleet app clones in parallel
-# Usage: pnpm quality:fleet [--fix] [--no-pull] [--filter=NAME]
+# Fleet quality scan — runs lint + typecheck on all local fleet apps in parallel.
+#
+# Usage:
+#   pnpm quality:fleet                    # full scan, 6 parallel workers
+#   pnpm quality:fleet -- --fix           # auto-fix lint issues first
+#   pnpm quality:fleet -- --no-pull       # skip git pull
+#   pnpm quality:fleet -- --jobs 10       # 10 parallel workers
+#   pnpm quality:fleet -- --filter=NAME   # scan a single app
 
+set -uo pipefail
 
-# Note: no set -e/pipefail here — run_quality handles errors manually
+FLEET_DIR="${FLEET_DIR:-$HOME/new-code/template-apps}"
+RESULTS_DIR=$(mktemp -d)
+LOG_DIR=$(mktemp -d)
+PROGRESS_FILE="$LOG_DIR/_progress.log"
+touch "$PROGRESS_FILE"
 
-FLEET_DIR="${FLEET_DIR:-/Users/narduk/new-code/template-apps}"
-RESULTS_DIR="/tmp/fleet-quality-results"
-mkdir -p "$RESULTS_DIR"
-
-# Flags
 DO_FIX=false
 DO_PULL=true
 FILTER=""
+MAX_JOBS=6
 
 for arg in "$@"; do
   case $arg in
-    --fix) DO_FIX=true ;;
-    --no-pull) DO_PULL=false ;;
-    --filter=*) FILTER="${arg#*=}" ;;
+    --fix)        DO_FIX=true ;;
+    --no-pull)    DO_PULL=false ;;
+    --filter=*)   FILTER="${arg#*=}" ;;
+    --jobs)       ;; # handled below
+    --)           ;;
+    *)
+      # Handle --jobs N (two-arg form)
+      if [ "${PREV_ARG:-}" = "--jobs" ]; then
+        MAX_JOBS="$arg"
+      fi
+      ;;
+  esac
+  PREV_ARG="$arg"
+done
+
+# Also handle --jobs=N
+for arg in "$@"; do
+  case $arg in
+    --jobs=*) MAX_JOBS="${arg#*=}" ;;
   esac
 done
+
+WORKER_PIDS=()
+
+cleanup() {
+  for pid in "${WORKER_PIDS[@]}"; do
+    if kill -0 "$pid" 2>/dev/null; then
+      pkill -TERM -P "$pid" 2>/dev/null || true
+      kill -TERM "$pid" 2>/dev/null || true
+    fi
+  done
+  [ -n "${TAIL_PID:-}" ] && kill "$TAIL_PID" 2>/dev/null || true
+  wait 2>/dev/null
+  # Keep results dir for inspection, clean logs
+  rm -rf "$LOG_DIR"
+}
+
+trap cleanup INT TERM
+trap 'rm -rf "$LOG_DIR"' EXIT
 
 # Auto-discover fleet apps
 REPOS=()
@@ -30,7 +71,6 @@ for d in "$FLEET_DIR"/*/; do
   if [[ -n "$FILTER" && "$repo" != "$FILTER" ]]; then
     continue
   fi
-  
   if [ -f "$d/apps/web/package.json" ] || [ -f "$d/package.json" ]; then
     REPOS+=("$repo")
   fi
@@ -41,112 +81,155 @@ if [ ${#REPOS[@]} -eq 0 ]; then
   exit 1
 fi
 
-echo "🚀 Running quality on ${#REPOS[@]} fleet apps..."
-[ "$DO_FIX" = true ] && echo "✨ Auto-fix enabled (--fix)"
-[ "$DO_PULL" = false ] && echo "⏸️  Skipping git pull (--no-pull)"
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "║  Fleet Quality — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "║  Apps: ${#REPOS[@]}  |  Workers: $MAX_JOBS"
+[ "$DO_FIX" = true ]  && echo "║  Auto-fix: ON"
+[ "$DO_PULL" = false ] && echo "║  Git pull: SKIPPED"
+echo "╚══════════════════════════════════════════════════════════════╝"
+echo ""
+
+START_TIME=$(date +%s)
+
+# Live progress
+tail -f "$PROGRESS_FILE" &
+TAIL_PID=$!
 
 run_quality() {
-  set +e  # Allow non-zero exits — we capture exit codes manually
   local repo=$1
   local result_file="$RESULTS_DIR/$repo.txt"
+  local log_file="$LOG_DIR/$repo.log"
   local app_path="$FLEET_DIR/$repo"
-  
-  echo "⏳ Starting: $repo"
-  
-  if [ ! -d "$app_path" ]; then
-    echo "FAIL | $repo | Directory missing" > "$result_file"
-    return
-  fi
+  local app_start
+  app_start=$(date +%s)
 
-  cd "$app_path"
+  progress() { echo "$1" >> "$PROGRESS_FILE"; }
 
-  # Smart Pull
-  if [ "$DO_PULL" = true ]; then
-    if [[ -z $(git status --porcelain) ]]; then
-      git pull --rebase origin main 2>/dev/null >/dev/null || true
-    else
-      echo "⚠️  $repo is dirty, skipping git pull"
+  {
+    if [ ! -d "$app_path" ]; then
+      echo "FAIL | $repo | Directory missing" > "$result_file"
+      progress "  ❌ $repo — directory missing"
+      return
     fi
-  fi
 
-  # Build eslint plugins if they exist
-  if grep -q "build:plugins" package.json 2>/dev/null; then
-    pnpm run build:plugins 2>&1 >/dev/null || true
-  fi
+    cd "$app_path"
+    progress "  ▶  $repo"
 
-  # Run lint + typecheck directly from apps/web (not via turbo — its TUI swallows output when piped)
-  if [ -d "apps/web" ]; then
+    # Smart pull
+    if [ "$DO_PULL" = true ]; then
+      if [[ -z $(git status --porcelain) ]]; then
+        git pull --rebase origin main 2>/dev/null >/dev/null || true
+      fi
+    fi
+
+    # Build eslint plugins
+    if grep -q "build:plugins" package.json 2>/dev/null; then
+      pnpm run build:plugins 2>&1 >/dev/null || true
+    fi
+
+    if [ ! -d "apps/web" ]; then
+      echo "FAIL | $repo | No apps/web directory" > "$result_file"
+      progress "  ❌ $repo — no apps/web ($(( $(date +%s) - app_start ))s)"
+      return
+    fi
+
     cd apps/web
 
-    # Auto-fix lint issues first if requested
+    # Auto-fix if requested
     if [ "$DO_FIX" = true ]; then
       pnpm run lint --fix 2>&1 >/dev/null || true
     fi
 
-    LINT_OUT=$(pnpm run lint 2>&1); LINT_EXIT=$?
-    TC_OUT=$(pnpm run typecheck 2>&1); TC_EXIT=$?
-  else
-    echo "FAIL | $repo | No apps/web directory" > "$result_file"
-    echo "❌ Failed: $repo (no apps/web)"
-    return
-  fi
+    # Run lint and typecheck IN PARALLEL within this worker
+    local lint_file="$LOG_DIR/${repo}_lint.tmp"
+    local tc_file="$LOG_DIR/${repo}_tc.tmp"
 
-  COMBINED="$LINT_OUT"$'\n'"$TC_OUT"
+    pnpm run lint > "$lint_file" 2>&1 &
+    local lint_pid=$!
+    pnpm run typecheck > "$tc_file" 2>&1 &
+    local tc_pid=$!
 
-  # Match real ESLint lines: "line:col  warning|error  message  rule-name"
-  LINT_ISSUES=$(echo "$COMBINED" | grep -E '[0-9]+:[0-9]+\s+(warning|error)\s' | grep -vE 'node_modules|ELIFECYCLE|Command failed' || true)
-  # Match TypeScript errors: "TS[0-9]+:"
-  TS_ERRORS=$(echo "$COMBINED" | grep -E 'TS[0-9]+:' | grep -v 'node_modules' || true)
-  DETAILS=$(printf '%s\n%s' "$LINT_ISSUES" "$TS_ERRORS" | grep -v '^$' | head -n 8)
+    wait "$lint_pid" 2>/dev/null; local lint_exit=$?
+    wait "$tc_pid" 2>/dev/null; local tc_exit=$?
 
-  # Count issues
-  if [ -z "$LINT_ISSUES" ]; then
-    WARN_COUNT=0
-    ERR_COUNT=0
-  else
-    WARN_COUNT=$(echo "$LINT_ISSUES" | grep -c 'warning' 2>/dev/null | tr -d '[:space:]')
-    ERR_COUNT=$(echo "$LINT_ISSUES" | grep -c 'error' 2>/dev/null | tr -d '[:space:]')
-  fi
-  if [ -z "$TS_ERRORS" ]; then
-    TS_COUNT=0
-  else
-    TS_COUNT=$(echo "$TS_ERRORS" | grep -c 'TS[0-9]' 2>/dev/null | tr -d '[:space:]')
-  fi
-  TOTAL_ISSUES=$((WARN_COUNT + ERR_COUNT + TS_COUNT))
+    local LINT_OUT
+    LINT_OUT=$(cat "$lint_file" 2>/dev/null || echo "")
+    local TC_OUT
+    TC_OUT=$(cat "$tc_file" 2>/dev/null || echo "")
+    rm -f "$lint_file" "$tc_file"
 
-  if [ "$TOTAL_ISSUES" -gt 0 ]; then
-    if [ "$ERR_COUNT" -gt 0 ] || [ "$TS_COUNT" -gt 0 ]; then
-      echo "FAIL | $repo | ${ERR_COUNT} errors, ${TS_COUNT} TS errors, ${WARN_COUNT} warnings" > "$result_file"
-    else
-      echo "FAIL | $repo | $WARN_COUNT warnings" > "$result_file"
+    local COMBINED="$LINT_OUT"$'\n'"$TC_OUT"
+
+    # Parse issues
+    local LINT_ISSUES
+    LINT_ISSUES=$(echo "$COMBINED" | grep -E '[0-9]+:[0-9]+\s+(warning|error)\s' | grep -vE 'node_modules|ELIFECYCLE|Command failed' || true)
+    local TS_ERRORS
+    TS_ERRORS=$(echo "$COMBINED" | grep -E 'TS[0-9]+:' | grep -v 'node_modules' || true)
+    local DETAILS
+    DETAILS=$(printf '%s\n%s' "$LINT_ISSUES" "$TS_ERRORS" | grep -v '^$' | head -n 8)
+
+    local WARN_COUNT=0 ERR_COUNT=0 TS_COUNT=0
+    if [ -n "$LINT_ISSUES" ]; then
+      WARN_COUNT=$(echo "$LINT_ISSUES" | grep -c 'warning' 2>/dev/null | tr -d '[:space:]')
+      ERR_COUNT=$(echo "$LINT_ISSUES" | grep -c 'error' 2>/dev/null | tr -d '[:space:]')
     fi
-    echo "$DETAILS" >> "$result_file"
-    echo "❌ Failed: $repo"
-  elif [ $LINT_EXIT -ne 0 ] || [ $TC_EXIT -ne 0 ]; then
-    echo "FAIL | $repo | Exit code lint=$LINT_EXIT tc=$TC_EXIT" > "$result_file"
-    echo "❌ Failed: $repo (exit lint=$LINT_EXIT tc=$TC_EXIT)"
-  else
-    echo "PASS | $repo | 0" > "$result_file"
-    echo "✅ Passed: $repo"
-  fi
+    if [ -n "$TS_ERRORS" ]; then
+      TS_COUNT=$(echo "$TS_ERRORS" | grep -c 'TS[0-9]' 2>/dev/null | tr -d '[:space:]')
+    fi
+    local TOTAL_ISSUES=$((WARN_COUNT + ERR_COUNT + TS_COUNT))
+
+    local duration=$(( $(date +%s) - app_start ))
+
+    if [ "$TOTAL_ISSUES" -gt 0 ]; then
+      if [ "$ERR_COUNT" -gt 0 ] || [ "$TS_COUNT" -gt 0 ]; then
+        echo "FAIL | $repo | ${ERR_COUNT} errors, ${TS_COUNT} TS errors, ${WARN_COUNT} warnings" > "$result_file"
+      else
+        echo "FAIL | $repo | $WARN_COUNT warnings" > "$result_file"
+      fi
+      echo "$DETAILS" >> "$result_file"
+      progress "  ❌ $repo — ${TOTAL_ISSUES} issues (${duration}s)"
+    elif [ $lint_exit -ne 0 ] || [ $tc_exit -ne 0 ]; then
+      echo "FAIL | $repo | Exit code lint=$lint_exit tc=$tc_exit" > "$result_file"
+      progress "  ❌ $repo — exit lint=$lint_exit tc=$tc_exit (${duration}s)"
+    else
+      echo "PASS | $repo | 0" > "$result_file"
+      progress "  ✅ $repo (${duration}s)"
+    fi
+
+  } > "$log_file" 2>&1
 }
 
-# Run all in parallel (up to 8 at a time)
-pids=()
+# Launch workers with throttling
+RUNNING=0
+
 for repo in "${REPOS[@]}"; do
   run_quality "$repo" &
-  pids+=($!)
-  if [ ${#pids[@]} -ge 8 ]; then
-    wait "${pids[0]}"
-    pids=("${pids[@]:1}")
-  fi
+  WORKER_PIDS+=($!)
+  RUNNING=$((RUNNING + 1))
+
+  while [ "$RUNNING" -ge "$MAX_JOBS" ]; do
+    wait -n 2>/dev/null || true
+    RUNNING=$((RUNNING - 1))
+  done
 done
-for pid in "${pids[@]}"; do wait "$pid"; done
+
+# Wait for all remaining workers
+for pid in "${WORKER_PIDS[@]}"; do
+  wait "$pid" 2>/dev/null || true
+done
+
+# Stop progress tailer
+sleep 0.3
+kill "$TAIL_PID" 2>/dev/null || true
+wait "$TAIL_PID" 2>/dev/null || true
+
+END_TIME=$(date +%s)
+TOTAL_DURATION=$((END_TIME - START_TIME))
 
 # Summary table
 echo ""
 echo "════════════════════════════════════════════════════════════════════════"
-echo "  FLEET QUALITY RESULTS"
+echo "  FLEET QUALITY RESULTS — ${TOTAL_DURATION}s total (${MAX_JOBS}x parallel)"
 echo "════════════════════════════════════════════════════════════════════════"
 PASS=0; FAIL=0
 for repo in "${REPOS[@]}"; do
@@ -169,19 +252,23 @@ for repo in "${REPOS[@]}"; do
 done
 echo "════════════════════════════════════════════════════════════════════════"
 echo ""
-echo "✅ Passed: $PASS / ${#REPOS[@]}"
-echo "❌ Failed: $FAIL / ${#REPOS[@]}"
+echo "  ✅ Passed: $PASS / ${#REPOS[@]}"
+echo "  ❌ Failed: $FAIL / ${#REPOS[@]}"
 
 if [ $FAIL -gt 0 ]; then
   echo ""
-  echo "Failure details:"
+  echo "  Failure details:"
   for repo in "${REPOS[@]}"; do
     file="$RESULTS_DIR/$repo.txt"
     if grep -q "^FAIL" "$file" 2>/dev/null; then
       echo ""
-      echo "--- $repo ---"
-      cat "$file" | tail -n +2
+      echo "  ━━━ $repo ━━━"
+      tail -n +2 "$file" | sed 's/^/  /'
     fi
   done
+  echo ""
+  rm -rf "$RESULTS_DIR"
   exit 1
 fi
+
+rm -rf "$RESULTS_DIR"
