@@ -186,4 +186,107 @@ test.describe('example-auth', () => {
     await expect(page).toHaveURL(/\/login/, { timeout: 10_000 })
     await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible()
   })
+
+  // ─── Logout & session ───────────────────────────────────────────────────
+
+  test('logout from dashboard redirects to login and session is cleared', async ({ page }) => {
+    test.setTimeout(30_000)
+    await page.goto('/login')
+    await waitForHydration(page)
+    await page.getByRole('button', { name: 'Sign In as Demo User' }).click()
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 })
+    await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Sign out' }).click()
+    await expect(page).toHaveURL(/\/login/, { timeout: 10_000 })
+    await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible()
+
+    await page.goto('/dashboard/')
+    await expect(page).toHaveURL(/\/login/, { timeout: 10_000 })
+  })
+
+  test('session persists after full page reload on dashboard', async ({ page }) => {
+    test.setTimeout(30_000)
+    await page.goto('/login')
+    await waitForHydration(page)
+    await page.getByRole('button', { name: 'Sign In as Demo User' }).click()
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 })
+    await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible()
+
+    await page.reload()
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 })
+    await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible()
+    await expect(page.getByText('Total Users')).toBeVisible()
+  })
+
+  test('authenticated user visiting login is redirected to dashboard', async ({ page }) => {
+    test.setTimeout(30_000)
+    await page.goto('/login')
+    await waitForHydration(page)
+    await page.getByRole('button', { name: 'Sign In as Demo User' }).click()
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 })
+
+    await page.goto('/login')
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 })
+    await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible()
+  })
+
+  test('authenticated user visiting register is redirected to dashboard', async ({ page }) => {
+    test.setTimeout(30_000)
+    await page.goto('/login')
+    await waitForHydration(page)
+    await page.getByRole('button', { name: 'Sign In as Demo User' }).click()
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 })
+
+    await page.goto('/register')
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 })
+    await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible()
+  })
+
+  test('authenticated user visiting index is redirected to dashboard', async ({ page }) => {
+    test.setTimeout(30_000)
+    await page.goto('/login')
+    await waitForHydration(page)
+    await page.getByRole('button', { name: 'Sign In as Demo User' }).click()
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 })
+
+    await page.goto('/')
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 })
+    await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible()
+  })
+
+  test('manual email/password login after registration succeeds', async ({ page }) => {
+    test.setTimeout(45_000)
+    const email = `e2e-manual-${Date.now()}@example.com`
+    const password = 'securePassword123'
+
+    await page.goto('/register')
+    await waitForHydration(page)
+    await page.getByPlaceholder('John Doe').fill('Manual Login User')
+    await page.getByPlaceholder('you@example.com').fill(email)
+    await page.getByPlaceholder('••••••••').first().fill(password)
+    await page.getByRole('button', { name: 'Create Account', exact: true }).click()
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 })
+
+    await page.getByRole('button', { name: 'Sign out' }).click()
+    await expect(page).toHaveURL(/\/login/, { timeout: 10_000 })
+
+    await page.getByPlaceholder('you@example.com').fill(email)
+    await page.getByPlaceholder('••••••••').first().fill(password)
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click()
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 })
+    await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible()
+    await expect(page.getByText('Manual Login User').or(page.getByText('Manual Login User', { exact: false })).first()).toBeVisible({ timeout: 5_000 })
+  })
+
+  test('login form accepts valid email format and shows server error for unknown user', async ({ page }) => {
+    test.setTimeout(15_000)
+    await page.goto('/login')
+    await waitForHydration(page)
+    await page.getByPlaceholder('you@example.com').fill('valid-but-unknown@example.com')
+    await page.getByPlaceholder('••••••••').first().fill('somepassword')
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click()
+    await expect(page.getByText('Invalid email or password')).toBeVisible({ timeout: 5_000 })
+    await expect(page).toHaveURL(/\/login/)
+  })
 })

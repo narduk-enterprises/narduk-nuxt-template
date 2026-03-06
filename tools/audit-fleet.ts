@@ -84,28 +84,18 @@ function getCanonicalCi(): string {
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
 
 concurrency:
   group: ci-\${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# CI is disabled (workflow_dispatch only) to conserve GitHub Actions minutes.
+# Deploy is done locally via \`pnpm run deploy\` (wrangler deploy).
+# See .agents/workflows/deploy.md for the local deploy workflow.
+
 jobs:
   quality:
     uses: narduk-enterprises/narduk-nuxt-template/.github/workflows/reusable-quality.yml@main
-
-  deploy:
-    if: github.event_name != 'pull_request'
-    needs: [quality]
-    permissions:
-      contents: read
-      deployments: write
-    uses: narduk-enterprises/narduk-nuxt-template/.github/workflows/reusable-deploy.yml@main
-    secrets:
-      DOPPLER_TOKEN: \${{ secrets.DOPPLER_TOKEN }}
 `
 }
 

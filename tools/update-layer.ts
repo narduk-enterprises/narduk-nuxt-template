@@ -135,7 +135,7 @@ async function main() {
       const versionContent = [
         `sha=${templateSha}`,
         `template=narduk-nuxt-template`,
-        `updated=${new Date().toISOString()}`,
+        `synced=${new Date().toISOString()}`,
         '',
       ].join('\n')
       await fs.readFile(path.join(ROOT_DIR, '.template-version'), 'utf-8').catch(() => '')

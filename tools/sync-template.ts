@@ -179,6 +179,22 @@ function copyRecursiveSync(
 // ─── Main ────────────────────────────────────────────────────
 
 function main() {
+  if (!dryRun) {
+    try {
+      const status = execSync('git status --porcelain', {
+        encoding: 'utf-8',
+        cwd: TEMPLATE_DIR,
+      }).trim()
+      if (status) {
+        console.error('❌ Template repository has uncommitted changes.')
+        console.error('   Please commit or stash your changes before syncing.')
+        process.exit(1)
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   console.log()
   console.log(`Template Sync: ${appName}${dryRun ? ' [DRY RUN]' : ''}`)
   console.log(`═══════════════════════════════════════════════════════════════`)

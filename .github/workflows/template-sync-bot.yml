@@ -13,7 +13,11 @@ on:
   push:
     branches: [main]
     paths:
-      # Verbatim-synced files
+      - "package.json"
+      - "prettier.config.mjs"
+      - ".editorconfig"
+      - ".vscode/settings.json"
+      - ".vscode/extensions.json"
       - "tools/update-layer.ts"
       - "tools/check-drift-ci.ts"
       - "tools/generate-favicons.ts"
@@ -21,6 +25,7 @@ on:
       - "tools/sync-template.ts"
       - "tools/validate.ts"
       - "tools/init.ts"
+      - "tools/tail.ts"
       - ".github/workflows/weekly-drift-check.yml"
       - ".github/workflows/reusable-quality.yml"
       - ".github/workflows/reusable-deploy.yml"
@@ -44,21 +49,26 @@ jobs:
     strategy:
       matrix:
         repo:
-          - neon-sewer-raid
-          - old-austin-grouch
-          - ogpreview-app
-          - imessage-dictionary
-          - narduk-enterprises-portfolio
-          - drift-map
-          - tiny-invoice
-          - enigma-box
-          - papa-everetts-pizza
-          - flashcard-pro
-          - clawdle
-          - circuit-breaker-online
-          - nagolnagemluapleira
+          - ai-media-gen
           - austin-texas-net
-          # Add derived repos here as the fleet grows
+          - circuit-breaker-online
+          - clawdle
+          - control-plane
+          - drift-map
+          - enigma-box
+          - favicon-checker
+          - flashcard-pro
+          - imessage-dictionary
+          - nagolnagemluapleira
+          - narduk-enterprises-portfolio
+          - neon-sewer-raid
+          - ogpreview-app
+          - old-austin-grouch
+          - papa-everetts-pizza
+          - sailing-passage-map
+          - tide-check
+          - tiny-invoice
+          - video-grab
       fail-fast: false
 
     steps:
@@ -94,11 +104,7 @@ jobs:
 
       - name: Update layer
         working-directory: app
-        run: |
-          # Pull latest layer from template (uses the template remote already added by update-layer.ts)
-          # We copy the layer directly from the template checkout since we already have it
-          rm -rf layers/narduk-nuxt-layer
-          cp -R ${{ github.workspace }}/template/layers/narduk-nuxt-layer layers/narduk-nuxt-layer
+        run: npx tsx tools/update-layer.ts
 
       - name: Check for changes
         id: changes
