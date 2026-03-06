@@ -10,6 +10,8 @@ const registerSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+  await enforceRateLimit(event, 'auth-register', 5, 60_000)
+
   const body = await readValidatedBody(event, registerSchema.parse)
   const db = useDatabase(event)
   const normalizedEmail = body.email.toLowerCase()

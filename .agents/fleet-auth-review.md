@@ -184,3 +184,40 @@ session: {
 - **papa-everetts-pizza:** Root `server/api/auth/login.post.ts` and `signup.post.ts` now call `setUserSession(event, { user })` after setting the custom cookie so layer `requireAuth` / `useUserSession` see the same user. Added `runtimeConfig.session.password` in `apps/web/nuxt.config.ts`.
 - **enigma-box:** Migrated to layer auth for consistency. Removed `apps/web/server/utils/auth.ts` (custom `enigma_session` cookie, hashPassword/verifyPassword, createSession/getSessionUser/destroySession/requireAuth). Added `apps/web/server/utils/puzzle.ts` with game-specific `hashAnswer`/`verifyAnswer` only (SHA-256 of normalized puzzle answers). Admin and verify routes now use `requireAuth` from `#layer/server/utils/auth` and answer helpers from `#server/utils/puzzle`. Login/register/me/logout are provided by the layer; after `update-layer`, session will use nuxt-auth-utils. Updated `tools/seed-enigma.ts` comment to reference `puzzle.ts`.
 - **All fleet apps (20):** Added `runtimeConfig.session.password` (from `NUXT_SESSION_PASSWORD` or a dev-only default ≥32 chars) in each app’s `apps/web/nuxt.config.ts`: ai-media-gen, papa-everetts-pizza, control-plane, flashcard-pro, tide-check, tiny-invoice, enigma-box, austin-texas-net, neon-sewer-raid, favicon-checker, ogpreview-app, old-austin-grouch, narduk-enterprises-portfolio, imessage-dictionary, nagolnagemluapleira, video-grab, sailing-passage-map, drift-map, clawdle, circuit-breaker-online.
+
+---
+
+## Re-review findings & fixes (2026-03-06, pass 2)
+
+### Template issues found
+
+1. **No rate limiting on auth endpoints (CRITICAL):** Layer `login.post.ts`, `register.post.ts`, `api-keys.post.ts`, `api-keys/[id].delete.ts` had zero `enforceRateLimit` calls — violating AGENTS.md policy.
+2. **`login-test.post.ts` unrestricted (HIGH):** Passwordless demo login in `example-auth` had no `import.meta.dev` guard — accessible in production.
+3. **`useAuthApi.changePassword` dead reference (MEDIUM):** `useAuthApi` composable called `/api/auth/change-password` but no such route existed in the layer.
+
+### Fleet app issues found
+
+4. **All 20 fleet apps stale (CRITICAL):** Every vendored layer still uses OLD D1-session-first auth (`getSessionUser` / `createSession` / `destroySession`), not nuxt-auth-utils (`getUserSession` / `setUserSession` / `clearUserSession`).
+5. **papa-everetts-pizza timing-unsafe password verification (HIGH):** `verifyPassword` used plain `===` comparison instead of constant-time XOR loop.
+6. **papa-everetts-pizza logout incomplete (HIGH):** `logout.post.ts` cleared custom `session` cookie and D1 row but never called `clearUserSession(event)`, leaving nuxt-auth-utils sealed cookie active after logout.
+7. **ai-media-gen dead custom auth utils (MEDIUM):** `apps/web/server/utils/auth.ts` had custom `getUserByEmail`, `createUser`, `verifyCredentials`, `getSessionWithUser`, `deleteSession` — all unreferenced dead code after prior fixes.
+8. **tiny-invoice own password.ts (OK):** Has `constantTimeEqual` — timing-safe, no fix needed.
+
+### Fixes applied (pass 2)
+
+- **Template `login.post.ts`:** Added `await enforceRateLimit(event, 'auth-login', 10, 60_000)` — 10 requests/minute per IP.
+- **Template `register.post.ts`:** Added `await enforceRateLimit(event, 'auth-register', 5, 60_000)` — 5 requests/minute per IP.
+- **Template `api-keys.post.ts`:** Added `await enforceRateLimit(event, 'auth-api-keys', 10, 60_000)`.
+- **Template `api-keys/[id].delete.ts`:** Added `await enforceRateLimit(event, 'auth-api-keys', 10, 60_000)`.
+- **Template `change-password.post.ts`:** Created new layer endpoint at `server/api/auth/change-password.post.ts` with `requireAuth`, Zod validation (`currentPassword` min 1, `newPassword` min 8), rate limiting (5/min), and `verifyUserPassword` / `hashUserPassword`. Resolves the `useAuthApi.changePassword` dead reference.
+- **example-auth `login.post.ts`:** Added `await enforceRateLimit(event, 'auth-login', 10, 60_000)`.
+- **example-auth `login-test.post.ts`:** Added `import.meta.dev` guard (returns 404 in production) and rate limiting (5/min).
+- **papa-everetts-pizza `server/utils/auth.ts`:** Replaced `return toHex(hash) === hashHex` with constant-time XOR comparison loop (`diff |= a.charCodeAt(i) ^ b.charCodeAt(i)`).
+- **papa-everetts-pizza `server/api/auth/logout.post.ts`:** Added `await clearUserSession(event)` after clearing the custom session cookie and D1 row.
+- **ai-media-gen:** Deleted `apps/web/server/utils/auth.ts` (dead code — no imports from other files).
+
+### Remaining action items
+
+- **All 20 fleet apps** need `pnpm run update-layer` to get the nuxt-auth-utils migration + rate-limited auth endpoints + change-password endpoint.
+- **papa-everetts-pizza** should consider migrating to layer-only auth long-term (dual session architecture increases attack surface).
+- **control-plane** layer copy already had `change-password.post.ts`; after `update-layer` it will get the canonical version from the template.

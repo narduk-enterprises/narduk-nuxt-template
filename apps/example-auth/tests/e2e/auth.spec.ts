@@ -275,8 +275,7 @@ test.describe('example-auth', () => {
     await page.getByPlaceholder('••••••••').first().fill(password)
     await page.getByRole('button', { name: 'Sign In', exact: true }).click()
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 })
-    await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible()
-    await expect(page.getByText('Manual Login User').or(page.getByText('Manual Login User', { exact: false })).first()).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByRole('heading', { name: /Welcome back, Manual Login User/ })).toBeVisible({ timeout: 5_000 })
   })
 
   test('login form accepts valid email format and shows server error for unknown user', async ({ page }) => {
