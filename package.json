@@ -32,6 +32,7 @@
     "check:fleet-doppler": "doppler run -- npx tsx tools/validate-fleet-doppler.ts",
     "validate:fleet": "npx tsx tools/validate-fleet.ts",
     "tail:fleet": "npx tsx tools/tail-fleet.ts",
+    "fetch:fleet": "npx tsx tools/fetch-fleet.ts",
     "backfill:secrets": "doppler run -- npx tsx tools/backfill-secrets.ts",
     "clean": "find . -type d \\( -name node_modules -o -name .nuxt -o -name .output -o -name .nitro -o -name .wrangler -o -name .turbo -o -name .data -o -name dist \\) -not -path './.git/*' -prune -exec rm -rf {} +",
     "clean:install": "pnpm run clean && pnpm install && pnpm run db:ready:all",
