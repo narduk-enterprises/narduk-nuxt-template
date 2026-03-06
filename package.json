@@ -25,6 +25,7 @@
     "check:reach": "npx tsx tools/check-apps-reachable.ts",
     "check:fleet-doppler": "doppler run -- npx tsx tools/validate-fleet-doppler.ts",
     "check:fleet": "npx tsx tools/validate-fleet.ts",
+    "validate:fleet": "npx tsx tools/validate-fleet.ts",
     "backfill:cron-secret": "doppler run -- npx tsx tools/backfill-cron-secret.ts",
     "clean": "find . -type d \\( -name node_modules -o -name .nuxt -o -name .output -o -name .nitro -o -name .wrangler -o -name .turbo -o -name .data -o -name dist \\) -not -path './.git/*' -prune -exec rm -rf {} +",
     "clean:install": "pnpm run clean && pnpm install && pnpm run db:ready:all",

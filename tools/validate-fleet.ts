@@ -269,6 +269,112 @@ const reachability: Validator = {
   },
 }
 
+const gitRemote: Validator = {
+  name: 'git-remote',
+  async run(ctx) {
+    const appsDir = process.env.FLEET_APPS_DIR || `${ctx.templateRoot}/../template-apps`
+    const appRoot = `${appsDir}/${ctx.project}`
+
+    try {
+      execSync(`test -d "${appRoot}/.git"`, { stdio: 'pipe' })
+    } catch {
+      return { status: 'warn', message: 'no local clone' }
+    }
+
+    const issues: string[] = []
+
+    // Check origin URL matches expected pattern
+    try {
+      const originUrl = execSync(`git -C "${appRoot}" remote get-url origin`, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }).trim()
+
+      const expectedPatterns = [
+        `git@github.com:narduk-enterprises/${ctx.project}.git`,
+        `https://github.com/narduk-enterprises/${ctx.project}.git`,
+      ]
+      if (!expectedPatterns.includes(originUrl)) {
+        issues.push(`  ORIGIN: ${originUrl} (expected narduk-enterprises/${ctx.project})`)
+      }
+    } catch {
+      issues.push('  ORIGIN: could not read remote URL')
+    }
+
+    // Check for stale remote refs that block fetch/pull
+    try {
+      const pruneOutput = execSync(`git -C "${appRoot}" remote prune origin --dry-run`, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      })
+      const staleCount = (pruneOutput.match(/\[would prune\]/g) || []).length
+      if (staleCount > 0) {
+        issues.push(`  STALE: ${staleCount} remote ref(s) need pruning`)
+      }
+    } catch {
+      /* ignore */
+    }
+
+    if (issues.length === 0) return { status: 'pass', message: 'ok' }
+    return { status: 'fail', message: `${issues.length} issue(s)`, detail: issues }
+  },
+}
+
+const layerFreshness: Validator = {
+  name: 'layer-fresh',
+  async run(ctx) {
+    const appsDir = process.env.FLEET_APPS_DIR || `${ctx.templateRoot}/../template-apps`
+    const appRoot = `${appsDir}/${ctx.project}`
+    const secHeaders = `${appRoot}/layers/narduk-nuxt-layer/server/middleware/securityHeaders.ts`
+
+    try {
+      const content = execSync(`cat "${secHeaders}"`, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      })
+      const lines = content.split('\n').length
+      const hasDynamic = content.includes('cspScriptSrc') || content.includes('posthogHost')
+
+      if (hasDynamic) return { status: 'pass', message: `dynamic (${lines} lines)` }
+      return {
+        status: 'fail',
+        message: `hardcoded (${lines} lines)`,
+        detail: ['  securityHeaders.ts is outdated — run: pnpm run update-layer'],
+      }
+    } catch {
+      return { status: 'warn', message: 'no local clone' }
+    }
+  },
+}
+
+const shipScript: Validator = {
+  name: 'ship-script',
+  async run(ctx) {
+    const appsDir = process.env.FLEET_APPS_DIR || `${ctx.templateRoot}/../template-apps`
+    const pkgPath = `${appsDir}/${ctx.project}/package.json`
+
+    try {
+      const content = execSync(`cat "${pkgPath}"`, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      })
+      const pkg = JSON.parse(content)
+      const missing: string[] = []
+      if (!pkg.scripts?.ship) missing.push('ship')
+      if (!pkg.scripts?.preship) missing.push('preship')
+
+      if (missing.length === 0) return { status: 'pass', message: 'present' }
+      return {
+        status: 'fail',
+        message: `missing: ${missing.join(', ')}`,
+        detail: ['  Run sync-template to add ship/preship scripts'],
+      }
+    } catch {
+      return { status: 'warn', message: 'no local clone' }
+    }
+  },
+}
+
 /** All built-in validators, in display order. */
 const BUILTIN_VALIDATORS: Validator[] = [
   dopplerRequired,
@@ -276,6 +382,9 @@ const BUILTIN_VALIDATORS: Validator[] = [
   dopplerHubSync,
   drift,
   reachability,
+  gitRemote,
+  layerFreshness,
+  shipScript,
 ]
 
 // ──────────────────────────────────────────────────────────────
