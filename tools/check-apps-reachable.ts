@@ -2,12 +2,15 @@
  * Check that all fleet apps are reachable (and optionally report build version/time).
  *
  * Usage:
- *   npx tsx tools/check-apps-reachable.ts
- *   npx tsx tools/check-apps-reachable.ts --urls=./fleet-urls.json   # use URL list file instead of Doppler
+ *   npx tsx tools/check-apps-reachable.ts --urls=./fleet-urls.json
+ *   npx tsx tools/check-apps-reachable.ts --projects=app1,app2
  *   npx tsx tools/check-apps-reachable.ts --timeout=15
  *
- * With Doppler: reads SITE_URL from each project's prd config (same project list as sync bot).
  * With --urls=path: JSON file with { "app-name": "https://..." } or [ "https://...", ... ].
+ * With --projects=list: comma-separated Doppler project names; SITE_URL is read from each prd config.
+ *
+ * Fleet membership is driven by the control-plane D1 registry — this script does NOT
+ * maintain a hardcoded list of app names. Use --urls= or --projects= to specify targets.
  */
 
 import { execSync } from 'node:child_process'
@@ -15,25 +18,17 @@ import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const args = process.argv.slice(2)
-const urlListPath = args.find((a) => a.startsWith('--urls='))?.slice(7)
-const timeoutSec = Number(args.find((a) => a.startsWith('--timeout='))?.slice(10) || '10') * 1000
+const urlListPath = args.find((a) => a.startsWith('--urls='))?.slice('--urls='.length)
+const projectsArg = args.find((a) => a.startsWith('--projects='))?.slice('--projects='.length)
+const timeoutSec =
+  Number(args.find((a) => a.startsWith('--timeout='))?.slice('--timeout='.length) || '10') * 1000
 
-const FLEET_PROJECTS = [
-  'neon-sewer-raid',
-  'old-austin-grouch',
-  'ogpreview-app',
-  'imessage-dictionary',
-  'narduk-enterprises-portfolio',
-  'drift-map',
-  'tiny-invoice',
-  'enigma-box',
-  'papa-everetts-pizza',
-  'flashcard-pro',
-  'clawdle',
-  'circuit-breaker-online',
-  'nagolnagemluapleira',
-  'austin-texas-net',
-]
+const FLEET_PROJECTS: string[] = projectsArg
+  ? projectsArg
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+  : []
 
 function isDopplerAvailable(): boolean {
   try {
@@ -71,7 +66,16 @@ function loadUrlsFromFile(path: string): Record<string, string> {
   return data
 }
 
-async function fetchWithTimeout(url: string, ms: number): Promise<{ ok: boolean; status: number; duration: number; buildVersion?: string; buildTime?: string }> {
+async function fetchWithTimeout(
+  url: string,
+  ms: number,
+): Promise<{
+  ok: boolean
+  status: number
+  duration: number
+  buildVersion?: string
+  buildTime?: string
+}> {
   const start = Date.now()
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), ms)
@@ -108,24 +112,37 @@ async function main() {
   if (urlListPath) {
     const obj = loadUrlsFromFile(urlListPath)
     entries = Object.entries(obj)
-  } else if (isDopplerAvailable()) {
+  } else if (FLEET_PROJECTS.length > 0 && isDopplerAvailable()) {
     entries = FLEET_PROJECTS.map((name) => [name, getDopplerSiteUrl(name) ?? '']).filter(
       (e): e is [string, string] => !!e[1],
     )
     if (entries.length === 0) {
-      console.error('No SITE_URL found for any Doppler project. Check Doppler CLI auth and prd config.')
+      console.error(
+        'No SITE_URL found for any of the specified Doppler projects. Check Doppler CLI auth and prd config.',
+      )
       process.exit(1)
     }
   } else {
-    console.error('Doppler CLI not available and no --urls= file provided.')
-    console.error('  Install Doppler CLI, or run with: --urls=./fleet-urls.json')
+    console.error('No targets specified.')
+    console.error('  Provide --urls=./fleet-urls.json  (JSON map of app-name → URL)')
+    console.error(
+      '  or      --projects=app1,app2      (Doppler project names; reads SITE_URL from prd)',
+    )
     process.exit(1)
   }
 
   console.log('')
   console.log('Fleet reachability check')
   console.log('────────────────────────')
-  const results: { name: string; url: string; ok: boolean; status: number; duration: number; buildVersion?: string; buildTime?: string }[] = []
+  const results: {
+    name: string
+    url: string
+    ok: boolean
+    status: number
+    duration: number
+    buildVersion?: string
+    buildTime?: string
+  }[] = []
 
   for (const [name, url] of entries) {
     const r = await fetchWithTimeout(url, timeoutSec)

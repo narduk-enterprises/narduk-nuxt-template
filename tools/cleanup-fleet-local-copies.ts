@@ -5,24 +5,50 @@
  * Removes local auth, D1 cache, and shadowed SEO composables from fleet apps
  * that now get these from the shared layer.
  *
- * Usage: npx tsx tools/cleanup-fleet-local-copies.ts [--dry-run]
+ * Usage:
+ *   npx tsx tools/cleanup-fleet-local-copies.ts [--dry-run] [--fleet-dir=<path>] [--apps=app1,app2]
+ *
+ * Options:
+ *   --dry-run              Print what would be removed, without deleting
+ *   --fleet-dir=<path>     Path to directory containing all fleet app folders
+ *                          (overrides FLEET_DIR env var)
+ *   --apps=<list>          Comma-separated list of app names to clean
+ *                          (runs the auth cleanup on exactly those apps)
+ *
+ * Without --apps, the script cleans apps listed in the AUTH_APPS constant
+ * and the D1/SEO lists. Update those constants or use --apps to target
+ * specific apps without modifying the source.
+ *
+ * The fleet directory can also be provided via the FLEET_DIR environment variable.
  */
 
-import { existsSync, unlinkSync, readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs'
-import { join, basename } from 'node:path'
+import { existsSync, unlinkSync } from 'node:fs'
+import { join } from 'node:path'
 
-const FLEET_DIR = '/Users/narduk/new-code/template-apps'
-const DRY_RUN = process.argv.includes('--dry-run')
+const args = process.argv.slice(2)
+const DRY_RUN = args.includes('--dry-run')
+
+const fleetDirArg = args.find((a) => a.startsWith('--fleet-dir='))?.slice('--fleet-dir='.length)
+const FLEET_DIR = fleetDirArg ?? process.env.FLEET_DIR ?? ''
+
+if (!FLEET_DIR) {
+  console.error('❌ Fleet directory not specified.')
+  console.error('  Provide --fleet-dir=<path> or set FLEET_DIR environment variable.')
+  process.exit(1)
+}
+
+const appsArg = args.find((a) => a.startsWith('--apps='))?.slice('--apps='.length)
+const overrideApps = appsArg
+  ? appsArg
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+  : null
 
 // ─── Auth files to remove ───────────────────────────────────────
-// Only from apps that implement the custom D1 session pattern
-const AUTH_APPS = [
-  'tiny-invoice',
-  'flashcard-pro',
-  'enigma-box',
-  'papa-everetts-pizza',
-  'ai-media-gen',
-]
+// Apps that implement the custom D1 session pattern.
+// Override at runtime with --apps=app1,app2 without editing this file.
+const AUTH_APPS: string[] = overrideApps ?? []
 
 const AUTH_FILES_TO_REMOVE = [
   'apps/web/server/utils/password.ts',
@@ -31,19 +57,13 @@ const AUTH_FILES_TO_REMOVE = [
 ]
 
 // ─── D1 Cache files to remove ───────────────────────────────────
-const D1_CACHE_CLEANUP = [
-  { app: 'tide-check', file: 'apps/web/server/utils/apiCache.ts' },
-  { app: 'control-plane', file: 'apps/web/server/utils/d1-cache.ts' },
-]
+// Add entries here when an app's local D1 cache util is superseded by the layer.
+const D1_CACHE_CLEANUP: { app: string; file: string }[] = []
 
 // ─── Shadowed SEO composables to remove ─────────────────────────
-// These shadow the layer's useSeo/useSchemaOrg with local copies
-const SHADOWED_SEO = [
-  { app: 'imessage-dictionary', files: ['apps/web/app/composables/useSchemaOrg.ts', 'apps/web/app/composables/useSeo.ts'] },
-  { app: 'nagolnagemluapleira', files: ['apps/web/app/composables/useSchemaOrg.ts', 'apps/web/app/composables/useSeo.ts'] },
-  { app: 'old-austin-grouch', files: ['apps/web/app/composables/useSchemaOrg.ts', 'apps/web/app/composables/useSeo.ts'] },
-  { app: 'ogpreview-app', files: ['apps/web/app/composables/useSchemaOrg.ts', 'apps/web/app/composables/useSeo.ts'] },
-]
+// These shadow the layer's useSeo/useSchemaOrg with local copies.
+// Add entries here when an app's local composable should be replaced by the layer version.
+const SHADOWED_SEO: { app: string; files: string[] }[] = []
 
 let totalRemoved = 0
 let totalSkipped = 0

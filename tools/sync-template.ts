@@ -9,16 +9,16 @@
  *
  * Usage:
  *   npx tsx tools/sync-template.ts <app-dir>
- *   npx tsx tools/sync-template.ts ~/new-code/neon-sewer-raid
- *   npx tsx tools/sync-template.ts ~/new-code/neon-sewer-raid --dry-run
- *   npx tsx tools/sync-template.ts ~/new-code/neon-sewer-raid --strict  # fail on remaining drift
+ *   npx tsx tools/sync-template.ts ~/new-code/your-app
+ *   npx tsx tools/sync-template.ts ~/new-code/your-app --dry-run
+ *   npx tsx tools/sync-template.ts ~/new-code/your-app --strict  # fail on remaining drift
  *
  * Options:
  *   --dry-run   Show what would change without writing anything
  *   --strict    Exit 1 if any drift remains after sync (for CI gating)
  */
 
-import { execSync } from "node:child_process";
+import { execSync } from 'node:child_process'
 import {
   copyFileSync,
   existsSync,
@@ -28,123 +28,119 @@ import {
   rmSync,
   statSync,
   writeFileSync,
-} from "node:fs";
-import { dirname, join, relative } from "node:path";
-import { fileURLToPath } from "node:url";
+} from 'node:fs'
+import { dirname, join, relative } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const TEMPLATE_DIR = join(__dirname, "..");
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const TEMPLATE_DIR = join(__dirname, '..')
 
-const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
-const flags = new Set(process.argv.slice(2).filter((a) => a.startsWith("--")));
-const dryRun = flags.has("--dry-run");
-const strict = flags.has("--strict");
+const args = process.argv.slice(2).filter((a) => !a.startsWith('--'))
+const flags = new Set(process.argv.slice(2).filter((a) => a.startsWith('--')))
+const dryRun = flags.has('--dry-run')
+const strict = flags.has('--strict')
 
-const appDir = args[0]?.replace(/^~/, process.env.HOME || "");
+const appDir = args[0]?.replace(/^~/, process.env.HOME || '')
 if (!appDir) {
-  console.error(
-    "Usage: npx tsx tools/sync-template.ts <app-directory> [--dry-run] [--strict]",
-  );
-  console.error(
-    "  e.g: npx tsx tools/sync-template.ts ~/new-code/neon-sewer-raid",
-  );
-  process.exit(1);
+  console.error('Usage: npx tsx tools/sync-template.ts <app-directory> [--dry-run] [--strict]')
+  console.error('  e.g: npx tsx tools/sync-template.ts ~/new-code/your-app')
+  process.exit(1)
 }
 
 if (!existsSync(appDir)) {
-  console.error(`App directory not found: ${appDir}`);
-  process.exit(1);
+  console.error(`App directory not found: ${appDir}`)
+  process.exit(1)
 }
 
-const appName = appDir.split("/").pop() || "unknown";
+const appName = appDir.split('/').pop() || 'unknown'
 
 // ─── File Categories ─────────────────────────────────────────
 
 /** Files that must be identical to the template (copied verbatim). */
 const COPY_VERBATIM = [
   // Tooling
-  "tools/update-layer.ts",
-  "tools/check-drift-ci.ts",
-  "tools/generate-favicons.ts",
-  "tools/check-setup.cjs",
-  "tools/validate.ts",
-  "tools/init.ts",
+  'tools/update-layer.ts',
+  'tools/check-drift-ci.ts',
+  'tools/generate-favicons.ts',
+  'tools/check-setup.cjs',
+  'tools/validate.ts',
+  'tools/init.ts',
 
   // CI/CD
-  ".github/workflows/version-bump.yml",
-  ".github/workflows/weekly-drift-check.yml",
+  '.github/workflows/version-bump.yml',
+  '.github/workflows/weekly-drift-check.yml',
 
   // Build orchestration
-  "turbo.json",
+  'turbo.json',
 
   // Renovate
-  "renovate.json",
+  'renovate.json',
 
   // Copilot/agent infra
-  ".github/copilot-instructions.md",
+  '.github/copilot-instructions.md',
 
   // ESLint (canonical config — app overrides go in eslint.overrides.mjs)
-  "apps/web/eslint.config.mjs",
+  'apps/web/eslint.config.mjs',
 
   // Formatting (Prettier + EditorConfig + VS Code)
-  "prettier.config.mjs",
-  ".editorconfig",
-  ".vscode/settings.json",
-  ".vscode/extensions.json",
-];
+  'prettier.config.mjs',
+  '.editorconfig',
+  '.vscode/settings.json',
+  '.vscode/extensions.json',
+]
 
 /** Agent workflow files — copy if missing, don't overwrite customizations. */
 const COPY_IF_MISSING = [
-  ".agents/workflows/check-architecture.md",
-  ".agents/workflows/check-data-fetching.md",
-  ".agents/workflows/check-plugin-lifecycle.md",
-  ".agents/workflows/check-seo-compliance.md",
-  ".agents/workflows/check-ssr-hydration-safety.md",
-  ".agents/workflows/check-ui-styling.md",
-  ".agents/workflows/check-layer-health.md",
-  ".agents/workflows/check-standardization.md",
-  ".agents/workflows/review-cloudflare-layer.md",
-  ".agents/workflows/review-doppler-pattern.md",
-  ".agents/workflows/audit-repo-hygiene.md",
-  ".agents/workflows/audit-init-flow.md",
-  ".agents/workflows/deploy.md",
-  ".agents/workflows/score-repo.md",
-  ".agents/workflows/generate-app-idea.md",
-  ".agents/workflows/generate-brand-identity.md",
-  ".agents/workflows/migrate-local.md",
-  ".agents/workflows/migrate-to-monorepo.md",
-  ".agents/workflows/standardize-app.md",
-];
+  '.agents/workflows/check-architecture.md',
+  '.agents/workflows/check-data-fetching.md',
+  '.agents/workflows/check-plugin-lifecycle.md',
+  '.agents/workflows/check-seo-compliance.md',
+  '.agents/workflows/check-ssr-hydration-safety.md',
+  '.agents/workflows/check-ui-styling.md',
+  '.agents/workflows/check-layer-health.md',
+  '.agents/workflows/check-standardization.md',
+  '.agents/workflows/review-cloudflare-layer.md',
+  '.agents/workflows/review-doppler-pattern.md',
+  '.agents/workflows/audit-repo-hygiene.md',
+  '.agents/workflows/audit-init-flow.md',
+  '.agents/workflows/deploy.md',
+  '.agents/workflows/score-repo.md',
+  '.agents/workflows/generate-app-idea.md',
+  '.agents/workflows/generate-brand-identity.md',
+  '.agents/workflows/migrate-local.md',
+  '.agents/workflows/migrate-to-monorepo.md',
+  '.agents/workflows/standardize-app.md',
+]
 
 /** Directories where ALL files recursively must be synced (new files added, existing updated). */
-const SYNC_DIRECTORIES_RECURSIVE = ["packages/eslint-config"];
+const SYNC_DIRECTORIES_RECURSIVE = ['packages/eslint-config']
 
 /** Files that should be removed from derived apps. */
 const REMOVE_STALE = [
-  ".github/workflows/publish-layer.yml",
-  ".github/workflows/deploy-showcase.yml",
-  ".github/workflows/deploy.yml",
-  "tools/check-setup.js",
-  ".github/workflows/reusable-quality.yml",
-  ".github/workflows/reusable-deploy.yml",
-  ".github/workflows/template-sync-bot.yml",
-  ".env",
-  ".env.local",
-  ".env.example",
-];
+  '.github/workflows/publish-layer.yml',
+  '.github/workflows/deploy-showcase.yml',
+  '.github/workflows/deploy.yml',
+  'tools/check-setup.js',
+  '.github/workflows/reusable-quality.yml',
+  '.github/workflows/reusable-deploy.yml',
+  '.github/workflows/template-sync-bot.yml',
+  '.env',
+  '.env.local',
+  '.env.example',
+]
 
 // ─── Helpers ─────────────────────────────────────────────────
 
 function ensureDir(filePath: string) {
-  const dir = dirname(filePath);
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  const dir = dirname(filePath)
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
 }
 
 function filesIdentical(a: string, b: string): boolean {
   try {
-    return readFileSync(a).equals(readFileSync(b));
+    return readFileSync(a).equals(readFileSync(b))
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -153,111 +149,105 @@ function copyRecursiveSync(
   dest: string,
   ignores: RegExp[] = [/\/node_modules$/, /\/dist$/, /\/\.turbo$/],
 ): { copied: number; skipped: number } {
-  const result = { copied: 0, skipped: 0 };
-  if (ignores.some((regex) => regex.test(src))) return result;
+  const result = { copied: 0, skipped: 0 }
+  if (ignores.some((regex) => regex.test(src))) return result
 
-  const stat = statSync(src);
+  const stat = statSync(src)
   if (stat.isDirectory()) {
-    if (!existsSync(dest)) mkdirSync(dest, { recursive: true });
+    if (!existsSync(dest)) mkdirSync(dest, { recursive: true })
     for (const child of readdirSync(src)) {
-      const childRes = copyRecursiveSync(
-        join(src, child),
-        join(dest, child),
-        ignores,
-      );
-      result.copied += childRes.copied;
-      result.skipped += childRes.skipped;
+      const childRes = copyRecursiveSync(join(src, child), join(dest, child), ignores)
+      result.copied += childRes.copied
+      result.skipped += childRes.skipped
     }
   } else {
     if (existsSync(dest) && filesIdentical(src, dest)) {
-      result.skipped++;
+      result.skipped++
     } else {
-      const action = existsSync(dest) ? "UPDATE" : "ADD";
-      console.log(`  ${action}: ${relative(TEMPLATE_DIR, src)}`);
+      const action = existsSync(dest) ? 'UPDATE' : 'ADD'
+      console.log(`  ${action}: ${relative(TEMPLATE_DIR, src)}`)
       if (!dryRun) {
-        ensureDir(dest);
-        copyFileSync(src, dest);
+        ensureDir(dest)
+        copyFileSync(src, dest)
       }
-      result.copied++;
+      result.copied++
     }
   }
-  return result;
+  return result
 }
 
 // ─── Main ────────────────────────────────────────────────────
 
 function main() {
-  console.log();
-  console.log(`Template Sync: ${appName}${dryRun ? " [DRY RUN]" : ""}`);
-  console.log(
-    `═══════════════════════════════════════════════════════════════`,
-  );
-  console.log(`  App:      ${appDir}`);
-  console.log(`  Template: ${TEMPLATE_DIR}`);
-  console.log();
+  console.log()
+  console.log(`Template Sync: ${appName}${dryRun ? ' [DRY RUN]' : ''}`)
+  console.log(`═══════════════════════════════════════════════════════════════`)
+  console.log(`  App:      ${appDir}`)
+  console.log(`  Template: ${TEMPLATE_DIR}`)
+  console.log()
 
-  let copied = 0;
-  let skipped = 0;
-  let added = 0;
-  let removed = 0;
-  let packageJsonChanged = false;
-  let npmrcChanged = false;
+  let copied = 0
+  let skipped = 0
+  let added = 0
+  let removed = 0
+  let packageJsonChanged = false
+  let npmrcChanged = false
 
   // Phase 1: Copy verbatim files
-  console.log("Phase 1: Syncing critical infrastructure files...");
+  console.log('Phase 1: Syncing critical infrastructure files...')
   for (const file of COPY_VERBATIM) {
-    const src = join(TEMPLATE_DIR, file);
-    const dest = join(appDir, file);
+    const src = join(TEMPLATE_DIR, file)
+    const dest = join(appDir, file)
 
-    if (!existsSync(src)) continue;
+    if (!existsSync(src)) continue
 
     if (existsSync(dest) && filesIdentical(src, dest)) {
-      skipped++;
-      continue;
+      skipped++
+      continue
     }
 
-    const action = existsSync(dest) ? "UPDATE" : "ADD";
-    console.log(`  ${action}: ${file}`);
+    const action = existsSync(dest) ? 'UPDATE' : 'ADD'
+    console.log(`  ${action}: ${file}`)
     if (!dryRun) {
-      ensureDir(dest);
-      copyFileSync(src, dest);
+      ensureDir(dest)
+      copyFileSync(src, dest)
     }
-    copied++;
+    copied++
   }
   // Also sync entire directories (e.g., ESLint plugins)
   for (const dir of SYNC_DIRECTORIES_RECURSIVE) {
-    const srcDir = join(TEMPLATE_DIR, dir);
-    const destDir = join(appDir, dir);
-    if (!existsSync(srcDir)) continue;
-    const res = copyRecursiveSync(srcDir, destDir);
-    copied += res.copied;
-    skipped += res.skipped;
+    const srcDir = join(TEMPLATE_DIR, dir)
+    const destDir = join(appDir, dir)
+    if (!existsSync(srcDir)) continue
+    const res = copyRecursiveSync(srcDir, destDir)
+    copied += res.copied
+    skipped += res.skipped
   }
 
-  console.log(`  ${copied} files synced, ${skipped} already up to date.`);
-  console.log();
+  console.log(`  ${copied} files synced, ${skipped} already up to date.`)
+  console.log()
 
   // Phase 2: Add missing workflow files
-  console.log("Phase 2: Adding missing agent workflows...");
+  console.log('Phase 2: Adding missing agent workflows...')
   for (const file of COPY_IF_MISSING) {
-    const src = join(TEMPLATE_DIR, file);
-    const dest = join(appDir, file);
+    const src = join(TEMPLATE_DIR, file)
+    const dest = join(appDir, file)
 
-    if (!existsSync(src) || existsSync(dest)) continue;
+    if (!existsSync(src) || existsSync(dest)) continue
 
-    console.log(`  ADD: ${file}`);
+    console.log(`  ADD: ${file}`)
     if (!dryRun) {
-      ensureDir(dest);
-      copyFileSync(src, dest);
+      ensureDir(dest)
+      copyFileSync(src, dest)
     }
-    added++;
+    added++
   }
-  console.log(`  ${added} workflows added.`);
-  console.log();
+  console.log(`  ${added} workflows added.`)
+  console.log()
 
   // Phase 3: Replace CI with reusable-workflow version (monorepo layout only; app-directory defaults to apps/web)
-  console.log("Phase 3: Switching CI to reusable workflows...");
-  const ciPath = join(appDir, ".github/workflows/ci.yml");
+  console.log('Phase 3: Switching CI to reusable workflows...')
+  const ciPath = join(appDir, '.github/workflows/ci.yml')
   const slimCi = `name: CI
 
 on:
@@ -278,404 +268,375 @@ concurrency:
 jobs:
   quality:
     uses: narduk-enterprises/narduk-nuxt-template/.github/workflows/reusable-quality.yml@main
-`;
+`
 
   if (existsSync(ciPath)) {
-    const current = readFileSync(ciPath, "utf-8");
+    const current = readFileSync(ciPath, 'utf-8')
     if (current.trimEnd() === slimCi.trimEnd()) {
-      console.log("  ci.yml matches canonical version.");
+      console.log('  ci.yml matches canonical version.')
     } else {
-      console.log("  REPLACE: .github/workflows/ci.yml (standardizing)");
+      console.log('  REPLACE: .github/workflows/ci.yml (standardizing)')
       if (!dryRun) {
-        writeFileSync(ciPath, slimCi, "utf-8");
+        writeFileSync(ciPath, slimCi, 'utf-8')
       }
     }
   } else {
-    console.log("  ADD: .github/workflows/ci.yml");
+    console.log('  ADD: .github/workflows/ci.yml')
     if (!dryRun) {
-      ensureDir(ciPath);
-      writeFileSync(ciPath, slimCi, "utf-8");
+      ensureDir(ciPath)
+      writeFileSync(ciPath, slimCi, 'utf-8')
     }
   }
-  console.log();
+  console.log()
 
   // Phase 4: Write .template-version
-  console.log("Phase 4: Writing .template-version...");
-  let templateSha = "";
+  console.log('Phase 4: Writing .template-version...')
+  let templateSha = ''
   try {
-    templateSha = execSync("git rev-parse HEAD", {
-      encoding: "utf-8",
-      stdio: "pipe",
+    templateSha = execSync('git rev-parse HEAD', {
+      encoding: 'utf-8',
+      stdio: 'pipe',
       cwd: TEMPLATE_DIR,
-    }).trim();
+    }).trim()
   } catch {
     /* ignore */
   }
 
   const versionContent = [
-    `sha=${templateSha || "unknown"}`,
+    `sha=${templateSha || 'unknown'}`,
     `template=narduk-nuxt-template`,
     `synced=${new Date().toISOString()}`,
-    "",
-  ].join("\n");
+    '',
+  ].join('\n')
 
-  const versionPath = join(appDir, ".template-version");
+  const versionPath = join(appDir, '.template-version')
   console.log(
-    `  ${existsSync(versionPath) ? "UPDATE" : "ADD"}: .template-version (${templateSha.slice(0, 12) || "unknown"})`,
-  );
+    `  ${existsSync(versionPath) ? 'UPDATE' : 'ADD'}: .template-version (${templateSha.slice(0, 12) || 'unknown'})`,
+  )
   if (!dryRun) {
-    writeFileSync(versionPath, versionContent, "utf-8");
+    writeFileSync(versionPath, versionContent, 'utf-8')
   }
-  console.log();
+  console.log()
 
   // Phase 4.5: Sync critical package.json scripts (these must match the template exactly)
-  console.log("Phase 4.5: Syncing critical package.json scripts...");
+  console.log('Phase 4.5: Syncing critical package.json scripts...')
   const CRITICAL_SCRIPTS: Record<string, string> = {
     postinstall:
       "node -e \"if(!require('fs').existsSync('.setup-complete'))console.log('\\n⚠️  Run pnpm run setup before doing anything else! See AGENTS.md.\\n')\"",
-    "build:plugins": "pnpm --filter @narduk/eslint-config build",
-    prelint: "pnpm run build:plugins",
-  };
+    'build:plugins': 'pnpm --filter @narduk/eslint-config build',
+    prelint: 'pnpm run build:plugins',
+  }
 
-  const appPkgPath = join(appDir, "package.json");
+  const appPkgPath = join(appDir, 'package.json')
   try {
-    const appPkg = JSON.parse(readFileSync(appPkgPath, "utf-8"));
-    let changed = false;
+    const appPkg = JSON.parse(readFileSync(appPkgPath, 'utf-8'))
+    let changed = false
     for (const [name, expected] of Object.entries(CRITICAL_SCRIPTS)) {
       if (appPkg.scripts?.[name] !== expected) {
-        console.log(`  FIX: scripts.${name}`);
-        appPkg.scripts = appPkg.scripts || {};
-        appPkg.scripts[name] = expected;
-        changed = true;
-        packageJsonChanged = true;
+        console.log(`  FIX: scripts.${name}`)
+        appPkg.scripts = appPkg.scripts || {}
+        appPkg.scripts[name] = expected
+        changed = true
+        packageJsonChanged = true
       }
     }
     if (changed && !dryRun) {
-      writeFileSync(
-        appPkgPath,
-        JSON.stringify(appPkg, null, 2) + "\n",
-        "utf-8",
-      );
-      console.log("  ✅ Updated package.json");
+      writeFileSync(appPkgPath, JSON.stringify(appPkg, null, 2) + '\n', 'utf-8')
+      console.log('  ✅ Updated package.json')
     } else if (!changed) {
-      console.log("  All critical scripts match.");
+      console.log('  All critical scripts match.')
     }
   } catch (e: any) {
-    console.warn(`  ⚠️ Failed to sync scripts: ${e.message}`);
+    console.warn(`  ⚠️ Failed to sync scripts: ${e.message}`)
   }
-  console.log();
+  console.log()
 
   // Phase 4.6: Sync apps/web/package.json critical scripts
-  console.log("Phase 4.6: Syncing apps/web/package.json scripts...");
-  const webPkgPath = join(appDir, "apps/web/package.json");
+  console.log('Phase 4.6: Syncing apps/web/package.json scripts...')
+  const webPkgPath = join(appDir, 'apps/web/package.json')
   if (existsSync(webPkgPath)) {
     try {
-      const webPkg = JSON.parse(readFileSync(webPkgPath, "utf-8"));
-      let changed = false;
+      const webPkg = JSON.parse(readFileSync(webPkgPath, 'utf-8'))
+      let changed = false
 
       // Ensure apps/web lint is robust
       const WEB_CRITICAL_SCRIPTS: Record<string, string> = {
-        lint: "eslint . --max-warnings 0",
-      };
+        lint: 'eslint . --max-warnings 0',
+      }
 
       for (const [name, expected] of Object.entries(WEB_CRITICAL_SCRIPTS)) {
         if (webPkg.scripts?.[name] !== expected) {
-          console.log(`  FIX: apps/web scripts.${name}`);
-          webPkg.scripts = webPkg.scripts || {};
-          webPkg.scripts[name] = expected;
-          changed = true;
+          console.log(`  FIX: apps/web scripts.${name}`)
+          webPkg.scripts = webPkg.scripts || {}
+          webPkg.scripts[name] = expected
+          changed = true
         }
       }
 
       // Turborepo handles quality natively, so the old dummy script should be removed
       if (webPkg.scripts?.quality) {
-        console.log(`  FIX: REMOVE apps/web scripts.quality`);
-        delete webPkg.scripts.quality;
-        changed = true;
+        console.log(`  FIX: REMOVE apps/web scripts.quality`)
+        delete webPkg.scripts.quality
+        changed = true
       }
       if (changed && !dryRun) {
-        writeFileSync(
-          webPkgPath,
-          JSON.stringify(webPkg, null, 2) + "\n",
-          "utf-8",
-        );
-        console.log("  ✅ Updated apps/web/package.json");
+        writeFileSync(webPkgPath, JSON.stringify(webPkg, null, 2) + '\n', 'utf-8')
+        console.log('  ✅ Updated apps/web/package.json')
       } else if (!changed) {
-        console.log("  All apps/web critical scripts match.");
+        console.log('  All apps/web critical scripts match.')
       }
     } catch (e: any) {
-      console.warn(`  ⚠️ Failed to sync apps/web scripts: ${e.message}`);
+      console.warn(`  ⚠️ Failed to sync apps/web scripts: ${e.message}`)
     }
   }
-  console.log();
+  console.log()
 
   // Phase 5: Remove stale files
-  console.log("Phase 5: Cleaning stale files...");
+  console.log('Phase 5: Cleaning stale files...')
   for (const file of REMOVE_STALE) {
-    const target = join(appDir, file);
-    if (!existsSync(target)) continue;
+    const target = join(appDir, file)
+    if (!existsSync(target)) continue
 
-    console.log(`  DELETE: ${file}`);
+    console.log(`  DELETE: ${file}`)
     if (!dryRun) {
-      rmSync(target, { force: true });
+      rmSync(target, { force: true })
     }
-    removed++;
+    removed++
   }
-  if (removed === 0) console.log("  No stale files found.");
-  console.log();
+  if (removed === 0) console.log('  No stale files found.')
+  console.log()
 
   // Phase 6: Patch .gitignore
-  console.log("Phase 6: Patching .gitignore...");
-  const gitignorePath = join(appDir, ".gitignore");
+  console.log('Phase 6: Patching .gitignore...')
+  const gitignorePath = join(appDir, '.gitignore')
   if (existsSync(gitignorePath)) {
-    let gi = readFileSync(gitignorePath, "utf-8");
-    let patched = false;
+    let gi = readFileSync(gitignorePath, 'utf-8')
+    let patched = false
 
-    if (!gi.includes(".turbo")) {
-      gi = gi.replace(/\.cache\n/, ".cache\n.turbo\n");
-      patched = true;
-      console.log("  ADD: .turbo to .gitignore");
+    if (!gi.includes('.turbo')) {
+      gi = gi.replace(/\.cache\n/, '.cache\n.turbo\n')
+      patched = true
+      console.log('  ADD: .turbo to .gitignore')
     }
 
-    if (gi.includes("tools/eslint-plugin-vue-official-best-practices")) {
-      gi = gi.replace(
-        /.*tools\/eslint-plugin-vue-official-best-practices.*\n?/g,
-        "",
-      );
-      patched = true;
-      console.log("  REMOVE: stale eslint-plugin path from .gitignore");
+    if (gi.includes('tools/eslint-plugin-vue-official-best-practices')) {
+      gi = gi.replace(/.*tools\/eslint-plugin-vue-official-best-practices.*\n?/g, '')
+      patched = true
+      console.log('  REMOVE: stale eslint-plugin path from .gitignore')
     }
 
     if (patched && !dryRun) {
-      writeFileSync(gitignorePath, gi, "utf-8");
+      writeFileSync(gitignorePath, gi, 'utf-8')
     }
     if (!patched) {
-      console.log("  .gitignore is up to date.");
+      console.log('  .gitignore is up to date.')
     }
   }
-  console.log();
+  console.log()
 
   // Phase 7: Ensure .npmrc has strict-peer-dependencies
-  console.log("Phase 7: Checking .npmrc...");
-  const npmrcPath = join(appDir, ".npmrc");
+  console.log('Phase 7: Checking .npmrc...')
+  const npmrcPath = join(appDir, '.npmrc')
   if (existsSync(npmrcPath)) {
-    let npmrc = readFileSync(npmrcPath, "utf-8");
-    let patched = false;
+    let npmrc = readFileSync(npmrcPath, 'utf-8')
+    let patched = false
 
-    if (!npmrc.includes("strict-peer-dependencies")) {
-      console.log("  ADD: strict-peer-dependencies=false");
-      npmrc += "\nstrict-peer-dependencies=false\n";
-      patched = true;
-      npmrcChanged = true;
-    } else if (npmrc.includes("strict-peer-dependencies=true")) {
-      console.log("  UPDATE: strict-peer-dependencies=true → false");
-      npmrc = npmrc.replace(
-        "strict-peer-dependencies=true",
-        "strict-peer-dependencies=false",
-      );
-      patched = true;
-      npmrcChanged = true;
+    if (!npmrc.includes('strict-peer-dependencies')) {
+      console.log('  ADD: strict-peer-dependencies=false')
+      npmrc += '\nstrict-peer-dependencies=false\n'
+      patched = true
+      npmrcChanged = true
+    } else if (npmrc.includes('strict-peer-dependencies=true')) {
+      console.log('  UPDATE: strict-peer-dependencies=true → false')
+      npmrc = npmrc.replace('strict-peer-dependencies=true', 'strict-peer-dependencies=false')
+      patched = true
+      npmrcChanged = true
     }
 
-    if (npmrc.includes("@loganrenz:registry")) {
-      console.log("  UPDATE: @loganrenz → @narduk-enterprises registry scope");
-      npmrc = npmrc.replace(
-        /@loganrenz:registry/g,
-        "@narduk-enterprises:registry",
-      );
-      patched = true;
+    if (npmrc.includes('@loganrenz:registry')) {
+      console.log('  UPDATE: @loganrenz → @narduk-enterprises registry scope')
+      npmrc = npmrc.replace(/@loganrenz:registry/g, '@narduk-enterprises:registry')
+      patched = true
     }
 
     if (patched && !dryRun) {
-      writeFileSync(npmrcPath, npmrc, "utf-8");
+      writeFileSync(npmrcPath, npmrc, 'utf-8')
     }
 
     if (!patched) {
-      console.log("  .npmrc is up to date.");
+      console.log('  .npmrc is up to date.')
     }
   } else {
-    console.log("  ADD: .npmrc with registry + strict-peer-dependencies");
+    console.log('  ADD: .npmrc with registry + strict-peer-dependencies')
     if (!dryRun) {
       writeFileSync(
         npmrcPath,
         [
-          "@narduk-enterprises:registry=https://npm.pkg.github.com",
-          "",
-          "strict-peer-dependencies=false",
-          "",
-        ].join("\n"),
-        "utf-8",
-      );
-      npmrcChanged = true;
+          '@narduk-enterprises:registry=https://npm.pkg.github.com',
+          '',
+          'strict-peer-dependencies=false',
+          '',
+        ].join('\n'),
+        'utf-8',
+      )
+      npmrcChanged = true
     }
   }
-  console.log();
+  console.log()
 
   // Phase 8: Update root package.json scripts
-  console.log("Phase 8: Checking root package.json scripts...");
-  const rootPkgPath = join(appDir, "package.json");
+  console.log('Phase 8: Checking root package.json scripts...')
+  const rootPkgPath = join(appDir, 'package.json')
   if (existsSync(rootPkgPath)) {
-    const pkg = JSON.parse(readFileSync(rootPkgPath, "utf-8"));
-    const scripts = pkg.scripts || {};
-    let patchCount = 0;
+    const pkg = JSON.parse(readFileSync(rootPkgPath, 'utf-8'))
+    const scripts = pkg.scripts || {}
+    let patchCount = 0
 
     const requiredScripts: Record<string, string> = {
-      predev: "node tools/check-setup.cjs",
-      prebuild: "node tools/check-setup.cjs",
-      predeploy: "node tools/check-setup.cjs",
-      "update-layer": "npx tsx tools/update-layer.ts",
-      "generate:favicons": "npx tsx tools/generate-favicons.ts",
+      predev: 'node tools/check-setup.cjs',
+      prebuild: 'node tools/check-setup.cjs',
+      predeploy: 'node tools/check-setup.cjs',
+      'update-layer': 'npx tsx tools/update-layer.ts',
+      'generate:favicons': 'npx tsx tools/generate-favicons.ts',
       // Fleet apps only run quality on their own code, not layer/eslint packages
       quality: "turbo run quality --filter='./apps/*'",
-    };
+      // Formatting — must match template exactly so all apps have consistent formatting tooling
+      format:
+        'prettier --write "**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}" --ignore-path .gitignore',
+      'format:check':
+        'prettier --check "**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}" --ignore-path .gitignore',
+    }
 
     for (const [name, cmd] of Object.entries(requiredScripts)) {
       if (!scripts[name]) {
-        console.log(`  ADD script: "${name}"`);
-        scripts[name] = cmd;
-        patchCount++;
+        console.log(`  ADD script: "${name}"`)
+        scripts[name] = cmd
+        patchCount++
       } else if (scripts[name] !== cmd) {
-        console.log(`  UPDATE script: "${name}"`);
-        scripts[name] = cmd;
-        patchCount++;
+        console.log(`  UPDATE script: "${name}"`)
+        scripts[name] = cmd
+        patchCount++
       }
     }
 
     // Ensure packageManager is set (required by pnpm/action-setup in CI)
-    const templatePkg = JSON.parse(
-      readFileSync(join(TEMPLATE_DIR, "package.json"), "utf-8"),
-    );
-    if (
-      templatePkg.packageManager &&
-      pkg.packageManager !== templatePkg.packageManager
-    ) {
-      console.log(`  SET packageManager: "${templatePkg.packageManager}"`);
-      pkg.packageManager = templatePkg.packageManager;
-      patchCount++;
-      packageJsonChanged = true;
+    const templatePkg = JSON.parse(readFileSync(join(TEMPLATE_DIR, 'package.json'), 'utf-8'))
+    if (templatePkg.packageManager && pkg.packageManager !== templatePkg.packageManager) {
+      console.log(`  SET packageManager: "${templatePkg.packageManager}"`)
+      pkg.packageManager = templatePkg.packageManager
+      patchCount++
+      packageJsonChanged = true
     }
 
-    const devDeps = pkg.devDependencies || {};
+    const devDeps = pkg.devDependencies || {}
     const requiredDevDeps: Record<string, string> = {
-      tsx: "^4.21.0",
-      turbo: "^2.8.12",
-    };
+      tsx: '^4.21.0',
+      turbo: '^2.8.12',
+      prettier: '^3.8.1',
+    }
 
     for (const [name, version] of Object.entries(requiredDevDeps)) {
       if (!devDeps[name]) {
-        console.log(`  ADD devDependency: "${name}@${version}"`);
-        devDeps[name] = version;
-        patchCount++;
-        packageJsonChanged = true;
+        console.log(`  ADD devDependency: "${name}@${version}"`)
+        devDeps[name] = version
+        patchCount++
+        packageJsonChanged = true
       }
     }
-    pkg.devDependencies = devDeps;
+    pkg.devDependencies = devDeps
 
     if (patchCount > 0) {
-      pkg.scripts = scripts;
+      pkg.scripts = scripts
       if (!dryRun) {
-        writeFileSync(
-          rootPkgPath,
-          JSON.stringify(pkg, null, 2) + "\n",
-          "utf-8",
-        );
+        writeFileSync(rootPkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8')
       }
-      console.log(`  ${patchCount} items patched.`);
+      console.log(`  ${patchCount} items patched.`)
     } else {
-      console.log("  All required scripts and dependencies present.");
+      console.log('  All required scripts and dependencies present.')
     }
   }
-  console.log();
+  console.log()
 
   // Phase 8.5: Sync pnpm configuration (overrides and onlyBuiltDependencies)
-  console.log("Phase 8.5: Syncing pnpm configuration...");
+  console.log('Phase 8.5: Syncing pnpm configuration...')
   if (existsSync(rootPkgPath)) {
     try {
-      const pkg = JSON.parse(readFileSync(rootPkgPath, "utf-8"));
-      const templatePkg = JSON.parse(
-        readFileSync(join(TEMPLATE_DIR, "package.json"), "utf-8"),
-      );
-      let changed = false;
+      const pkg = JSON.parse(readFileSync(rootPkgPath, 'utf-8'))
+      const templatePkg = JSON.parse(readFileSync(join(TEMPLATE_DIR, 'package.json'), 'utf-8'))
+      let changed = false
 
-      if (
-        JSON.stringify(pkg.pnpm?.overrides) !==
-        JSON.stringify(templatePkg.pnpm?.overrides)
-      ) {
-        console.log("  UPDATE: pnpm.overrides");
-        pkg.pnpm = pkg.pnpm || {};
-        pkg.pnpm.overrides = templatePkg.pnpm.overrides;
-        changed = true;
-        packageJsonChanged = true;
+      if (JSON.stringify(pkg.pnpm?.overrides) !== JSON.stringify(templatePkg.pnpm?.overrides)) {
+        console.log('  UPDATE: pnpm.overrides')
+        pkg.pnpm = pkg.pnpm || {}
+        pkg.pnpm.overrides = templatePkg.pnpm.overrides
+        changed = true
+        packageJsonChanged = true
       }
 
       if (
         JSON.stringify(pkg.pnpm?.onlyBuiltDependencies) !==
         JSON.stringify(templatePkg.pnpm?.onlyBuiltDependencies)
       ) {
-        console.log("  UPDATE: pnpm.onlyBuiltDependencies");
-        pkg.pnpm = pkg.pnpm || {};
-        pkg.pnpm.onlyBuiltDependencies = templatePkg.pnpm.onlyBuiltDependencies;
-        changed = true;
-        packageJsonChanged = true;
+        console.log('  UPDATE: pnpm.onlyBuiltDependencies')
+        pkg.pnpm = pkg.pnpm || {}
+        pkg.pnpm.onlyBuiltDependencies = templatePkg.pnpm.onlyBuiltDependencies
+        changed = true
+        packageJsonChanged = true
       }
 
       if (changed && !dryRun) {
-        writeFileSync(
-          rootPkgPath,
-          JSON.stringify(pkg, null, 2) + "\n",
-          "utf-8",
-        );
-        console.log("  ✅ Updated package.json pnpm config");
+        writeFileSync(rootPkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8')
+        console.log('  ✅ Updated package.json pnpm config')
       } else if (!changed) {
-        console.log("  pnpm configuration matches template.");
+        console.log('  pnpm configuration matches template.')
       }
     } catch {
       /* skip */
     }
   }
-  console.log();
+  console.log()
 
   // Phase 9: Ensure .setup-complete sentinel exists
   // sync-template only runs on already-initialized derived apps, so the bootstrap
   // guard (check-setup.js) should never block them. Create the sentinel if missing.
-  console.log("Phase 9: Checking bootstrap sentinel...");
-  const sentinelPath = join(appDir, ".setup-complete");
+  console.log('Phase 9: Checking bootstrap sentinel...')
+  const sentinelPath = join(appDir, '.setup-complete')
   if (existsSync(sentinelPath)) {
-    console.log("  .setup-complete already exists.");
+    console.log('  .setup-complete already exists.')
   } else {
-    console.log("  ADD: .setup-complete (app is already initialized)");
+    console.log('  ADD: .setup-complete (app is already initialized)')
     if (!dryRun) {
       writeFileSync(
         sentinelPath,
         `initialized=${new Date().toISOString()}\napp=${appName}\nsource=sync-template\n`,
-        "utf-8",
-      );
+        'utf-8',
+      )
     }
   }
-  console.log();
+  console.log()
 
   // Phase 10: Update compatibility dates to today
-  console.log("Phase 10: Updating compatibility dates...");
-  const today = new Date().toISOString().slice(0, 10);
-  let datesUpdated = 0;
+  console.log('Phase 10: Updating compatibility dates...')
+  const today = new Date().toISOString().slice(0, 10)
+  let datesUpdated = 0
 
   // wrangler.json files
-  const appsPath = join(appDir, "apps");
+  const appsPath = join(appDir, 'apps')
   if (existsSync(appsPath)) {
     for (const entry of readdirSync(appsPath, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
-      const wranglerPath = join(appsPath, entry.name, "wrangler.json");
-      if (!existsSync(wranglerPath)) continue;
+      if (!entry.isDirectory()) continue
+      const wranglerPath = join(appsPath, entry.name, 'wrangler.json')
+      if (!existsSync(wranglerPath)) continue
       try {
-        const content = readFileSync(wranglerPath, "utf-8");
+        const content = readFileSync(wranglerPath, 'utf-8')
         const updated = content.replace(
           /"compatibility_date":\s*"[^"]*"/,
           `"compatibility_date": "${today}"`,
-        );
+        )
         if (content !== updated) {
-          console.log(`  UPDATE: apps/${entry.name}/wrangler.json → ${today}`);
-          if (!dryRun) writeFileSync(wranglerPath, updated, "utf-8");
-          datesUpdated++;
+          console.log(`  UPDATE: apps/${entry.name}/wrangler.json → ${today}`)
+          if (!dryRun) writeFileSync(wranglerPath, updated, 'utf-8')
+          datesUpdated++
         }
       } catch {
         /* skip */
@@ -684,266 +645,244 @@ jobs:
   }
 
   // nuxt.config.ts compatibilityDate in layer
-  const layerConfigPath = join(
-    appDir,
-    "layers/narduk-nuxt-layer/nuxt.config.ts",
-  );
+  const layerConfigPath = join(appDir, 'layers/narduk-nuxt-layer/nuxt.config.ts')
   if (existsSync(layerConfigPath)) {
     try {
-      const content = readFileSync(layerConfigPath, "utf-8");
+      const content = readFileSync(layerConfigPath, 'utf-8')
       const updated = content.replace(
         /compatibilityDate:\s*'[^']*'/,
         `compatibilityDate: '${today}'`,
-      );
+      )
       if (content !== updated) {
-        console.log(
-          `  UPDATE: layers/narduk-nuxt-layer/nuxt.config.ts → ${today}`,
-        );
-        if (!dryRun) writeFileSync(layerConfigPath, updated, "utf-8");
-        datesUpdated++;
+        console.log(`  UPDATE: layers/narduk-nuxt-layer/nuxt.config.ts → ${today}`)
+        if (!dryRun) writeFileSync(layerConfigPath, updated, 'utf-8')
+        datesUpdated++
       }
     } catch {
       /* skip */
     }
   }
 
-  if (datesUpdated === 0) console.log("  All compatibility dates are current.");
-  console.log();
+  if (datesUpdated === 0) console.log('  All compatibility dates are current.')
+  console.log()
 
   // Phase 11: Enforce Doppler hub-and-spoke references
-  console.log("Phase 11: Checking Doppler hub references...");
-  let dopplerAvailable = false;
+  console.log('Phase 11: Checking Doppler hub references...')
+  let dopplerAvailable = false
   try {
-    execSync("doppler --version", { encoding: "utf-8", stdio: "pipe" });
-    dopplerAvailable = true;
+    execSync('doppler --version', { encoding: 'utf-8', stdio: 'pipe' })
+    dopplerAvailable = true
   } catch {
     /* not installed */
   }
 
   if (!dopplerAvailable) {
-    console.log("  ⏭ Doppler CLI not available; skipping.");
+    console.log('  ⏭ Doppler CLI not available; skipping.')
   } else {
-    const appPkgPath = join(appDir, "package.json");
-    let projectName = appName;
+    const appPkgPath = join(appDir, 'package.json')
+    let projectName = appName
     if (existsSync(appPkgPath)) {
       try {
-        const pkg = JSON.parse(readFileSync(appPkgPath, "utf-8"));
-        if (pkg.name) projectName = pkg.name;
+        const pkg = JSON.parse(readFileSync(appPkgPath, 'utf-8'))
+        if (pkg.name) projectName = pkg.name
       } catch {
         /* use fallback */
       }
     }
 
-    let projectExists = false;
+    let projectExists = false
     try {
       execSync(`doppler projects get ${projectName}`, {
-        encoding: "utf-8",
-        stdio: "pipe",
-      });
-      projectExists = true;
+        encoding: 'utf-8',
+        stdio: 'pipe',
+      })
+      projectExists = true
     } catch {
       /* project doesn't exist */
     }
 
     if (!projectExists) {
-      console.log(`  Doppler project "${projectName}" not found — creating...`);
+      console.log(`  Doppler project "${projectName}" not found — creating...`)
       if (!dryRun) {
         try {
           execSync(
             `doppler projects create ${projectName} --description "${appName} auto-provisioned by sync-template"`,
-            { encoding: "utf-8", stdio: "pipe" },
-          );
-          console.log(`  ✅ Created Doppler project: ${projectName}`);
-          projectExists = true;
+            { encoding: 'utf-8', stdio: 'pipe' },
+          )
+          console.log(`  ✅ Created Doppler project: ${projectName}`)
+          projectExists = true
         } catch (e: any) {
-          console.warn(`  ⚠️ Failed to create Doppler project: ${e.message}`);
+          console.warn(`  ⚠️ Failed to create Doppler project: ${e.message}`)
         }
       } else {
-        console.log(`  Would create Doppler project: ${projectName}`);
+        console.log(`  Would create Doppler project: ${projectName}`)
       }
     }
 
     if (!projectExists) {
-      console.log(
-        `  ⏭ Cannot proceed without Doppler project; skipping hub ref check.`,
-      );
+      console.log(`  ⏭ Cannot proceed without Doppler project; skipping hub ref check.`)
     } else {
       const hubRefs: Record<string, string> = {
-        CLOUDFLARE_API_TOKEN:
-          "${narduk-nuxt-template.prd.CLOUDFLARE_API_TOKEN}",
-        CLOUDFLARE_ACCOUNT_ID:
-          "${narduk-nuxt-template.prd.CLOUDFLARE_ACCOUNT_ID}",
-        POSTHOG_PUBLIC_KEY: "${narduk-nuxt-template.prd.POSTHOG_PUBLIC_KEY}",
-        POSTHOG_PROJECT_ID: "${narduk-nuxt-template.prd.POSTHOG_PROJECT_ID}",
-        POSTHOG_PROJECT_TOKEN:
-          "${narduk-nuxt-template.prd.POSTHOG_PROJECT_TOKEN}",
-        POSTHOG_HOST: "${narduk-nuxt-template.prd.POSTHOG_HOST}",
-        POSTHOG_PERSONAL_API_KEY:
-          "${narduk-nuxt-template.prd.POSTHOG_PERSONAL_API_KEY}",
-        GA_ACCOUNT_ID: "${narduk-nuxt-template.prd.GA_ACCOUNT_ID}",
-        GSC_SERVICE_ACCOUNT_JSON:
-          "${narduk-nuxt-template.prd.GSC_SERVICE_ACCOUNT_JSON}",
-        GSC_USER_EMAIL: "${narduk-nuxt-template.prd.GSC_USER_EMAIL}",
-        APPLE_KEY_ID: "${narduk-nuxt-template.prd.APPLE_KEY_ID}",
-        APPLE_SECRET_KEY: "${narduk-nuxt-template.prd.APPLE_SECRET_KEY}",
-        APPLE_TEAM_ID: "${narduk-nuxt-template.prd.APPLE_TEAM_ID}",
-      };
+        CLOUDFLARE_API_TOKEN: '${narduk-nuxt-template.prd.CLOUDFLARE_API_TOKEN}',
+        CLOUDFLARE_ACCOUNT_ID: '${narduk-nuxt-template.prd.CLOUDFLARE_ACCOUNT_ID}',
+        POSTHOG_PUBLIC_KEY: '${narduk-nuxt-template.prd.POSTHOG_PUBLIC_KEY}',
+        POSTHOG_PROJECT_ID: '${narduk-nuxt-template.prd.POSTHOG_PROJECT_ID}',
+        POSTHOG_PROJECT_TOKEN: '${narduk-nuxt-template.prd.POSTHOG_PROJECT_TOKEN}',
+        POSTHOG_HOST: '${narduk-nuxt-template.prd.POSTHOG_HOST}',
+        POSTHOG_PERSONAL_API_KEY: '${narduk-nuxt-template.prd.POSTHOG_PERSONAL_API_KEY}',
+        GA_ACCOUNT_ID: '${narduk-nuxt-template.prd.GA_ACCOUNT_ID}',
+        GSC_SERVICE_ACCOUNT_JSON: '${narduk-nuxt-template.prd.GSC_SERVICE_ACCOUNT_JSON}',
+        GSC_USER_EMAIL: '${narduk-nuxt-template.prd.GSC_USER_EMAIL}',
+        APPLE_KEY_ID: '${narduk-nuxt-template.prd.APPLE_KEY_ID}',
+        APPLE_SECRET_KEY: '${narduk-nuxt-template.prd.APPLE_SECRET_KEY}',
+        APPLE_TEAM_ID: '${narduk-nuxt-template.prd.APPLE_TEAM_ID}',
+      }
 
-      let hubTokenValue = "";
+      let hubTokenValue = ''
       try {
         const hubJson = execSync(
-          "doppler secrets get CLOUDFLARE_API_TOKEN --project narduk-nuxt-template --config prd --json",
-          { encoding: "utf-8", stdio: "pipe" },
-        );
-        hubTokenValue =
-          JSON.parse(hubJson).CLOUDFLARE_API_TOKEN?.computed || "";
+          'doppler secrets get CLOUDFLARE_API_TOKEN --project narduk-nuxt-template --config prd --json',
+          { encoding: 'utf-8', stdio: 'pipe' },
+        )
+        hubTokenValue = JSON.parse(hubJson).CLOUDFLARE_API_TOKEN?.computed || ''
       } catch {
         /* can't read hub */
       }
 
       if (!hubTokenValue) {
-        console.log(
-          "  ⏭ Cannot read hub project; skipping Doppler validation.",
-        );
+        console.log('  ⏭ Cannot read hub project; skipping Doppler validation.')
       } else {
-        let spokeTokenValue = "";
+        let spokeTokenValue = ''
         try {
           const spokeJson = execSync(
             `doppler secrets get CLOUDFLARE_API_TOKEN --project ${projectName} --config prd --json`,
-            { encoding: "utf-8", stdio: "pipe" },
-          );
-          spokeTokenValue =
-            JSON.parse(spokeJson).CLOUDFLARE_API_TOKEN?.computed || "";
+            { encoding: 'utf-8', stdio: 'pipe' },
+          )
+          spokeTokenValue = JSON.parse(spokeJson).CLOUDFLARE_API_TOKEN?.computed || ''
         } catch {
           /* secret missing */
         }
 
         if (spokeTokenValue === hubTokenValue) {
-          console.log("  Doppler hub references are correct.");
+          console.log('  Doppler hub references are correct.')
         } else {
-          console.log(
-            "  STALE: Cloudflare credentials are direct values, not hub references.",
-          );
+          console.log('  STALE: Cloudflare credentials are direct values, not hub references.')
           if (!dryRun) {
             const pairs = Object.entries(hubRefs)
               .map(([k, v]) => `${k}='${v}'`)
-              .join(" ");
+              .join(' ')
             try {
-              execSync(
-                `doppler secrets set ${pairs} --project ${projectName} --config prd`,
-                { encoding: "utf-8", stdio: "pipe" },
-              );
+              execSync(`doppler secrets set ${pairs} --project ${projectName} --config prd`, {
+                encoding: 'utf-8',
+                stdio: 'pipe',
+              })
               console.log(
                 `  ✅ Set ${Object.keys(hubRefs).length} hub references in ${projectName}/prd`,
-              );
+              )
             } catch (e: any) {
-              console.warn(`  ⚠️ Failed to set hub references: ${e.message}`);
+              console.warn(`  ⚠️ Failed to set hub references: ${e.message}`)
             }
           } else {
             console.log(
               `  Would set ${Object.keys(hubRefs).length} hub references in ${projectName}/prd`,
-            );
+            )
           }
         }
       }
     }
   }
-  console.log();
+  console.log()
 
   // Phase 12: Ensure doppler.yaml exists
-  console.log("Phase 12: Checking doppler.yaml...");
-  const dopplerYamlPath = join(appDir, "doppler.yaml");
+  console.log('Phase 12: Checking doppler.yaml...')
+  const dopplerYamlPath = join(appDir, 'doppler.yaml')
   if (existsSync(dopplerYamlPath)) {
-    console.log("  doppler.yaml already exists.");
+    console.log('  doppler.yaml already exists.')
   } else {
     // Always use the directory name as the Doppler project name — this matches
     // the fleet convention (Doppler project = repo/directory name, not package.json name).
-    const dopplerYamlContent = `setup:\n  project: ${appName}\n  config: prd\n`;
-    console.log(`  ADD: doppler.yaml (project=${appName}, config=prd)`);
+    const dopplerYamlContent = `setup:\n  project: ${appName}\n  config: prd\n`
+    console.log(`  ADD: doppler.yaml (project=${appName}, config=prd)`)
     if (!dryRun) {
-      writeFileSync(dopplerYamlPath, dopplerYamlContent, "utf-8");
+      writeFileSync(dopplerYamlPath, dopplerYamlContent, 'utf-8')
     }
   }
-  console.log();
+  console.log()
 
   // Phase 13: Sync lockfile
   if ((packageJsonChanged || npmrcChanged) && !dryRun) {
-    console.log("Phase 13: Syncing pnpm-lock.yaml...");
+    console.log('Phase 13: Syncing pnpm-lock.yaml...')
     try {
-      execSync("pnpm install --no-frozen-lockfile", {
+      execSync('pnpm install --no-frozen-lockfile', {
         cwd: appDir,
-        stdio: "inherit",
-      });
-      console.log("  ✅ Lockfile synchronized.");
+        stdio: 'inherit',
+      })
+      console.log('  ✅ Lockfile synchronized.')
     } catch (e: any) {
-      console.warn(`  ⚠️ Failed to sync lockfile: ${e.message}`);
+      console.warn(`  ⚠️ Failed to sync lockfile: ${e.message}`)
     }
   } else if (packageJsonChanged || npmrcChanged) {
-    console.log("Phase 13: Would sync pnpm-lock.yaml (dry run).");
+    console.log('Phase 13: Would sync pnpm-lock.yaml (dry run).')
   }
 
   // Phase 14: Sync pre-commit hook (lockfile drift prevention)
-  console.log("Phase 14: Syncing pre-commit hook...");
-  const templateHook = join(TEMPLATE_DIR, ".githooks/pre-commit");
-  const appHooksDir = join(appDir, ".githooks");
-  const appHook = join(appHooksDir, "pre-commit");
+  console.log('Phase 14: Syncing pre-commit hook...')
+  const templateHook = join(TEMPLATE_DIR, '.githooks/pre-commit')
+  const appHooksDir = join(appDir, '.githooks')
+  const appHook = join(appHooksDir, 'pre-commit')
   if (existsSync(templateHook)) {
-    const templateContent = readFileSync(templateHook, "utf-8");
-    const appContent = existsSync(appHook)
-      ? readFileSync(appHook, "utf-8")
-      : "";
+    const templateContent = readFileSync(templateHook, 'utf-8')
+    const appContent = existsSync(appHook) ? readFileSync(appHook, 'utf-8') : ''
     if (templateContent !== appContent) {
       if (!dryRun) {
-        mkdirSync(appHooksDir, { recursive: true });
-        copyFileSync(templateHook, appHook);
-        execSync(`chmod +x ${appHook}`, { stdio: "pipe" });
+        mkdirSync(appHooksDir, { recursive: true })
+        copyFileSync(templateHook, appHook)
+        execSync(`chmod +x ${appHook}`, { stdio: 'pipe' })
         execSync(`git config core.hooksPath .githooks`, {
           cwd: appDir,
-          stdio: "pipe",
-        });
-        console.log("  ✅ Pre-commit hook synced and activated.");
+          stdio: 'pipe',
+        })
+        console.log('  ✅ Pre-commit hook synced and activated.')
       } else {
-        console.log("  Would sync pre-commit hook (dry run).");
+        console.log('  Would sync pre-commit hook (dry run).')
       }
     } else {
-      console.log("  ✅ Pre-commit hook already up to date.");
+      console.log('  ✅ Pre-commit hook already up to date.')
     }
   }
 
   // Summary
-  console.log(
-    "═══════════════════════════════════════════════════════════════",
-  );
+  console.log('═══════════════════════════════════════════════════════════════')
   if (dryRun) {
-    console.log(" DRY RUN — no files were modified.");
-    console.log(" Re-run without --dry-run to apply changes.");
+    console.log(' DRY RUN — no files were modified.')
+    console.log(' Re-run without --dry-run to apply changes.')
   } else {
-    console.log(` Sync complete.`);
-    console.log();
-    console.log(" Next steps:");
-    console.log(`   cd ${appDir}`);
-    console.log("   pnpm install");
-    console.log("   pnpm run update-layer          # pull latest layer");
-    console.log("   pnpm run quality                # verify nothing broke");
-    console.log("   git add -A && git diff --cached # review changes");
-    console.log('   git commit -m "chore: sync with template infra"');
+    console.log(` Sync complete.`)
+    console.log()
+    console.log(' Next steps:')
+    console.log(`   cd ${appDir}`)
+    console.log('   pnpm install')
+    console.log('   pnpm run update-layer          # pull latest layer')
+    console.log('   pnpm run quality                # verify nothing broke')
+    console.log('   git add -A && git diff --cached # review changes')
+    console.log('   git commit -m "chore: sync with template infra"')
   }
-  console.log();
+  console.log()
 
   if (strict) {
     // Run a quick drift check to see if anything remains
-    const driftScript = join(appDir, "tools/check-drift-ci.ts");
+    const driftScript = join(appDir, 'tools/check-drift-ci.ts')
     if (existsSync(driftScript)) {
       try {
         execSync(`npx tsx ${driftScript} --strict`, {
-          stdio: "inherit",
+          stdio: 'inherit',
           cwd: appDir,
-        });
+        })
       } catch {
-        process.exit(1);
+        process.exit(1)
       }
     }
   }
 }
 
-main();
+main()

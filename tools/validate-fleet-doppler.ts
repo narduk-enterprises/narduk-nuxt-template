@@ -3,9 +3,14 @@
  * Run from the template repo so we catch missing config before check:reach or deploy.
  *
  * Usage:
- *   pnpm run check:fleet-doppler
+ *   pnpm run check:fleet-doppler --projects=app1,app2,app3
+ *   FLEET_PROJECTS=app1,app2 pnpm run check:fleet-doppler
  *
- * This runs under `doppler run`, so the template project's secrets are available.
+ * Fleet membership is owned by the control-plane D1 registry — this script does NOT
+ * maintain a hardcoded list of project names. Pass them via:
+ *   --projects=<comma-separated list>   (CLI flag)
+ *   FLEET_PROJECTS=<comma-separated>    (environment variable)
+ *
  * For fleet-wide read access, set FLEET_DOPPLER_TOKEN in the template's Doppler
  * project (prd) to a service token with read access to all fleet projects; the
  * script uses it when present for doppler secrets calls.
@@ -18,25 +23,14 @@ if (process.env.FLEET_DOPPLER_TOKEN) {
   process.env.DOPPLER_TOKEN = process.env.FLEET_DOPPLER_TOKEN
 }
 
-const FLEET_PROJECTS = [
-  'ai-media-gen',
-  'austin-texas-net',
-  'circuit-breaker-online',
-  'clawdle',
-  'control-plane',
-  'drift-map',
-  'enigma-box',
-  'flashcard-pro',
-  'imessage-dictionary',
-  'nagolnagemluapleira',
-  'neon-sewer-raid',
-  'ogpreview-app',
-  'old-austin-grouch',
-  'papa-everetts-pizza',
-  'sailing-passage-map',
-  'tiny-invoice',
-  'video-grab',
-]
+const projectsArg = process.argv
+  .slice(2)
+  .find((a) => a.startsWith('--projects='))
+  ?.slice('--projects='.length)
+const FLEET_PROJECTS: string[] = (projectsArg ?? process.env.FLEET_PROJECTS ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
 
 /** Secrets that every app MUST have to deploy and function. */
 const REQUIRED_SECRETS = [
@@ -57,6 +51,14 @@ const RECOMMENDED_SECRETS = [
   'POSTHOG_PROJECT_ID',
   'CRON_SECRET',
 ] as const
+
+if (FLEET_PROJECTS.length === 0) {
+  console.error('❌ No fleet projects specified.')
+  console.error(
+    '  Provide --projects=app1,app2 or set FLEET_PROJECTS=app1,app2 environment variable.',
+  )
+  process.exit(1)
+}
 
 function isDopplerAvailable(): boolean {
   try {
@@ -81,7 +83,9 @@ function getSecretNames(project: string, config: string): Set<string> | null {
 
 function main() {
   if (!isDopplerAvailable()) {
-    console.error('❌ Doppler CLI not available. Install and log in: https://docs.doppler.com/docs/install-cli')
+    console.error(
+      '❌ Doppler CLI not available. Install and log in: https://docs.doppler.com/docs/install-cli',
+    )
     process.exit(1)
   }
 
@@ -113,7 +117,9 @@ function main() {
   }
   console.log('════════════════════════════════════════════════════')
   if (noAccess > 0) {
-    console.error(`\n⚠️ ${noAccess} project(s) could not be read. Use a Doppler token with access to all fleet projects.`)
+    console.error(
+      `\n⚠️ ${noAccess} project(s) could not be read. Use a Doppler token with access to all fleet projects.`,
+    )
   }
   if (failed > 0) {
     console.error(`\n❌ ${failed} project(s) missing REQUIRED Doppler secrets (prd).`)
@@ -121,7 +127,9 @@ function main() {
     process.exit(1)
   }
   if (warned > 0) {
-    console.log(`\n🟠 ${warned} project(s) missing recommended secrets. Run setup-analytics.ts to fill gaps.`)
+    console.log(
+      `\n🟠 ${warned} project(s) missing recommended secrets. Run setup-analytics.ts to fill gaps.`,
+    )
   }
   if (failed === 0 && noAccess === 0) {
     console.log('\n✅ All fleet projects have required secrets.')

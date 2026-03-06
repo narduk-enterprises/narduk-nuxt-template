@@ -6,7 +6,7 @@
  *
  * Usage (run from template repo):
  *   npx tsx tools/migrate-to-monorepo.ts <app-dir>
- *   npx tsx tools/migrate-to-monorepo.ts ~/new-code/imessage-dictionary --dry-run
+ *   npx tsx tools/migrate-to-monorepo.ts ~/new-code/your-app --dry-run
  *
  * Options:
  *   --dry-run   Log what would be done without writing or running commands
@@ -216,7 +216,9 @@ function main() {
     try {
       const wr = JSON.parse(readFileSync(wranglerPath, 'utf-8'))
       if (wr.d1_databases?.[0]?.database_name) dbName = wr.d1_databases[0].database_name
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   const templateWebPkg = JSON.parse(
     readFileSync(join(TEMPLATE_DIR, 'apps/web/package.json'), 'utf-8'),
@@ -263,15 +265,13 @@ function main() {
     volta: templateWebPkg.volta || { node: '22.22.0' },
   }
   if (rootPkg.scripts?.['db:seed']) {
-    ;(webPkg.scripts as Record<string, string>)['db:seed'] =
-      rootPkg.scripts['db:seed'].replace(/wrangler d1 execute \S+/, `wrangler d1 execute ${dbName}`)
+    ;(webPkg.scripts as Record<string, string>)['db:seed'] = rootPkg.scripts['db:seed'].replace(
+      /wrangler d1 execute \S+/,
+      `wrangler d1 execute ${dbName}`,
+    )
   }
   if (!dryRun) {
-    writeFileSync(
-      join(appsWeb, 'package.json'),
-      JSON.stringify(webPkg, null, 2) + '\n',
-      'utf-8',
-    )
+    writeFileSync(join(appsWeb, 'package.json'), JSON.stringify(webPkg, null, 2) + '\n', 'utf-8')
   }
   console.log('  ✓ apps/web/package.json written.')
   console.log()
@@ -335,7 +335,7 @@ pnpm:
   if (existsSync(nuxtConfigPath)) {
     let content = readFileSync(nuxtConfigPath, 'utf-8')
     let changed = false
-    if (!content.includes("extends:") && !content.includes('extends :')) {
+    if (!content.includes('extends:') && !content.includes('extends :')) {
       content = content.replace(
         /export default defineNuxtConfig\(\{\s*\n/,
         "export default defineNuxtConfig({\n  extends: ['@narduk-enterprises/narduk-nuxt-template-layer'],\n  ",
@@ -344,7 +344,8 @@ pnpm:
     }
     if (!content.includes('nitro-cloudflare-dev')) {
       if (!content.includes('resolve(__dirname')) {
-        const pathImport = "import { resolve, dirname } from 'node:path'\nimport { fileURLToPath } from 'node:url'\nconst __dirname = dirname(fileURLToPath(import.meta.url))\n\n"
+        const pathImport =
+          "import { resolve, dirname } from 'node:path'\nimport { fileURLToPath } from 'node:url'\nconst __dirname = dirname(fileURLToPath(import.meta.url))\n\n"
         content = content.startsWith('import ') ? content : pathImport + content
       }
       content = content.replace(
@@ -401,11 +402,7 @@ pnpm:
   }
   delete (newRootPkg as Record<string, unknown>).type
   if (!dryRun) {
-    writeFileSync(
-      join(appDir, 'package.json'),
-      JSON.stringify(newRootPkg, null, 2) + '\n',
-      'utf-8',
-    )
+    writeFileSync(join(appDir, 'package.json'), JSON.stringify(newRootPkg, null, 2) + '\n', 'utf-8')
   }
   console.log('  ✓ Root package.json written.')
   console.log()
