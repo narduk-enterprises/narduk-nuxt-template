@@ -36,6 +36,7 @@ export default defineEventHandler(async (event) => {
     id: newUserId,
     name: body.name,
     email: normalizedEmail,
+    isAdmin: false,
   }
   await setUserSession(event, { user })
 

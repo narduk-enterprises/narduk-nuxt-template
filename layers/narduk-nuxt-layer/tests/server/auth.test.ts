@@ -12,6 +12,9 @@ vi.stubGlobal('useRuntimeConfig', () => ({
   sessionCookieName: 'test_session',
 }))
 
+// requireAuth checks nuxt-auth-utils session first; stub to return no session
+vi.stubGlobal('getUserSession', vi.fn().mockResolvedValue(null))
+
 // Mock useDatabase
 const mockDb = {
   select: vi.fn(),
