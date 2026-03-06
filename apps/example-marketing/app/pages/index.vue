@@ -1,7 +1,8 @@
 <script setup lang="ts">
 useSeo({
   title: 'Marketing Landing Page',
-  description: 'Example marketing page showcasing hero, pricing, testimonials, and contact form components.',
+  description:
+    'Example marketing page showcasing hero, pricing, testimonials, and contact form components.',
 })
 
 useWebPageSchema({

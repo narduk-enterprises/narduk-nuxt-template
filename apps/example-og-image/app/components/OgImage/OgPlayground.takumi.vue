@@ -1,15 +1,18 @@
 <script setup lang="ts">
-withDefaults(defineProps<{
-  title?: string
-  description?: string
-  badge?: string
-  accent?: string
-}>(), {
-  title: 'nuxt-og-image v6 beta',
-  description: 'Dynamic OG images on Cloudflare Workers',
-  badge: 'Playground',
-  accent: '#8b5cf6', // eslint-disable-line atx/no-inline-hex
-})
+withDefaults(
+  defineProps<{
+    title?: string
+    description?: string
+    badge?: string
+    accent?: string
+  }>(),
+  {
+    title: 'nuxt-og-image v6 beta',
+    description: 'Dynamic OG images on Cloudflare Workers',
+    badge: 'Playground',
+    accent: '#8b5cf6', // eslint-disable-line atx/no-inline-hex
+  },
+)
 </script>
 
 <template>
@@ -75,13 +78,24 @@ withDefaults(defineProps<{
     </div>
 
     <div :style="{ display: 'flex', flexDirection: 'column', gap: '18px', maxWidth: '940px' }">
-      <div :style="{ fontSize: '68px', fontWeight: '700', lineHeight: '1.05', letterSpacing: '-0.02em' }">
+      <div
+        :style="{
+          fontSize: '68px',
+          fontWeight: '700',
+          lineHeight: '1.05',
+          letterSpacing: '-0.02em',
+        }"
+      >
         {{ title }}
       </div>
       <div
-:style="{ fontSize: '34px', lineHeight: '1.25',
-                     // eslint-disable-next-line atx/no-inline-hex
-                     color: '#cbd5e1' }">
+        :style="{
+          fontSize: '34px',
+          lineHeight: '1.25',
+          // eslint-disable-next-line atx/no-inline-hex
+          color: '#cbd5e1',
+        }"
+      >
         {{ description }}
       </div>
     </div>
@@ -95,15 +109,14 @@ withDefaults(defineProps<{
       }"
     >
       <div
-:style="{
-        // eslint-disable-next-line atx/no-inline-hex
-        color: '#94a3b8'
-      }">
+        :style="{
+          // eslint-disable-next-line atx/no-inline-hex
+          color: '#94a3b8',
+        }"
+      >
         example-og-image
       </div>
-      <div :style="{ color: accent, fontWeight: '700' }">
-        /_og/*
-      </div>
+      <div :style="{ color: accent, fontWeight: '700' }">/_og/*</div>
     </div>
   </div>
 </template>

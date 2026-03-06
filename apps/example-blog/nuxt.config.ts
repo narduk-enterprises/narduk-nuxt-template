@@ -26,15 +26,11 @@ export default defineNuxtConfig({
     // Strip MDC/remark/rehype from optimizeDeps.include so Vite doesn't try to pre-bundle
     // them (they're transitive deps that can fail to resolve in pnpm; content runs server-side).
     ready(nuxt) {
-      const include = nuxt.options.vite?.optimizeDeps?.include as
-        | string[]
-        | undefined
+      const include = nuxt.options.vite?.optimizeDeps?.include as string[] | undefined
       if (include?.length) {
         nuxt.options.vite!.optimizeDeps!.include = include.filter(
           (entry) =>
-            !mdcOptimizeDepsPackages.some(
-              (pkg) => entry === pkg || entry.startsWith(`${pkg}>`),
-            ),
+            !mdcOptimizeDepsPackages.some((pkg) => entry === pkg || entry.startsWith(`${pkg}>`)),
         )
       }
     },
@@ -50,9 +46,9 @@ export default defineNuxtConfig({
     hooks: {
       'vite:extendConfig'(config) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ; (config as any).server ??= {}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ; (config as any).server.hmr = { port: hmrPort++ }
+        ;(config as any).server ??= {}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(config as any).server.hmr = { port: hmrPort++ }
       },
     },
   },

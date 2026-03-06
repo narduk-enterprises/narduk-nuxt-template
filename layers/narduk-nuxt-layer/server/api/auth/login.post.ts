@@ -2,7 +2,6 @@ import { z } from 'zod'
 import { users } from '../../database/schema'
 import { eq } from 'drizzle-orm'
 import { verifyUserPassword } from '../../utils/password'
-import { createSession } from '../../utils/auth'
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -31,9 +30,15 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { passwordHash: _passwordHash, ...cleanUser } = user
+  const { passwordHash: _passwordHash, ...rest } = user
+  const cleanUser = {
+    id: rest.id,
+    email: rest.email,
+    name: rest.name,
+    isAdmin: rest.isAdmin,
+  }
 
-  await createSession(event, user.id)
+  await setUserSession(event, { user: cleanUser })
 
   return { user: cleanUser }
 })

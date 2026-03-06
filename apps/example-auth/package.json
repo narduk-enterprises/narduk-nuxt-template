@@ -17,7 +17,8 @@
     "test:e2e": "playwright test --project=example-auth --config=../../playwright.config.ts",
     "db:ready": "pnpm run db:migrate && pnpm run db:seed",
     "db:migrate": "wrangler d1 execute narduk-nuxt-template-examples-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/0000_initial_schema.sql",
-    "db:seed": "wrangler d1 execute narduk-nuxt-template-examples-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed.sql"
+    "db:seed": "wrangler d1 execute narduk-nuxt-template-examples-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed.sql",
+    "format:check": "prettier --check \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path ../../.gitignore"
   },
   "dependencies": {
     "@narduk-enterprises/narduk-nuxt-template-layer": "workspace:*",

@@ -57,18 +57,24 @@ test.describe('example-blog', () => {
   test('navigate to post and see content', async ({ page }) => {
     await page.goto('/hello-world')
     await expect(page).toHaveURL(/\/hello-world/)
-    await expect(page.getByRole('heading', { name: 'Hello World: Building for the Edge' })).toBeVisible({ timeout: 10_000 })
+    await expect(
+      page.getByRole('heading', { name: 'Hello World: Building for the Edge' }),
+    ).toBeVisible({ timeout: 10_000 })
     await expect(page.getByText(/Nuxt 4|Welcome to the/)).toBeVisible()
   })
 
   test('post page loads without hydration errors', async ({ page }) => {
     await page.goto('/hello-world')
-    await expect(page.getByRole('heading', { name: 'Hello World: Building for the Edge' })).toBeVisible({ timeout: 10_000 })
+    await expect(
+      page.getByRole('heading', { name: 'Hello World: Building for the Edge' }),
+    ).toBeVisible({ timeout: 10_000 })
   })
 
   test('blog layout navigation to index', async ({ page }) => {
     await page.goto('/hello-world')
-    await expect(page.getByRole('heading', { name: 'Hello World: Building for the Edge' })).toBeVisible({ timeout: 10_000 })
+    await expect(
+      page.getByRole('heading', { name: 'Hello World: Building for the Edge' }),
+    ).toBeVisible({ timeout: 10_000 })
     await page.getByRole('link', { name: 'Blog', exact: true }).click()
     await expect(page).toHaveURL('/')
     await expect(page.getByRole('heading', { name: 'Our Blog' })).toBeVisible()

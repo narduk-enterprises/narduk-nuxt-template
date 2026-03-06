@@ -44,12 +44,17 @@ async function onDemoLogin() {
       </p>
     </div>
 
-    <UAlert v-if="demoError" color="error" variant="subtle" title="Error" :description="demoError" class="w-full max-w-md" />
+    <UAlert
+      v-if="demoError"
+      color="error"
+      variant="subtle"
+      title="Error"
+      :description="demoError"
+      class="w-full max-w-md"
+    />
 
     <div class="flex items-center gap-4">
-      <UButton to="/login" size="lg" icon="i-lucide-log-in">
-        Sign In
-      </UButton>
+      <UButton to="/login" size="lg" icon="i-lucide-log-in"> Sign In </UButton>
       <UButton to="/register" size="lg" variant="outline" color="neutral" icon="i-lucide-user-plus">
         Create Account
       </UButton>

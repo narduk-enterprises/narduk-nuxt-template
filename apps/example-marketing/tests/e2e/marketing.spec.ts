@@ -62,14 +62,18 @@ test.describe('example-marketing', () => {
     await page.goto('/')
     await waitForHydration(page)
     await page.getByRole('button', { name: "Let's talk" }).click()
-    await expect(page.getByText(/first name|last name|invalid|at least/i).first()).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText(/first name|last name|invalid|at least/i).first()).toBeVisible({
+      timeout: 5_000,
+    })
   })
 
   test('contact form success', async ({ page }) => {
     await page.goto('/')
     await waitForHydration(page)
     await page.getByRole('heading', { name: 'Contact sales' }).scrollIntoViewIfNeeded()
-    const form = page.locator('form').filter({ has: page.getByRole('button', { name: "Let's talk" }) })
+    const form = page
+      .locator('form')
+      .filter({ has: page.getByRole('button', { name: "Let's talk" }) })
     await form.getByLabel(/first name/i).click()
     await page.keyboard.type('Jane')
     await form.getByLabel(/last name/i).click()
@@ -86,7 +90,9 @@ test.describe('example-marketing', () => {
     await page.goto('/')
     await waitForHydration(page)
     await page.getByRole('heading', { name: 'Contact sales' }).scrollIntoViewIfNeeded()
-    const form = page.locator('form').filter({ has: page.getByRole('button', { name: "Let's talk" }) })
+    const form = page
+      .locator('form')
+      .filter({ has: page.getByRole('button', { name: "Let's talk" }) })
     await form.getByLabel(/first name/i).click()
     await page.keyboard.type('Jane')
     await form.getByLabel(/last name/i).click()
@@ -100,7 +106,6 @@ test.describe('example-marketing', () => {
     // After success, form fields should be cleared
     await expect(form.getByLabel(/first name/i)).toHaveValue('')
   })
-
 
   test('page has correct title', async ({ page }) => {
     await page.goto('/')

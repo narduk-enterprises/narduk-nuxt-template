@@ -1,7 +1,8 @@
 <script setup lang="ts">
 useSeo({
   title: 'Nuxt 4 Showcase',
-  description: 'Interactive examples showcasing Nuxt 4, Nuxt UI 4, and Cloudflare Workers patterns.',
+  description:
+    'Interactive examples showcasing Nuxt 4, Nuxt UI 4, and Cloudflare Workers patterns.',
   ogImage: {
     title: 'Nuxt 4 Showcase',
     description: 'Production-ready example apps',
@@ -11,7 +12,8 @@ useSeo({
 
 useWebPageSchema({
   name: 'Nuxt 4 Showcase',
-  description: 'Interactive examples showcasing Nuxt 4, Nuxt UI 4, and Cloudflare Workers patterns.',
+  description:
+    'Interactive examples showcasing Nuxt 4, Nuxt UI 4, and Cloudflare Workers patterns.',
   type: 'CollectionPage',
 })
 
@@ -20,7 +22,8 @@ const config = useRuntimeConfig()
 const examples = [
   {
     title: 'Auth & Dashboard',
-    description: 'Login, registration, session management, and a protected dashboard with sidebar navigation.',
+    description:
+      'Login, registration, session management, and a protected dashboard with sidebar navigation.',
     icon: 'i-lucide-lock',
     href: config.public.exampleAuthUrl as string,
     color: 'text-emerald-500',
@@ -44,7 +47,8 @@ const examples = [
   },
   {
     title: 'OG Images',
-    description: 'Dynamic Open Graph image generation with nuxt-og-image v6 beta on Cloudflare Workers.',
+    description:
+      'Dynamic Open Graph image generation with nuxt-og-image v6 beta on Cloudflare Workers.',
     icon: 'i-lucide-image-up',
     href: config.public.exampleOgImageUrl as string,
     color: 'text-violet-500',
@@ -52,7 +56,8 @@ const examples = [
   },
   {
     title: 'Apple Maps',
-    description: 'Apple MapKit JS 5.x integration with JWT token auth on Nuxt 4 and Cloudflare Workers.',
+    description:
+      'Apple MapKit JS 5.x integration with JWT token auth on Nuxt 4 and Cloudflare Workers.',
     icon: 'i-lucide-map',
     href: config.public.exampleAppleMapsUrl as string,
     color: 'text-blue-500',
@@ -69,8 +74,8 @@ const examples = [
         Nuxt 4 <span class="text-primary">Showcase</span>
       </h1>
       <p class="text-lg text-muted max-w-2xl mx-auto">
-        Production-ready example apps built with the Nuxt 4 template layer.
-        Each example is a standalone Cloudflare Worker you can explore independently.
+        Production-ready example apps built with the Nuxt 4 template layer. Each example is a
+        standalone Cloudflare Worker you can explore independently.
       </p>
       <div class="flex items-center justify-center gap-4">
         <UButton
@@ -98,7 +103,9 @@ const examples = [
         rel="noopener"
         class="group block"
       >
-        <UCard class="h-full transition-all hover:ring-2 hover:ring-primary/50 hover:-translate-y-1">
+        <UCard
+          class="h-full transition-all hover:ring-2 hover:ring-primary/50 hover:-translate-y-1"
+        >
           <div class="space-y-4">
             <div class="flex items-center gap-3">
               <div class="p-2.5 rounded-lg bg-elevated">
@@ -107,7 +114,10 @@ const examples = [
               <h2 class="text-xl font-semibold group-hover:text-primary transition-colors">
                 {{ example.title }}
               </h2>
-              <UIcon name="i-lucide-external-link" class="size-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
+              <UIcon
+                name="i-lucide-external-link"
+                class="size-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
+              />
             </div>
 
             <p class="text-sm text-muted leading-relaxed">
@@ -139,9 +149,9 @@ const examples = [
         <div class="space-y-2">
           <h3 class="font-semibold">Independent Workers</h3>
           <p class="text-sm text-muted">
-            Each example runs as a fully independent Cloudflare Worker with its own domain.
-            Click any card above to open it in a new tab. All apps are built from the same
-            Nuxt 4 template layer and can be developed and deployed independently.
+            Each example runs as a fully independent Cloudflare Worker with its own domain. Click
+            any card above to open it in a new tab. All apps are built from the same Nuxt 4 template
+            layer and can be developed and deployed independently.
           </p>
         </div>
       </div>

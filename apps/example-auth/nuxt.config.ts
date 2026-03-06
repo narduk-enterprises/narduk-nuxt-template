@@ -28,16 +28,19 @@ export default defineNuxtConfig({
     hooks: {
       'vite:extendConfig'(config) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ; (config as any).server = (config as any).server || {}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ; (config as any).server.hmr = { port: hmrPort++ }
+        ;(config as any).server = (config as any).server || {}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(config as any).server.hmr = { port: hmrPort++ }
       },
     },
   },
 
   runtimeConfig: {
     session: {
-      password: '', // Overridden at runtime via NUXT_SESSION_PASSWORD
+      // nuxt-auth-utils requires min 32 chars for sealed cookie encryption
+      password:
+        process.env.NUXT_SESSION_PASSWORD ||
+        (import.meta.dev ? 'example-auth-dev-session-secret-min-32-chars' : ''),
       cookie: {
         secure: false, // Allow cookies over HTTP in local dev (Safari compat)
       },

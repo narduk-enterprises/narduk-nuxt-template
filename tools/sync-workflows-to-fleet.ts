@@ -14,7 +14,16 @@
  *   npx tsx tools/sync-workflows-to-fleet.ts --apps-dir ~/other   # override apps directory
  */
 
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -32,7 +41,7 @@ const prune = args.includes('--prune')
 const appsDirArg = (() => {
   const idx = args.indexOf('--apps-dir')
   if (idx !== -1 && args[idx + 1]) return args[idx + 1]
-  const eq = args.find(a => a.startsWith('--apps-dir='))
+  const eq = args.find((a) => a.startsWith('--apps-dir='))
   if (eq) return eq.split('=')[1]
   return join(process.env.HOME || '~', 'new-code/template-apps')
 })()
@@ -62,14 +71,17 @@ function main() {
 
   // Discover canonical workflow files (*.md only)
   const canonicalFiles = readdirSync(TEMPLATE_WORKFLOWS)
-    .filter(f => f.endsWith('.md'))
+    .filter((f) => f.endsWith('.md'))
     .sort()
 
   // Discover fleet apps
   const apps = readdirSync(APPS_DIR)
-    .filter(d => {
-      try { return statSync(join(APPS_DIR, d)).isDirectory() }
-      catch { return false }
+    .filter((d) => {
+      try {
+        return statSync(join(APPS_DIR, d)).isDirectory()
+      } catch {
+        return false
+      }
     })
     .sort()
 
@@ -83,7 +95,13 @@ function main() {
   console.log()
 
   // Summary accumulators
-  const summary: { name: string; added: number; updated: number; pruned: number; unchanged: number }[] = []
+  const summary: {
+    name: string
+    added: number
+    updated: number
+    pruned: number
+    unchanged: number
+  }[] = []
 
   for (const appName of apps) {
     const appDir = join(APPS_DIR, appName)
@@ -128,7 +146,7 @@ function main() {
     // Prune stale workflows (files in app that aren't in canonical set)
     if (prune && existsSync(appWorkflows)) {
       const canonicalSet = new Set(canonicalFiles)
-      const appFiles = readdirSync(appWorkflows).filter(f => f.endsWith('.md'))
+      const appFiles = readdirSync(appWorkflows).filter((f) => f.endsWith('.md'))
 
       for (const file of appFiles) {
         if (!canonicalSet.has(file)) {
@@ -149,11 +167,7 @@ function main() {
   console.log('═'.repeat(72))
   const col = (s: string, w: number) => s.padEnd(w)
   console.log(
-    col('App', 30)
-    + col('Added', 8)
-    + col('Updated', 10)
-    + col('Pruned', 9)
-    + col('Same', 6)
+    col('App', 30) + col('Added', 8) + col('Updated', 10) + col('Pruned', 9) + col('Same', 6),
   )
   console.log('─'.repeat(72))
 
@@ -172,21 +186,21 @@ function main() {
     const icon = hasChanges ? '🔄' : '✅'
 
     console.log(
-      col(`${icon} ${app.name}`, 30)
-      + col(String(app.added), 8)
-      + col(String(app.updated), 10)
-      + col(String(app.pruned), 9)
-      + col(String(app.unchanged), 6)
+      col(`${icon} ${app.name}`, 30) +
+        col(String(app.added), 8) +
+        col(String(app.updated), 10) +
+        col(String(app.pruned), 9) +
+        col(String(app.unchanged), 6),
     )
   }
 
   console.log('─'.repeat(72))
   console.log(
-    col('TOTAL', 30)
-    + col(String(totalAdded), 8)
-    + col(String(totalUpdated), 10)
-    + col(String(totalPruned), 9)
-    + col(String(totalUnchanged), 6)
+    col('TOTAL', 30) +
+      col(String(totalAdded), 8) +
+      col(String(totalUpdated), 10) +
+      col(String(totalPruned), 9) +
+      col(String(totalUnchanged), 6),
   )
   console.log()
 

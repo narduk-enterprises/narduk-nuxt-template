@@ -9,13 +9,11 @@ const colorModeIcon = computed(() => {
 
 function cycleColorMode() {
   const modes = ['system', 'light', 'dark'] as const
-  const idx = modes.indexOf(colorMode.preference as typeof modes[number])
+  const idx = modes.indexOf(colorMode.preference as (typeof modes)[number])
   colorMode.preference = modes[(idx + 1) % modes.length]!
 }
 
-const navItems = [
-  { label: 'Overview', to: '/dashboard/', icon: 'i-lucide-layout-dashboard' },
-]
+const navItems = [{ label: 'Overview', to: '/dashboard/', icon: 'i-lucide-layout-dashboard' }]
 </script>
 
 <template>
@@ -23,7 +21,9 @@ const navItems = [
     <div class="h-screen flex bg-default">
       <aside class="w-64 border-r border-default bg-elevated flex flex-col max-md:hidden">
         <div class="p-4 border-b border-default flex items-center gap-3">
-          <div class="size-8 rounded bg-primary text-white flex items-center justify-center font-bold">
+          <div
+            class="size-8 rounded bg-primary text-white flex items-center justify-center font-bold"
+          >
             D
           </div>
           <span class="font-semibold">Dashboard</span>
@@ -46,16 +46,36 @@ const navItems = [
         <div class="p-4 border-t border-default space-y-4">
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium text-muted truncate">{{ user?.name || 'User' }}</span>
-            <UButton :icon="colorModeIcon" variant="ghost" color="neutral" size="sm" aria-label="Toggle color mode" @click="cycleColorMode" />
+            <UButton
+              :icon="colorModeIcon"
+              variant="ghost"
+              color="neutral"
+              size="sm"
+              aria-label="Toggle color mode"
+              @click="cycleColorMode"
+            />
           </div>
-          <UButton color="neutral" variant="ghost" icon="i-lucide-log-out" block @click="logout">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            icon="i-lucide-log-out"
+            block
+            @click="
+              async () => {
+                await logout()
+                await navigateTo('/login')
+              }
+            "
+          >
             Sign out
           </UButton>
         </div>
       </aside>
 
       <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header class="h-16 border-b border-default bg-default flex items-center justify-between px-4 md:hidden">
+        <header
+          class="h-16 border-b border-default bg-default flex items-center justify-between px-4 md:hidden"
+        >
           <span class="font-semibold">Dashboard</span>
           <UButton variant="ghost" icon="i-lucide-menu" color="neutral" aria-label="Open menu" />
         </header>

@@ -9,16 +9,14 @@ test.describe('example-apple-maps', () => {
   })
   test('page loads and shows header', async ({ page }) => {
     await page.goto('/')
-    await expect(
-      page.getByRole('link', { name: 'Apple Maps Example', exact: true }),
-    ).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByRole('link', { name: 'Apple Maps Example', exact: true })).toBeVisible({
+      timeout: 10_000,
+    })
   })
 
   test('subtitle text renders', async ({ page }) => {
     await page.goto('/')
-    await expect(
-      page.getByText(/MapKit JS 5.x on Nuxt 4/).first(),
-    ).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText(/MapKit JS 5.x on Nuxt 4/).first()).toBeVisible({ timeout: 15_000 })
   })
 
   test('map container or error/loading state is present', async ({ page }) => {

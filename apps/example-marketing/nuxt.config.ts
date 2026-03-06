@@ -3,9 +3,7 @@ let hmrPort = 24640
 export default defineNuxtConfig({
   extends: ['@narduk-enterprises/narduk-nuxt-template-layer'],
 
-  components: [
-    { path: '~/components/ui', pathPrefix: false },
-  ],
+  components: [{ path: '~/components/ui', pathPrefix: false }],
 
   future: {
     compatibilityVersion: 4,
@@ -19,9 +17,9 @@ export default defineNuxtConfig({
     hooks: {
       'vite:extendConfig'(config) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ; (config as any).server ??= {}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ; (config as any).server.hmr = { port: hmrPort++ }
+        ;(config as any).server ??= {}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(config as any).server.hmr = { port: hmrPort++ }
       },
     },
   },

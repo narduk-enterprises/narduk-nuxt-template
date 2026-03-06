@@ -65,7 +65,11 @@ const { user } = useAuth()
         <h2 class="font-semibold">Recent Activity</h2>
       </template>
       <div class="space-y-4">
-        <div v-for="i in 5" :key="i" class="flex items-center justify-between py-2 border-b border-default last:border-0 last:pb-0">
+        <div
+          v-for="i in 5"
+          :key="i"
+          class="flex items-center justify-between py-2 border-b border-default last:border-0 last:pb-0"
+        >
           <div class="flex items-center gap-3">
             <div class="size-8 rounded-full bg-elevated flex items-center justify-center">
               <UIcon name="i-lucide-user" class="size-4 text-muted" />

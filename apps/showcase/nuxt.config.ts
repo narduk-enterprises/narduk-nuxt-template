@@ -27,9 +27,9 @@ export default defineNuxtConfig({
     hooks: {
       'vite:extendConfig'(config) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ; (config as any).server ??= {}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ; (config as any).server.hmr = { port: hmrPort++ }
+        ;(config as any).server ??= {}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(config as any).server.hmr = { port: hmrPort++ }
       },
     },
   },
@@ -49,7 +49,8 @@ export default defineNuxtConfig({
   site: {
     url: process.env.SITE_URL || 'https://showcase.nard.uk',
     name: 'Nuxt 4 Showcase',
-    description: 'Interactive examples showcasing Nuxt 4 + Nuxt UI 4 + Cloudflare Workers patterns.',
+    description:
+      'Interactive examples showcasing Nuxt 4 + Nuxt UI 4 + Cloudflare Workers patterns.',
     defaultLocale: 'en',
   },
 

@@ -28,9 +28,12 @@ useWebPageSchema({
     <main class="flex-1 flex flex-col p-4">
       <div class="max-w-4xl mx-auto w-full space-y-4">
         <p class="text-muted text-sm">
-          Using <code class="rounded bg-elevated px-1">AppMapKit</code> component from the shared layer.
+          Using <code class="rounded bg-elevated px-1">AppMapKit</code> component from the shared
+          layer.
         </p>
-        <div class="rounded-xl overflow-hidden border border-default shadow-card min-h-[400px] bg-muted/30 relative">
+        <div
+          class="rounded-xl overflow-hidden border border-default shadow-card min-h-[400px] bg-muted/30 relative"
+        >
           <AppMapKit
             :fallback-center="{ lat: 48.2082, lng: 16.3738 }"
             :zoom-span="{ lat: 0.05, lng: 0.05 }"

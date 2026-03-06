@@ -18,7 +18,7 @@ export default defineNuxtConfig({
   },
 
   future: {
-    compatibilityVersion: 4
+    compatibilityVersion: 4,
   },
 
   runtimeConfig: {
@@ -37,13 +37,14 @@ export default defineNuxtConfig({
       posthogProjectId: process.env.POSTHOG_PROJECT_ID || '',
       // IndexNow
       indexNowKey: process.env.INDEXNOW_KEY || '',
-    }
+    },
   },
 
   site: {
     url: process.env.SITE_URL || 'https://nard.uk',
     name: 'Nuxt 4 Demo',
-    description: 'A production-ready demo template showcasing Nuxt 4, Nuxt UI 4, Tailwind CSS 4, and Cloudflare Workers with D1 database.',
+    description:
+      'A production-ready demo template showcasing Nuxt 4, Nuxt UI 4, Tailwind CSS 4, and Cloudflare Workers with D1 database.',
     defaultLocale: 'en',
   },
 

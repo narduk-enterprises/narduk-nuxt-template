@@ -155,9 +155,7 @@ test.describe('example-auth', () => {
     await page.getByPlaceholder('you@example.com').fill('wrong@example.com')
     await page.getByPlaceholder('••••••••').first().fill('wrongpassword')
     await page.getByRole('button', { name: 'Sign In', exact: true }).click()
-    await expect(
-      page.getByText('Invalid email or password'),
-    ).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText('Invalid email or password')).toBeVisible({ timeout: 5_000 })
   })
 
   test('duplicate registration shows error', async ({ page }) => {

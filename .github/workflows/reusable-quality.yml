@@ -4,27 +4,27 @@ on:
   workflow_call:
     inputs:
       node-version:
-        description: 'Node.js version'
+        description: "Node.js version"
         required: false
         type: string
-        default: '22'
+        default: "22"
       run-lint:
-        description: 'Run ESLint'
+        description: "Run ESLint"
         required: false
         type: boolean
         default: false
       run-typecheck:
-        description: 'Run TypeScript type checking'
+        description: "Run TypeScript type checking"
         required: false
         type: boolean
         default: false
       run-tests:
-        description: 'Run unit tests'
+        description: "Run unit tests"
         required: false
         type: boolean
         default: false
       run-drift-check:
-        description: 'Run template drift detection'
+        description: "Run template drift detection"
         required: false
         type: boolean
         default: false
@@ -116,6 +116,9 @@ jobs:
 
       - name: Lint
         run: pnpm -r run lint
+
+      - name: Format Check
+        run: pnpm run format:check
 
   typecheck:
     name: Typecheck

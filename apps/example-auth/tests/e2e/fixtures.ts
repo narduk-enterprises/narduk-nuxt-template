@@ -25,13 +25,9 @@ export const test = base.extend<{ page: Page }>({
       consoleLogs.push(msg.text())
     })
     await use(page)
-    const hydrationErrors = consoleLogs.filter((log) =>
-      HYDRATION_PATTERNS.some((p) => p.test(log)),
-    )
+    const hydrationErrors = consoleLogs.filter((log) => HYDRATION_PATTERNS.some((p) => p.test(log)))
     if (hydrationErrors.length > 0) {
-      throw new Error(
-        `Hydration errors detected in console:\n${hydrationErrors.join('\n')}`,
-      )
+      throw new Error(`Hydration errors detected in console:\n${hydrationErrors.join('\n')}`)
     }
   },
 })

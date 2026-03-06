@@ -1,6 +1,7 @@
 # Example: Blog
 
-Demonstrates **Nuxt Content v3 with MDC rendering** and a custom blog layout on Cloudflare Workers.
+Demonstrates **Nuxt Content v3 with MDC rendering** and a custom blog layout on
+Cloudflare Workers.
 
 ## What It Demonstrates
 

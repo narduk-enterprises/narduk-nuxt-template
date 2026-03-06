@@ -1,6 +1,7 @@
 # Example: Marketing
 
-Demonstrates **landing page UI components** built with Nuxt UI 4 and a custom landing layout.
+Demonstrates **landing page UI components** built with Nuxt UI 4 and a custom
+landing layout.
 
 ## What It Demonstrates
 

@@ -1,6 +1,7 @@
 # Example: Authentication
 
-Demonstrates **Web Crypto PBKDF2 + D1 session-based authentication** on Cloudflare Workers.
+Demonstrates **Web Crypto PBKDF2 + D1 session-based authentication** on
+Cloudflare Workers.
 
 ## What It Demonstrates
 
@@ -25,7 +26,8 @@ Demonstrates **Web Crypto PBKDF2 + D1 session-based authentication** on Cloudfla
 
 ## Doppler Setup (Required)
 
-This app reads secrets from the **`narduk-nuxt-template`** Doppler project, config **`dev_auth`**.
+This app reads secrets from the **`narduk-nuxt-template`** Doppler project,
+config **`dev_auth`**.
 
 **One-time setup:**
 

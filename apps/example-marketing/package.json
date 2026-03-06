@@ -14,7 +14,8 @@
     "prelint": "test -f .nuxt/eslint.config.mjs || nuxt prepare",
     "lint": "eslint . --max-warnings 0",
     "quality": "echo 'quality pass'",
-    "test:e2e": "playwright test --project=example-marketing --config=../../playwright.config.ts"
+    "test:e2e": "playwright test --project=example-marketing --config=../../playwright.config.ts",
+    "format:check": "prettier --check \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path ../../.gitignore"
   },
   "dependencies": {
     "@narduk-enterprises/narduk-nuxt-template-layer": "workspace:*",

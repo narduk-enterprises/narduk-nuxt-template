@@ -21,7 +21,7 @@ const success = ref(false)
 async function onSubmit() {
   loading.value = true
   success.value = false
-  await new Promise(resolve => setTimeout(resolve, 1000))
+  await new Promise((resolve) => setTimeout(resolve, 1000))
   loading.value = false
   success.value = true
   await nextTick()
@@ -37,15 +37,27 @@ async function onSubmit() {
     <div class="mx-auto max-w-7xl px-6 lg:px-8">
       <div class="mx-auto max-w-2xl text-center">
         <h2 class="text-3xl font-bold tracking-tight sm:text-4xl font-display">Contact sales</h2>
-        <p class="mt-2 text-lg leading-8 text-muted">Aute magna irure deserunt veniam aliqua magna enim voluptate.</p>
+        <p class="mt-2 text-lg leading-8 text-muted">
+          Aute magna irure deserunt veniam aliqua magna enim voluptate.
+        </p>
       </div>
 
       <div class="mx-auto mt-16 max-w-xl">
         <div v-if="success" data-testid="contact-success" class="mb-8">
-          <UAlert color="success" variant="subtle" title="Success" description="Your message has been sent successfully." />
+          <UAlert
+            color="success"
+            variant="subtle"
+            title="Success"
+            description="Your message has been sent successfully."
+          />
         </div>
 
-        <UForm :schema="schema" :state="state" class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2" @submit="onSubmit">
+        <UForm
+          :schema="schema"
+          :state="state"
+          class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2"
+          @submit="onSubmit"
+        >
           <UFormField name="firstName" label="First name" class="sm:col-span-1">
             <UInput v-model="state.firstName" class="w-full" />
           </UFormField>

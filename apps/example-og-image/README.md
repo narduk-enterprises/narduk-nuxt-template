@@ -1,6 +1,7 @@
 # Example: OG Image
 
-Demonstrates **dynamic Open Graph image generation** using the `nuxt-og-image` module and the shared `OgImageDefault` Takumi template.
+Demonstrates **dynamic Open Graph image generation** using the `nuxt-og-image`
+module and the shared `OgImageDefault` Takumi template.
 
 ## What It Shows
 
