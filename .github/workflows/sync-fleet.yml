@@ -53,8 +53,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: template
-          sparse-checkout: tools
-          sparse-checkout-cone-mode: false
 
       - uses: pnpm/action-setup@v4
         with:
@@ -68,7 +66,11 @@ jobs:
 
       - name: Install dependencies
         working-directory: app
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Sync template infrastructure
+        working-directory: template
+        run: npx tsx tools/sync-template.ts ${{ github.workspace }}/app
 
       - name: Copy latest update-layer from template
         run: cp template/tools/update-layer.ts app/tools/update-layer.ts
@@ -106,7 +108,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "chore: sync layer from narduk-nuxt-template"
+          git commit -m "chore: sync template + layer from narduk-nuxt-template"
           git pull --rebase origin main || true
           git push origin main
 
