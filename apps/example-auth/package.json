@@ -5,7 +5,7 @@
   "version": "1.17.2",
   "scripts": {
     "build": "nuxt build",
-    "dev": "pnpm run db:ready && doppler run -- nuxt dev",
+    "dev": "pnpm run db:ready && (doppler run -- nuxt dev || nuxt dev)",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",

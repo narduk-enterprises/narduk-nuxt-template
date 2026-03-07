@@ -1,4 +1,5 @@
 let hmrPort = 24650
+const ogImagePort = Number(process.env.NUXT_PORT || 3015)
 
 export default defineNuxtConfig({
   extends: ['@narduk-enterprises/narduk-nuxt-template-layer'],
@@ -8,7 +9,7 @@ export default defineNuxtConfig({
   },
 
   devServer: {
-    port: 3015,
+    port: ogImagePort,
   },
 
   $development: {
@@ -24,13 +25,13 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      appUrl: process.env.SITE_URL || 'http://localhost:3015',
+      appUrl: process.env.SITE_URL || `http://localhost:${ogImagePort}`,
       appName: 'OG Image Example',
     },
   },
 
   site: {
-    url: process.env.SITE_URL || 'http://127.0.0.1:3015',
+    url: process.env.SITE_URL || `http://127.0.0.1:${ogImagePort}`,
     name: 'OG Image Example',
     description:
       'Dynamic Open Graph image generation on Cloudflare Workers with nuxt-og-image v6 beta.',

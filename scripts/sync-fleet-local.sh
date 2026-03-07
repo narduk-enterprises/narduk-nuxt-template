@@ -26,6 +26,7 @@ SKIP_QUALITY=""
 AUTO_COMMIT=""
 FILTER_APPS=""
 MAX_JOBS=4
+ALLOW_DIRTY_TEMPLATE=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -35,15 +36,17 @@ while [[ $# -gt 0 ]]; do
     --apps)         FILTER_APPS="$2"; shift 2 ;;
     --jobs)         MAX_JOBS="$2"; shift 2 ;;
     --sequential)   MAX_JOBS=1; shift ;;
+    --allow-dirty-template) ALLOW_DIRTY_TEMPLATE="1"; shift ;;
     --)             shift; break ;;
     *)              echo "Unknown option: $1"; exit 1 ;;
   esac
 done
 
 cd "$TEMPLATE_DIR" || exit 1
-if [ -n "$(git status --porcelain)" ]; then
+if [ -z "$ALLOW_DIRTY_TEMPLATE" ] && [ -n "$(git status --porcelain)" ]; then
   echo "❌ Template repository has uncommitted changes."
   echo "   Please commit or stash your changes before syncing the fleet."
+  echo "   Or run with --allow-dirty-template to sync anyway (e.g. fleet parallel workers)."
   exit 1
 fi
 
@@ -139,7 +142,7 @@ sync_one_app() {
     # Phase 1: Sync template config files
     progress "     $app_name — syncing config..."
     cd "$TEMPLATE_DIR"
-    if ! npx tsx tools/sync-template.ts "$app_path" $DRY_RUN 2>&1; then
+    if ! npx tsx tools/sync-template.ts "$app_path" $DRY_RUN --allow-dirty-template 2>&1; then
       echo ""
       echo "❌ sync-template FAILED"
       local fail_end

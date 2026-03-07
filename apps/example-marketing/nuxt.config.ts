@@ -1,4 +1,5 @@
 let hmrPort = 24640
+const marketingPort = Number(process.env.NUXT_PORT || 3013)
 
 export default defineNuxtConfig({
   extends: ['@narduk-enterprises/narduk-nuxt-template-layer'],
@@ -10,7 +11,7 @@ export default defineNuxtConfig({
   },
 
   devServer: {
-    port: 3013,
+    port: marketingPort,
   },
 
   $development: {
@@ -26,13 +27,13 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      appUrl: process.env.SITE_URL || 'http://localhost:3013',
+      appUrl: process.env.SITE_URL || `http://localhost:${marketingPort}`,
       appName: 'Marketing Example',
     },
   },
 
   site: {
-    url: process.env.SITE_URL || 'http://127.0.0.1:3013',
+    url: process.env.SITE_URL || `http://127.0.0.1:${marketingPort}`,
     name: 'Marketing Example',
     description: 'Landing page components: hero, pricing, testimonials, and contact forms.',
     defaultLocale: 'en',

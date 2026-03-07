@@ -1,4 +1,5 @@
 let hmrPort = 24660
+const appleMapsPort = Number(process.env.NUXT_PORT || 3016)
 
 export default defineNuxtConfig({
   extends: ['@narduk-enterprises/narduk-nuxt-template-layer'],
@@ -8,7 +9,7 @@ export default defineNuxtConfig({
   },
 
   devServer: {
-    port: 3016,
+    port: appleMapsPort,
   },
 
   $development: {
@@ -24,7 +25,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      appUrl: process.env.SITE_URL || 'http://localhost:3016',
+      appUrl: process.env.SITE_URL || `http://localhost:${appleMapsPort}`,
       appName: 'Apple Maps Example',
       mapkitToken:
         process.env.APPLE_MAPKIT_TOKEN ||
@@ -33,7 +34,7 @@ export default defineNuxtConfig({
   },
 
   site: {
-    url: process.env.SITE_URL || 'http://127.0.0.1:3016',
+    url: process.env.SITE_URL || `http://127.0.0.1:${appleMapsPort}`,
     name: 'Apple Maps Example',
     description: 'Apple MapKit JS integration on Nuxt 4 and Cloudflare Workers.',
     defaultLocale: 'en',

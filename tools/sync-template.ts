@@ -39,11 +39,13 @@ const args = process.argv.slice(2).filter((a) => !a.startsWith('--'))
 const flags = new Set(process.argv.slice(2).filter((a) => a.startsWith('--')))
 const dryRun = flags.has('--dry-run')
 const strict = flags.has('--strict')
+const allowDirtyTemplate = flags.has('--allow-dirty-template')
 
 const appDir = args[0]?.replace(/^~/, process.env.HOME || '')
 if (!appDir) {
-  console.error('Usage: npx tsx tools/sync-template.ts <app-directory> [--dry-run] [--strict]')
+  console.error('Usage: npx tsx tools/sync-template.ts <app-directory> [--dry-run] [--strict] [--allow-dirty-template]')
   console.error('  e.g: npx tsx tools/sync-template.ts ~/new-code/your-app')
+  console.error('  --allow-dirty-template  Skip template clean-working-tree check (used by fleet sync)')
   process.exit(1)
 }
 
@@ -180,7 +182,7 @@ function copyRecursiveSync(
 // ─── Main ────────────────────────────────────────────────────
 
 function main() {
-  if (!dryRun) {
+  if (!dryRun && !allowDirtyTemplate) {
     try {
       const status = execSync('git status --porcelain', {
         encoding: 'utf-8',

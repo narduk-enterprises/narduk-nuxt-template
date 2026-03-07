@@ -20,8 +20,8 @@ export default defineConfig({
     navigationTimeout: 5_000,
   },
   webServer: {
-    command: 'pnpm run dev:e2e',
-    url: 'http://localhost:3004',
+    command: 'pnpm run dev:kill && pnpm run dev:e2e',
+    url: 'http://localhost:3000',
     reuseExistingServer: false,
     timeout: 120_000,
   },
@@ -30,7 +30,7 @@ export default defineConfig({
       name: 'web',
       testDir: 'apps/web/tests/e2e',
       timeout: 30_000,
-      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:3004' },
+      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:3000' },
     },
     {
       name: 'showcase',
