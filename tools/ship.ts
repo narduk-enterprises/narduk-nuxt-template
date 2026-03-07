@@ -83,7 +83,8 @@ async function shipApp(appTarget: string) {
   if (hasMigrate && pkg) {
     console.log(`\n🗄️ Running remote D1 migrations for ${appTarget}...`)
     const migrateCmd = pkg.scripts['db:migrate'].replaceAll('--local', '--remote')
-    run(`doppler run -- bash -c "${migrateCmd.replace(/"/g, '\\"')}"`, appDir)
+    const escaped = migrateCmd.replace(/\$/g, '\\$').replace(/"/g, '\\"')
+    run(`doppler run -- bash -c "${escaped}"`, appDir)
   }
 
   // 4. Deploy
