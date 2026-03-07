@@ -249,7 +249,8 @@ function main() {
     scripts: {
       build: 'nuxt build',
       dev: 'nuxt dev',
-      'db:migrate': `wrangler d1 execute ${dbName} --local --file=drizzle/0000_initial_schema.sql`,
+      'db:migrate': `bash ../../tools/db-migrate.sh ${dbName} --local --dir drizzle`,
+      'db:reset': `bash ../../tools/db-migrate.sh ${dbName} --local --dir drizzle --reset`,
       'db:studio': 'drizzle-kit studio',
       generate: 'nuxt generate',
       preview: 'nuxt preview',

@@ -19,6 +19,7 @@
 import { validateUploadFiles, normalizeExtension } from '../utils/upload'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event).child('Upload')
   await enforceRateLimit(event, 'upload', 5, 60_000)
   await requireAuth(event)
 
@@ -49,6 +50,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Backwards compat: single-file returns object, multi returns array
+  log.info('File(s) uploaded', { count: results.length, keys: results.map((r) => r.key) })
   if (results.length === 1) {
     return results[0]
   }

@@ -17,6 +17,7 @@ const bodySchema = z.object({
  * Requires GSC_SERVICE_ACCOUNT_JSON with the Indexing API enabled.
  */
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event).child('Indexing')
   await requireAdmin(event)
   await enforceRateLimit(event, 'google-indexing-batch', 5, 60_000)
 
@@ -68,9 +69,12 @@ export default defineEventHandler(async (event) => {
   } catch (error: unknown) {
     if ((error as { statusCode?: number }).statusCode) throw error
     const err = error as { message?: string }
+    log.error('Batch indexing failed', { count: urls.length, type, error: err.message })
     throw createError({
       statusCode: 500,
       statusMessage: `Google Indexing API batch error: ${err.message}`,
     })
   }
+
+  log.info('Batch indexing submitted', { count: urls.length, type })
 })

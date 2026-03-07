@@ -22,6 +22,7 @@ interface GscQueryResponse {
 }
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event).child('Analytics')
   await requireAdmin(event)
 
   const config = useRuntimeConfig()
@@ -60,6 +61,8 @@ export default defineEventHandler(async (event) => {
       query.noCache ? 0 : undefined,
     )
 
+    log.debug('GSC performance fetched', { dimension: query.dimension, startDate, endDate, cached })
+
     return {
       ...data,
       startDate,
@@ -70,12 +73,14 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error: unknown) {
     if (error instanceof GoogleApiError) {
+      log.error('GSC performance failed', { status: error.status, error: error.message })
       throw createError({
         statusCode: error.status,
         statusMessage: `GSC performance error: ${error.message}`,
       })
     }
     const err = error as { statusCode?: number; statusMessage?: string; message?: string }
+    log.error('GSC performance failed', { error: err.statusMessage || err.message })
     throw createError({
       statusCode: err.statusCode || 500,
       statusMessage: `GSC performance error: ${err.statusMessage || err.message}`,

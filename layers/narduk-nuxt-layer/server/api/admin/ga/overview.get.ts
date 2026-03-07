@@ -29,6 +29,7 @@ interface GaReportResponse {
 }
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event).child('Analytics')
   await requireAdmin(event)
 
   const config = useRuntimeConfig()
@@ -74,6 +75,8 @@ export default defineEventHandler(async (event) => {
       query.noCache ? 0 : undefined,
     )
 
+    log.debug('GA overview fetched', { startDate, endDate, cached })
+
     return {
       ...data,
       startDate,
@@ -83,12 +86,14 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error: unknown) {
     if (error instanceof GoogleApiError) {
+      log.error('GA overview failed', { status: error.status, error: error.message })
       throw createError({
         statusCode: error.status,
         statusMessage: `GA4 Error: ${error.message}`,
       })
     }
     const err = error as { statusCode?: number; statusMessage?: string; message?: string }
+    log.error('GA overview failed', { error: err.statusMessage || err.message })
     throw createError({
       statusCode: err.statusCode || 500,
       statusMessage: `GA4 Error: ${err.statusMessage || err.message}`,
