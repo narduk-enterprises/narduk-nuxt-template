@@ -43,9 +43,13 @@ const allowDirtyTemplate = flags.has('--allow-dirty-template')
 
 const appDir = args[0]?.replace(/^~/, process.env.HOME || '')
 if (!appDir) {
-  console.error('Usage: npx tsx tools/sync-template.ts <app-directory> [--dry-run] [--strict] [--allow-dirty-template]')
+  console.error(
+    'Usage: npx tsx tools/sync-template.ts <app-directory> [--dry-run] [--strict] [--allow-dirty-template]',
+  )
   console.error('  e.g: npx tsx tools/sync-template.ts ~/new-code/your-app')
-  console.error('  --allow-dirty-template  Skip template clean-working-tree check (used by fleet sync)')
+  console.error(
+    '  --allow-dirty-template  Skip template clean-working-tree check (used by fleet sync)',
+  )
   process.exit(1)
 }
 
@@ -69,6 +73,7 @@ const COPY_VERBATIM = [
   'tools/validate.ts',
   'tools/init.ts',
   'tools/tail.ts',
+  'tools/db-migrate.sh',
 
   // CI/CD
   '.github/workflows/weekly-drift-check.yml',
@@ -387,6 +392,40 @@ jobs:
           changed = true
         }
       }
+
+      // Sync db:migrate to use tracked db-migrate.sh runner (detect DB name from wrangler.json)
+      const webWranglerPath = join(appDir, 'apps/web/wrangler.json')
+      if (existsSync(webWranglerPath)) {
+        try {
+          const wrangler = JSON.parse(readFileSync(webWranglerPath, 'utf-8'))
+          const dbName = wrangler.d1_databases?.[0]?.database_name
+          if (dbName) {
+            const expectedMigrate = `bash ../../tools/db-migrate.sh ${dbName} --local --dir drizzle`
+            const expectedReset = `bash ../../tools/db-migrate.sh ${dbName} --local --dir drizzle --reset && pnpm run db:seed`
+            const expectedReady = 'pnpm run db:migrate && pnpm run db:seed'
+
+            if (webPkg.scripts?.['db:migrate'] !== expectedMigrate) {
+              console.log(`  FIX: apps/web scripts.db:migrate (switching to tracked runner)`)
+              webPkg.scripts = webPkg.scripts || {}
+              webPkg.scripts['db:migrate'] = expectedMigrate
+              changed = true
+            }
+            if (webPkg.scripts?.['db:reset'] !== expectedReset) {
+              console.log(`  FIX: apps/web scripts.db:reset`)
+              webPkg.scripts['db:reset'] = expectedReset
+              changed = true
+            }
+            if (webPkg.scripts?.['db:ready'] !== expectedReady) {
+              console.log(`  FIX: apps/web scripts.db:ready`)
+              webPkg.scripts['db:ready'] = expectedReady
+              changed = true
+            }
+          }
+        } catch {
+          /* skip wrangler parse */
+        }
+      }
+
       if (changed && !dryRun) {
         writeFileSync(webPkgPath, JSON.stringify(webPkg, null, 2) + '\n', 'utf-8')
         console.log('  ✅ Updated apps/web/package.json')
