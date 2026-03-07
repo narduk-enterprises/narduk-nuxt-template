@@ -1,7 +1,5 @@
 ---
-description:
-  'Comprehensive SSR/Hydration safety audit + zero-tolerance hydration mismatch
-  fix workflow — detect, classify, fix, and prevent SSR/CSR divergence'
+description: 'Comprehensive SSR/Hydration safety audit + zero-tolerance hydration mismatch
 ---
 
 # /check-ssr-hydration-safety
@@ -188,6 +186,18 @@ different default values on server and client.
 - Use `useAsyncData`/`useFetch` with SSR enabled and consistent defaults.
 - Ensure initial values match on server and client (`ref(null)` vs `ref([])`
   matters if template branches).
+- **When `server: false` is intentional** (e.g. Cloudflare Workers needing D1
+  context): SSR sees `status === 'pending'` and empty defaults, so
+  `v-if`/`v-else` toggles or `v-if` guards on data length will produce different
+  DOM trees on server vs client. **Use `v-show` instead of `v-if`/`v-else`** for
+  any template branch that depends on async state or data length. This keeps the
+  same DOM nodes in both SSR and CSR — they are just shown/hidden via CSS. Apply
+  to:
+  - Loading skeleton vs content toggles
+  - Empty-state conditionals
+  - Data-count conditionals (e.g. `v-if="items.length > 0"`)
+  - Add a comment:
+    `<!-- hydration: v-show for server:false data (SSR/CSR must match) -->`
 
 ---
 
@@ -317,7 +327,4 @@ Provide:
 
 This workflow is "done" only when:
 
-- Zero hydration mismatch warnings in dev and in `build+preview`
-- Phase 1 static audit passes (all 8 checks)
-- Guardrails are in repo and enforced
-- No excessive `ClientOnly` usage; boundaries are minimal and justified
+- Zero hydration mismatch warnings in d

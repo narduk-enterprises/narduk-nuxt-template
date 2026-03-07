@@ -26,7 +26,7 @@ const examples = [
       'Login, registration, session management, and a protected dashboard with sidebar navigation.',
     icon: 'i-lucide-lock',
     href: config.public.exampleAuthUrl as string,
-    color: 'text-emerald-500',
+    color: 'text-primary',
     features: ['Web Crypto PBKDF2', 'D1 sessions', 'CSRF protection', 'Dashboard layout'],
   },
   {
@@ -34,7 +34,7 @@ const examples = [
     description: 'Content-driven blog powered by Nuxt Content v3 with markdown and MDC support.',
     icon: 'i-lucide-file-text',
     href: config.public.exampleBlogUrl as string,
-    color: 'text-blue-500',
+    color: 'text-info',
     features: ['Nuxt Content v3', 'MDC components', 'D1 storage on edge', 'SEO optimized'],
   },
   {
@@ -42,7 +42,7 @@ const examples = [
     description: 'Landing page components: hero, pricing tables, testimonials, and contact forms.',
     icon: 'i-lucide-megaphone',
     href: config.public.exampleMarketingUrl as string,
-    color: 'text-purple-500',
+    color: 'text-warning',
     features: ['Hero section', 'Pricing table', 'Testimonials', 'Contact form'],
   },
   {
@@ -51,7 +51,7 @@ const examples = [
       'Dynamic Open Graph image generation with nuxt-og-image v6 beta on Cloudflare Workers.',
     icon: 'i-lucide-image-up',
     href: config.public.exampleOgImageUrl as string,
-    color: 'text-violet-500',
+    color: 'text-secondary',
     features: ['defineOgImage()', 'Renderer suffixes', 'Route + query driven', 'Multi-size cards'],
   },
   {
@@ -60,7 +60,7 @@ const examples = [
       'Apple MapKit JS 5.x integration with JWT token auth on Nuxt 4 and Cloudflare Workers.',
     icon: 'i-lucide-map',
     href: config.public.exampleAppleMapsUrl as string,
-    color: 'text-blue-500',
+    color: 'text-success',
     features: ['MapKit JS 5.x', 'JWT token', 'Client-side init', 'Edge deploy'],
   },
 ]
