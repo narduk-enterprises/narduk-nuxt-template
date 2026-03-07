@@ -166,5 +166,37 @@ export function defineSharedAuthContract(options: SharedAuthContractOptions = {}
       await page.goto(registerPath)
       await expect(page).toHaveURL(new RegExp(protectedPath), { timeout: 10_000 })
     })
+
+    test('stale session cookie still allows login page to render', async ({ page, context }) => {
+      await context.addCookies([
+        {
+          name: 'nuxt-session',
+          value: 'stale-invalid-token-value',
+          domain: 'localhost',
+          path: '/',
+        },
+      ])
+
+      await page.goto(loginPath)
+      await expect(page).toHaveURL(new RegExp(loginPath), { timeout: 10_000 })
+      await expect(page.getByRole('heading', { name: loginHeading })).toBeVisible()
+    })
+
+    test('stale session cookie on protected route redirects to login', async ({
+      page,
+      context,
+    }) => {
+      await context.addCookies([
+        {
+          name: 'nuxt-session',
+          value: 'stale-invalid-token-value',
+          domain: 'localhost',
+          path: '/',
+        },
+      ])
+
+      await page.goto(protectedPath)
+      await expect(page).toHaveURL(new RegExp(loginPath), { timeout: 10_000 })
+    })
   })
 }
