@@ -97,31 +97,11 @@ const COPY_VERBATIM = [
   '.vscode/extensions.json',
 ]
 
-/** Agent workflow files — copy if missing, don't overwrite customizations. */
-const COPY_IF_MISSING = [
-  '.agents/workflows/check-architecture.md',
-  '.agents/workflows/check-data-fetching.md',
-  '.agents/workflows/check-plugin-lifecycle.md',
-  '.agents/workflows/check-seo-compliance.md',
-  '.agents/workflows/check-ssr-hydration-safety.md',
-  '.agents/workflows/check-ui-styling.md',
-  '.agents/workflows/check-layer-health.md',
-  '.agents/workflows/check-standardization.md',
-  '.agents/workflows/review-cloudflare-layer.md',
-  '.agents/workflows/review-doppler-pattern.md',
-  '.agents/workflows/audit-repo-hygiene.md',
-  // '.agents/workflows/audit-init-flow.md', // TODO: create this workflow
-  '.agents/workflows/deploy.md',
-  '.agents/workflows/score-repo.md',
-  '.agents/workflows/generate-app-idea.md',
-  '.agents/workflows/generate-brand-identity.md',
-  '.agents/workflows/migrate-local.md',
-  '.agents/workflows/migrate-to-monorepo.md',
-  '.agents/workflows/standardize-app.md',
-]
+/** Files to copy only if missing (not overwritten on subsequent syncs). */
+const COPY_IF_MISSING: string[] = []
 
 /** Directories where ALL files recursively must be synced (new files added, existing updated). */
-const SYNC_DIRECTORIES_RECURSIVE = ['packages/eslint-config']
+const SYNC_DIRECTORIES_RECURSIVE = ['packages/eslint-config', '.agents/workflows']
 
 /** Files that should be removed from derived apps. */
 const REMOVE_STALE = [
