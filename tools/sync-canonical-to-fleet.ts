@@ -37,6 +37,7 @@ const SYNC_MAP: Record<string, Record<string, string>> = {
   },
   posthog: {
     POSTHOG_HOST: 'POSTHOG_HOST',
+    POSTHOG_PERSONAL_API_KEY: 'POSTHOG_PERSONAL_API_KEY',
     POSTHOG_PROJECT_ID: 'POSTHOG_PROJECT_ID',
     POSTHOG_PUBLIC_KEY: 'POSTHOG_PUBLIC_KEY',
   },

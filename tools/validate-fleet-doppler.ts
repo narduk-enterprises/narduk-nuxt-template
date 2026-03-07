@@ -43,6 +43,7 @@ const REQUIRED_SECRETS = [
 /** Secrets that are strongly recommended for full analytics/SEO and cron. */
 const RECOMMENDED_SECRETS = [
   'GA_MEASUREMENT_ID',
+  'GA_PROPERTY_ID',
   'GSC_SERVICE_ACCOUNT_JSON',
   'INDEXNOW_KEY',
   'GSC_USER_EMAIL',

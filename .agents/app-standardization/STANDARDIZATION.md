@@ -284,11 +284,10 @@ runtimeConfig: {
   public: {
     appUrl: process.env.SITE_URL || 'https://YOUR_DOMAIN',
     appName: process.env.APP_NAME || 'Your App Name',
-    // Analytics
+    // Analytics (client-side tracking)
     posthogPublicKey: process.env.POSTHOG_PUBLIC_KEY || '',
     posthogHost: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',
     gaMeasurementId: process.env.GA_MEASUREMENT_ID || '',
-    posthogProjectId: process.env.POSTHOG_PROJECT_ID || '',
     // IndexNow
     indexNowKey: process.env.INDEXNOW_KEY || '',
   }

@@ -115,10 +115,20 @@ function readDopplerYaml(): { project: string; config: string } | null {
 
 /**
  * Persist a setup-generated secret. Prefer Doppler (doppler secrets set); otherwise print instructions.
+ *
+ * @param configOverride — When called from init.ts (via `doppler run --config prd`), pass 'prd'
+ *   to ensure secrets land in the production config rather than the dev config from doppler.yaml.
+ *   Falls back to doppler.yaml if no override is provided.
  */
-function writeSetupSecret(key: string, value: string) {
-  const doppler = readDopplerYaml()
+function writeSetupSecret(key: string, value: string, configOverride?: string) {
+  const envProject = process.env.DOPPLER_PROJECT
+  const envConfig = configOverride || process.env.DOPPLER_CONFIG
+  const doppler = envProject && envConfig
+    ? { project: envProject, config: envConfig }
+    : readDopplerYaml()
+
   if (doppler) {
+    const targetConfig = configOverride || doppler.config
     const out = spawnSync(
       'doppler',
       [
@@ -128,7 +138,7 @@ function writeSetupSecret(key: string, value: string) {
         '--project',
         doppler.project,
         '--config',
-        doppler.config,
+        targetConfig,
       ],
       {
         encoding: 'utf8',
@@ -136,7 +146,7 @@ function writeSetupSecret(key: string, value: string) {
       },
     )
     if (out.status === 0) {
-      console.log(`  ✅  ${key} written to Doppler (${doppler.project}/${doppler.config}).`)
+      console.log(`  ✅  ${key} written to Doppler (${doppler.project}/${targetConfig}).`)
       return
     }
   }
@@ -266,8 +276,14 @@ function checkStatus(): StatusResult {
   }
 }
 
+function resolvePublicDir(): string {
+  const monorepoPublic = join(process.cwd(), 'apps', 'web', 'public')
+  if (existsSync(monorepoPublic)) return monorepoPublic
+  return join(process.cwd(), 'public')
+}
+
 function findVerificationFiles(): string[] {
-  const publicDir = join(process.cwd(), 'public')
+  const publicDir = resolvePublicDir()
   const found: string[] = []
   try {
     for (const file of readdirSync(publicDir)) {
@@ -423,12 +439,18 @@ async function runGaSetup() {
     console.log(`  ✅  Web stream created. Measurement ID: ${measurementId}`)
   }
 
+  const numericPropertyId = propertyName.replace('properties/', '')
+
   console.log()
-  console.log('Step 3/3: Writing GA_MEASUREMENT_ID to Doppler...')
+  console.log('Step 3/4: Writing GA_MEASUREMENT_ID + GA_PROPERTY_ID to Doppler...')
   writeSetupSecret('GA_MEASUREMENT_ID', measurementId)
+  if (numericPropertyId) {
+    writeSetupSecret('GA_PROPERTY_ID', numericPropertyId)
+  }
 
   // Push GA property ID to control plane fleet registry
-  const numericPropertyId = propertyName.replace('properties/', '')
+  console.log()
+  console.log('Step 4/4: Updating control plane fleet registry...')
   if (numericPropertyId) {
     const cpUrl = 'https://control-plane.nard.uk'
     const cpAppName = getAppName()
@@ -572,19 +594,19 @@ async function runGscPipeline() {
       ? token
       : `google-site-verification: ${fileName}`
 
-    const publicDir = join(process.cwd(), 'public')
+    const publicDir = resolvePublicDir()
     if (!existsSync(publicDir)) {
       mkdirSync(publicDir, { recursive: true })
     }
 
     writeFileSync(join(publicDir, fileName), content)
-    console.log(`  ✅  Created public/${fileName}`)
+    console.log(`  ✅  Created ${publicDir}/${fileName}`)
 
     // Cloudflare Pages may strip .html extension
     if (fileName.endsWith('.html')) {
       const noExt = fileName.slice(0, -5)
       writeFileSync(join(publicDir, noExt), content)
-      console.log(`  ✅  Created public/${noExt} (no-extension fallback)`)
+      console.log(`  ✅  Created ${publicDir}/${noExt} (no-extension fallback)`)
     }
 
     console.log()

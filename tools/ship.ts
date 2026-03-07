@@ -17,10 +17,6 @@ function runQuiet(cmd: string, cwd = process.cwd()) {
   }
 }
 
-async function main() {
-  const args = process.argv.slice(2)
-  const appTarget = args[0] || 'web' // default to web target
-
 async function shipApp(appTarget: string) {
   // Find target directory
   let appDir = resolve(process.cwd(), 'apps', appTarget)

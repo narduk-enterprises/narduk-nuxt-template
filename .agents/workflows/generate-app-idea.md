@@ -249,11 +249,11 @@ pnpm run setup -- --name="<app-name>" --display="<Display Name>"
 
 After setup completes, verify everything is healthy:
 
+```bash
+pnpm run validate
+pnpm run db:migrate
+pnpm --filter <app-name> run quality
 ```
-
-pnpm run validate pnpm run db:migrate pnpm --filter <app-name> run quality
-
-````
 
 If quality passes with zero errors and zero warnings, proceed. If not, fix any issues before building.
 
@@ -366,8 +366,4 @@ Create `audit_report.md` answering:
 - `audit_report.md` with brutally honest feedback.
 
 **CRITICAL RULE:** If you encounter errors or warnings, you must fix them properly. Do NOT use hacky monkey fixes, `@ts-expect-error`, or suppressions. Solve the actual root cause.
-
 ```
-
-```
-````

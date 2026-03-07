@@ -105,7 +105,7 @@ const COPY_IF_MISSING = [
   '.agents/workflows/review-cloudflare-layer.md',
   '.agents/workflows/review-doppler-pattern.md',
   '.agents/workflows/audit-repo-hygiene.md',
-  '.agents/workflows/audit-init-flow.md',
+  // '.agents/workflows/audit-init-flow.md', // TODO: create this workflow
   '.agents/workflows/deploy.md',
   '.agents/workflows/score-repo.md',
   '.agents/workflows/generate-app-idea.md',
@@ -740,7 +740,6 @@ jobs:
         CLOUDFLARE_ACCOUNT_ID: '${narduk-nuxt-template.prd.CLOUDFLARE_ACCOUNT_ID}',
         POSTHOG_PUBLIC_KEY: '${narduk-nuxt-template.prd.POSTHOG_PUBLIC_KEY}',
         POSTHOG_PROJECT_ID: '${narduk-nuxt-template.prd.POSTHOG_PROJECT_ID}',
-        POSTHOG_PROJECT_TOKEN: '${narduk-nuxt-template.prd.POSTHOG_PROJECT_TOKEN}',
         POSTHOG_HOST: '${narduk-nuxt-template.prd.POSTHOG_HOST}',
         POSTHOG_PERSONAL_API_KEY: '${narduk-nuxt-template.prd.POSTHOG_PERSONAL_API_KEY}',
         GA_ACCOUNT_ID: '${narduk-nuxt-template.prd.GA_ACCOUNT_ID}',

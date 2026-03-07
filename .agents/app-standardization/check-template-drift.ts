@@ -56,7 +56,7 @@ const CRITICAL_FILES = [
   '.agents/workflows/check-ssr-hydration-safety.md',
   '.agents/workflows/check-ui-styling.md',
   '.agents/workflows/deploy.md',
-  '.agents/workflows/audit-init-flow.md',
+  // '.agents/workflows/audit-init-flow.md', // TODO: create this workflow
   '.agents/workflows/audit-repo-hygiene.md',
   '.agents/workflows/check-layer-health.md',
   '.agents/workflows/review-cloudflare-layer.md',
