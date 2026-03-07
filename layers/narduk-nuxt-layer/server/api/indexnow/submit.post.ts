@@ -14,8 +14,8 @@
  */
 export default defineEventHandler(async (event) => {
   const log = useLogger(event).child('IndexNow')
-  // Rate limit: max 5 submissions per minute per IP
-  await enforceRateLimit(event, 'indexnow', 5, 60_000)
+  // Rate limit: max 30 submissions per minute per IP
+  await enforceRateLimit(event, 'indexnow', 30, 60_000)
 
   const config = useRuntimeConfig(event)
   const key = String(config.public.indexNowKey ?? '')

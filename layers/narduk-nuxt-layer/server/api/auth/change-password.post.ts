@@ -10,7 +10,7 @@ const changePasswordSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event).child('Auth')
-  await enforceRateLimit(event, 'auth-change-password', 5, 60_000)
+  await enforceRateLimit(event, 'auth-change-password', 20, 60_000)
 
   const user = await requireAuth(event)
   const body = await readValidatedBody(event, changePasswordSchema.parse)

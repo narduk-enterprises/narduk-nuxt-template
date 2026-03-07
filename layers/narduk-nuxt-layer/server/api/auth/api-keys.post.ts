@@ -12,7 +12,7 @@ const bodySchema = z.object({
  */
 export default defineEventHandler(async (event) => {
   const log = useLogger(event).child('Auth')
-  await enforceRateLimit(event, 'auth-api-keys', 10, 60_000)
+  await enforceRateLimit(event, 'auth-api-keys', 30, 60_000)
 
   const user = await requireAuth(event)
   const { name } = await readValidatedBody(event, bodySchema.parse)

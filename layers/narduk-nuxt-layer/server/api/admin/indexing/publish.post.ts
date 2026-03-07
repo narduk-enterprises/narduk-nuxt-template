@@ -25,7 +25,7 @@ const bodySchema = z.object({
 export default defineEventHandler(async (event) => {
   const log = useLogger(event).child('Indexing')
   await requireAdmin(event)
-  await enforceRateLimit(event, 'google-indexing-publish', 10, 60_000)
+  await enforceRateLimit(event, 'google-indexing-publish', 50, 60_000)
 
   const body = await readBody<unknown>(event)
   const parsed = bodySchema.safeParse(body)

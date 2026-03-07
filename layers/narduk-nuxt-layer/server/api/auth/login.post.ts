@@ -10,7 +10,7 @@ const loginSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event).child('Auth')
-  await enforceRateLimit(event, 'auth-login', 10, 60_000)
+  await enforceRateLimit(event, 'auth-login', 30, 60_000)
 
   const body = await readValidatedBody(event, loginSchema.parse)
   const db = useDatabase(event)

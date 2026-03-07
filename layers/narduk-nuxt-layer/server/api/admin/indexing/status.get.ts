@@ -20,7 +20,7 @@ const querySchema = z.object({
 export default defineEventHandler(async (event) => {
   const log = useLogger(event).child('Indexing')
   await requireAdmin(event)
-  await enforceRateLimit(event, 'google-indexing-status', 10, 60_000)
+  await enforceRateLimit(event, 'google-indexing-status', 60, 60_000)
 
   const query = await getValidatedQuery(event, querySchema.parse)
   const encodedUrl = encodeURIComponent(query.url)

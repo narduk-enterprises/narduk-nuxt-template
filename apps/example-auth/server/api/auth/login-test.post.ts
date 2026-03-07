@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Allow enough for E2E tests running in parallel (5/min is too low)
-  await enforceRateLimit(event, 'auth-login-test', 30, 60_000)
+  await enforceRateLimit(event, 'auth-login-test', 100, 60_000)
 
   const user = await ensureDefaultTestUser(event)
 
