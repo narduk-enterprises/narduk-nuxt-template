@@ -4,7 +4,7 @@
  * Requires auth (requireAuth). Accepts multipart form data with one or more files.
  * Stores each file in R2 under `uploads/<uuid>.<ext>` and returns the key(s).
  *
- * - Rate-limited: 5 requests per 60 seconds per IP.
+ * - Rate-limited: 20 requests per 60 seconds per IP.
  * - Max file size: 10 MB per file.
  * - Allowed types: JPEG, PNG, WebP, GIF, SVG, AVIF.
  *
@@ -20,7 +20,7 @@ import { validateUploadFiles, normalizeExtension } from '../utils/upload'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event).child('Upload')
-  await enforceRateLimit(event, 'upload', 5, 60_000)
+  await enforceRateLimit(event, 'upload', 20, 60_000)
   await requireAuth(event)
 
   const formData = await readMultipartFormData(event)
