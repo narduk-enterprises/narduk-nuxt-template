@@ -2,7 +2,8 @@
 description:
   Audit and fix Tailwind v4 + Nuxt UI 4 best-practice drift — CSS entry point,
   @theme usage, semantic tokens, color runtime config, scoped style safety,
-  deprecated utilities, import order, and design token compliance
+  deprecated utilities, import order, design token compliance, and custom CSS
+  minimization (Tailwind-First enforcement)
 ---
 
 # Tailwind v4 + Nuxt UI 4 Best-Practice Drift Audit & Fix
@@ -403,7 +404,84 @@ grep -n '@source' app/assets/css/main.css 2>/dev/null || echo "No @source direct
 
 ---
 
-## Phase 11 — Compile Report & Fix
+## Phase 11 — Custom CSS Minimization (Tailwind-First)
+
+Custom CSS is technical debt. Every line of custom CSS is a line that could
+break on Tailwind upgrades, doesn't respond to dark mode automatically, and is
+harder to maintain. **Favor Tailwind utility classes and Nuxt UI design tokens
+over custom CSS rules.**
+
+### 11.1 Audit `<style>` blocks in components and pages
+
+```bash
+grep -rlc '<style' app/components/ app/pages/ app/layouts/ 2>/dev/null | while read f; do count=$(grep -c '<style' "$f"); echo "  $count style block(s): $f"; done || echo "PASS: no style blocks"
+```
+
+**Best practice:**
+
+- **Eliminate `<style>` blocks** in components. Use Tailwind classes inline.
+- The only acceptable `<style>` blocks are in `main.css` (design system
+  primitives), `app.vue` (page transitions), or third-party component overrides
+  that cannot use props/slots.
+- If a `<style scoped>` block only contains `@apply`, inline the classes
+  directly in the template and delete the block.
+
+### 11.2 Audit custom CSS classes in `main.css`
+
+```bash
+grep -c '{' app/assets/css/main.css 2>/dev/null || echo "0"
+```
+
+Review the count. A healthy `main.css` should be **mostly** `@import`, `@theme`,
+and `:root`/`.dark` variable blocks. Custom utility classes (`.card-base`,
+`.glass`, `.form-container`) are acceptable as **design system primitives** —
+but keep the count low.
+
+**Rules for acceptable custom CSS in `main.css`:**
+
+- ✅ `@theme` variables (fonts, shadows, radius, transitions)
+- ✅ `:root` / `.dark` semantic variable overrides
+- ✅ Reusable design system primitives (glass, card-base, form layouts)
+- ✅ Keyframe animations
+- ✅ Page transition styles
+- ❌ One-off component styles (move to Tailwind inline)
+- ❌ Color definitions outside `@theme` or `:root`/`.dark`
+- ❌ Media queries that duplicate Tailwind breakpoints (`sm:`, `md:`, `lg:`)
+- ❌ Flexbox/grid rules that Tailwind handles (`flex`, `grid`, `gap-*`)
+
+### 11.3 Check for custom CSS that duplicates Tailwind utilities
+
+```bash
+grep -rn 'display:\s*flex\|display:\s*grid\|display:\s*none\|margin:\|padding:\|font-size:\|font-weight:\|text-align:\|justify-content:\|align-items:\|gap:' app/assets/css/main.css app/components/ app/pages/ 2>/dev/null | grep -v node_modules | grep -v '@theme\|:root\|\.dark' | head -20 || echo "PASS: no custom CSS duplicating Tailwind"
+```
+
+**Fix:** Replace custom CSS properties with their Tailwind equivalents:
+
+| Custom CSS                          | Tailwind class   |
+| ----------------------------------- | ---------------- |
+| `display: flex`                     | `flex`           |
+| `display: grid`                     | `grid`           |
+| `justify-content: center`           | `justify-center` |
+| `align-items: center`               | `items-center`   |
+| `gap: 1rem`                         | `gap-4`          |
+| `padding: 1.5rem`                   | `p-6`            |
+| `font-weight: 600`                  | `font-semibold`  |
+| `border-radius: 0.5rem`             | `rounded-lg`     |
+| `@media (min-width: 640px) { ... }` | `sm:...`         |
+
+### 11.4 Check for inline `style` attributes
+
+```bash
+grep -rn ' style="' app/components/ app/pages/ app/layouts/ 2>/dev/null | grep -v node_modules | head -15 || echo "PASS: no inline style attributes"
+```
+
+**Fix:** Replace `style="..."` with Tailwind classes or CSS variables.
+Exception: dynamic styles bound with `:style` for computed values (e.g.
+`transform`, `--progress`) are acceptable.
+
+---
+
+## Phase 12 — Compile Report & Fix
 
 Present findings grouped by severity:
 
@@ -411,7 +489,7 @@ Present findings grouped by severity:
 | ----------- | ----------------------------------------------------------------------------- |
 | 🔴 Critical | Wrong import order, missing `@import '@nuxt/ui'`, `@theme static` for primary |
 | 🟠 High     | Semantic token shadowing, `@apply` in scoped styles, deprecated components    |
-| 🟡 Medium   | Raw palette colors, deprecated class names, missing `UApp`                    |
+| 🟡 Medium   | Raw palette colors, deprecated class names, missing `UApp`, custom CSS bloat  |
 | 🟢 Low      | Missing `@source`, icon syntax, arbitrary value bracket cleanup               |
 
 **For each finding:**
