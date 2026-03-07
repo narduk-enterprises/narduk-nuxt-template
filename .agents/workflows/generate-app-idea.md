@@ -243,7 +243,7 @@ Run the setup script (the script is NOT interactive). This handles ALL initializ
 pnpm run setup -- --name="<app-name>" --display="<Display Name>"
 --url="https://<app-name>.nard.uk"
 
-```
+````
 
 > **What to expect:** Setup takes ~2 minutes and prints 10 steps. Steps involving Doppler and analytics may show ⏭ (skipped) or ⚠️ (deferred) — this is normal if Doppler isn't fully configured. The critical steps are **1** (string replacement), **2** (D1 provisioning), and **3** (wrangler.json). At the end, a **SETUP SUMMARY** shows ✅ completed / ⏭ deferred — if the critical steps show ✅, setup succeeded.
 
@@ -253,9 +253,10 @@ After setup completes, verify everything is healthy:
 pnpm run validate
 pnpm run db:migrate
 pnpm --filter <app-name> run quality
-```
+````
 
-If quality passes with zero errors and zero warnings, proceed. If not, fix any issues before building.
+If quality passes with zero errors and zero warnings, proceed. If not, fix any
+issues before building.
 
 Then read `AGENTS.md` and `tools/AGENTS.md`.
 
@@ -266,35 +267,48 @@ Then read `AGENTS.md` and `tools/AGENTS.md`.
 Build the app inside `apps/web`. Features:
 
 **1. Database Schema (Cloudflare D1)**
+
 - [table details...]
 
 **2. API Routes (Nitro / Cloudflare Workers)**
+
 - [endpoint details...]
 
 **3. Frontend (Nuxt UI 4)**
+
 - [UI requirements...]
-- **Requirement:** Use the inherited layer design tokens, Nuxt UI 4 components (including Pro components: `PageHero`, `PageSection`, `PageFeature`, `PageCTA` for landing pages; `DashboardGroup`, `DashboardSidebar`, `DashboardPanel` for admin interfaces), and Tailwind v4.
+- **Requirement:** Use the inherited layer design tokens, Nuxt UI 4 components
+  (including Pro components: `PageHero`, `PageSection`, `PageFeature`, `PageCTA`
+  for landing pages; `DashboardGroup`, `DashboardSidebar`, `DashboardPanel` for
+  admin interfaces), and Tailwind v4.
 
 ### ⚠️ CRITICAL: Database Schema Extension Pattern
 
-When adding app-specific tables beyond the layer's base schema (`users`, `sessions`):
+When adding app-specific tables beyond the layer's base schema (`users`,
+`sessions`):
 
-1. **Create `apps/web/server/database/schema.ts`** — re-export the layer schema first, then define your app tables:
+1. **Create `apps/web/server/database/schema.ts`** — re-export the layer schema
+   first, then define your app tables:
+
    ```ts
    export * from '#layer/server/database/schema'
    // App-specific tables below
    export const myTable = sqliteTable('my_table', { ... })
    ```
 
-2. **Create `apps/web/server/utils/database.ts`** — export `useAppDatabase(event)` using the FULL schema:
+2. **Create `apps/web/server/utils/database.ts`** — export
+   `useAppDatabase(event)` using the FULL schema:
    ```ts
-   import { drizzle } from 'drizzle-orm/d1';
-   import * as schema from '#server/database/schema';
+   import { drizzle } from 'drizzle-orm/d1'
+   import * as schema from '#server/database/schema'
    export function useAppDatabase(event: H3Event) {
-     return drizzle(event.context.cloudflare.env.DB, { schema });
+     return drizzle(event.context.cloudflare.env.DB, { schema })
    }
    ```
-3. **Use `useAppDatabase(event)` in ALL your server routes** — NEVER use the auto-imported `useDatabase` from the layer (it only sees layer tables; naming your helper `useDatabase` causes "Duplicated imports" warnings and the layer's version wins).
+3. **Use `useAppDatabase(event)` in ALL your server routes** — NEVER use the
+   auto-imported `useDatabase` from the layer (it only sees layer tables; naming
+   your helper `useDatabase` causes "Duplicated imports" warnings and the
+   layer's version wins).
 
 ### Server Import Rule
 
@@ -306,42 +320,70 @@ Always use `#server/` aliases for server-to-server imports:
 
 ### Migration Pattern
 
-After creating or modifying the schema, add a new SQL migration file in `apps/web/drizzle/` (e.g., `0001_app_tables.sql`). The `db:migrate` script automatically runs all `drizzle/*.sql` files in alphabetical order — no script edits needed.
+After creating or modifying the schema, add a new SQL migration file in
+`apps/web/drizzle/` (e.g., `0001_app_tables.sql`). The `db:migrate` script
+automatically runs all `drizzle/*.sql` files in alphabetical order — no script
+edits needed.
 
 ### Quality Scope
 
-Only run lint/typecheck scoped to the app: `pnpm --filter <app-name> run quality`.
-Do NOT run workspace-root quality — layer warnings are pre-existing and not your responsibility.
+Only run lint/typecheck scoped to the app:
+`pnpm --filter <app-name> run quality`. Do NOT run workspace-root quality —
+layer warnings are pre-existing and not your responsibility.
 
 ---
 
 ## Mission 1b: Brand Identity
 
-Once the app is built and functional, follow the `/generate-brand-identity` workflow (`.agents/workflows/generate-brand-identity.md`) end-to-end. **Do not ask any questions** — you are the creative director. Analyze the app, make all creative decisions yourself, and execute the full pipeline: theme colors, typography, visual assets (logo, hero imagery), favicons, and holistic design polish. The app should feel like a real product — not a template.
+Once the app is built and functional, follow the `/generate-brand-identity`
+workflow (`.agents/workflows/generate-brand-identity.md`) end-to-end. **Do not
+ask any questions** — you are the creative director. Analyze the app, make all
+creative decisions yourself, and execute the full pipeline: theme colors,
+typography, visual assets (logo, hero imagery), favicons, and holistic design
+polish. The app should feel like a real product — not a template.
 
-Generate a **distinctive, memorable logo** using `/generate-brand-identity` Phase 3. The logo must work as a favicon at 16×16 and as an app icon at 180×180. Use the `generate_image` tool and the `pnpm generate:favicons` script to produce all required assets.
+Generate a **distinctive, memorable logo** using `/generate-brand-identity`
+Phase 3. The logo must work as a favicon at 16×16 and as an app icon at 180×180.
+Use the `generate_image` tool and the `pnpm generate:favicons` script to produce
+all required assets.
 
 ### ⚠️ MANDATORY: Remove ALL Template Branding
 
 The template ships with default branding that **MUST** be replaced:
 
-1. **Remove the N4 icon.** The green "N4" Nuxt logo in the header/navbar is template branding. It must be deleted and replaced with the app's own logo. Do NOT ship an app with the N4 icon anywhere.
-2. **Remove or redesign the default navbar.** The template's default `UHeader` with a generic "Home" link and color mode toggle is lazy scaffolding. Either:
-   - **Remove it entirely** if the app doesn't need top navigation (most single-page tools, utilities, and simple apps don't), OR
-   - **Redesign it completely** with the app's own logo, meaningful navigation links, and intentional layout — only if navigation genuinely adds value to the user experience.
-   - A navbar with just "Home" and a color toggle is **unacceptable**. If that's all you'd put in it, remove it.
-3. **Replace all placeholder text.** Search for "Nuxt 4", "N4", "Demo", "Template" in the UI and replace with app-specific content.
-4. **Light theme by default.** Set `colorMode: { preference: 'light' }` in `nuxt.config.ts`. We prefer light mode as the default experience. Dark mode must still look polished, but light mode is what users see first.
+1. **Remove the N4 icon.** The green "N4" Nuxt logo in the header/navbar is
+   template branding. It must be deleted and replaced with the app's own logo.
+   Do NOT ship an app with the N4 icon anywhere.
+2. **Remove or redesign the default navbar.** The template's default `UHeader`
+   with a generic "Home" link and color mode toggle is lazy scaffolding. Either:
+   - **Remove it entirely** if the app doesn't need top navigation (most
+     single-page tools, utilities, and simple apps don't), OR
+   - **Redesign it completely** with the app's own logo, meaningful navigation
+     links, and intentional layout — only if navigation genuinely adds value to
+     the user experience.
+   - A navbar with just "Home" and a color toggle is **unacceptable**. If that's
+     all you'd put in it, remove it.
+3. **Replace all placeholder text.** Search for "Nuxt 4", "N4", "Demo",
+   "Template" in the UI and replace with app-specific content.
+4. **Light theme by default.** Set `colorMode: { preference: 'light' }` in
+   `nuxt.config.ts`. We prefer light mode as the default experience. Dark mode
+   must still look polished, but light mode is what users see first.
 
 ## Mission 1c: SEO Excellence
 
-This app must be **exceptionally SEO-friendly**. Go beyond the template defaults:
+This app must be **exceptionally SEO-friendly**. Go beyond the template
+defaults:
 
-- Every page MUST call `useSeo()` with rich, keyword-optimized titles and descriptions.
-- Every page MUST call `useWebPageSchema()` (or appropriate Schema.org type) for structured data.
-- Write compelling, unique meta descriptions for every route — not generic placeholders.
-- Ensure the landing page has a clear `<h1>` with proper heading hierarchy throughout.
-- Use semantic HTML5 elements (`<main>`, `<article>`, `<section>`, `<nav>`, etc.).
+- Every page MUST call `useSeo()` with rich, keyword-optimized titles and
+  descriptions.
+- Every page MUST call `useWebPageSchema()` (or appropriate Schema.org type) for
+  structured data.
+- Write compelling, unique meta descriptions for every route — not generic
+  placeholders.
+- Ensure the landing page has a clear `<h1>` with proper heading hierarchy
+  throughout.
+- Use semantic HTML5 elements (`<main>`, `<article>`, `<section>`, `<nav>`,
+  etc.).
 - OG images must be customized per page with descriptive text and branding.
 - Verify that `sitemap.xml` and `robots.txt` are correctly generated.
 - IndexNow is already wired — ensure it fires on content changes.
@@ -356,14 +398,21 @@ Create `audit_report.md` answering:
 1. Did `pnpm run setup` complete smoothly?
 2. Did Drizzle migration and `nitro-cloudflare-dev` work out of the box?
 3. Did Nuxt layer inheritance work seamlessly?
-4. Any pre-existing TypeScript errors from `pnpm --filter <app-name> run quality`?
+4. Any pre-existing TypeScript errors from
+   `pnpm --filter <app-name> run quality`?
 5. Did documentation accurately guide you?
 6. Any HMR port collisions, Tailwind issues, or Doppler errors?
 
 ### Final Deliverable:
 
-- Working code for [App Name] with **ZERO errors and ZERO warnings** (TypeScript, ESLint, Build).
+- Working code for [App Name] with **ZERO errors and ZERO warnings**
+  (TypeScript, ESLint, Build).
 - `audit_report.md` with brutally honest feedback.
 
-**CRITICAL RULE:** If you encounter errors or warnings, you must fix them properly. Do NOT use hacky monkey fixes, `@ts-expect-error`, or suppressions. Solve the actual root cause.
+**CRITICAL RULE:** If you encounter errors or warnings, you must fix them
+properly. Do NOT use hacky monkey fixes, `@ts-expect-error`, or suppressions.
+Solve the actual root cause.
+
+```
+
 ```

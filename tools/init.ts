@@ -647,7 +647,9 @@ Deployment is done locally via \`pnpm run ship\` (see AGENTS.md).
       console.log(
         '    ⚠️  Deploy will fail on push to main until DOPPLER_TOKEN is set; run setup with --repair after adding your remote.',
       )
-      deferred.push('GitHub DOPPLER_TOKEN secret (no git remote — re-run with --repair after adding remote)')
+      deferred.push(
+        'GitHub DOPPLER_TOKEN secret (no git remote — re-run with --repair after adding remote)',
+      )
     } else {
       try {
         // Check if ci-deploy token already exists

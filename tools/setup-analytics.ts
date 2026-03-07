@@ -123,23 +123,14 @@ function readDopplerYaml(): { project: string; config: string } | null {
 function writeSetupSecret(key: string, value: string, configOverride?: string) {
   const envProject = process.env.DOPPLER_PROJECT
   const envConfig = configOverride || process.env.DOPPLER_CONFIG
-  const doppler = envProject && envConfig
-    ? { project: envProject, config: envConfig }
-    : readDopplerYaml()
+  const doppler =
+    envProject && envConfig ? { project: envProject, config: envConfig } : readDopplerYaml()
 
   if (doppler) {
     const targetConfig = configOverride || doppler.config
     const out = spawnSync(
       'doppler',
-      [
-        'secrets',
-        'set',
-        `${key}=${value}`,
-        '--project',
-        doppler.project,
-        '--config',
-        targetConfig,
-      ],
+      ['secrets', 'set', `${key}=${value}`, '--project', doppler.project, '--config', targetConfig],
       {
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'pipe'],
