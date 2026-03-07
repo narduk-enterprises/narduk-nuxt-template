@@ -94,6 +94,24 @@ checks below.
   scoped CSS hazards preventing them from rendering styles correctly (Tailwind
   `@theme` utility usage is preferred).
 
+### 9. Check `<Transition>` wraps a native element root
+
+- Vue's `<Transition>` requires its direct child to be a single **native DOM
+  element** (or a component with a single element root). Nuxt UI components like
+  `UButton` render through multi-component chains (`NuxtLink > ULink`) that can
+  produce non-element root nodes (comment nodes, text nodes, or fragments),
+  which `<Transition>` cannot animate.
+- **Symptom:**
+  `[Vue warn]: Component inside <Transition> renders non-element root node that cannot be animated.`
+- **Fix pattern:** Wrap the Nuxt UI component in a plain `<div>` (or
+  semantically appropriate element) so `<Transition>` always sees a native
+  element. Move `v-if`/`v-show` to the wrapper. Move any fixed/absolute
+  positioning CSS to the wrapper class. // turbo
+  `grep -rn '<Transition' app/components/ app/pages/ 2>/dev/null | head -20`
+- Review output manually: for each `<Transition>`, verify the direct child is a
+  native element (`<div>`, `<span>`, `<button>`, etc.) or a wrapper `<div>`
+  around any Nuxt UI / component library components.
+
 ---
 
 ## Phase 2 — Runtime Detection & Triage
@@ -198,6 +216,23 @@ different default values on server and client.
   - Data-count conditionals (e.g. `v-if="items.length > 0"`)
   - Add a comment:
     `<!-- hydration: v-show for server:false data (SSR/CSR must match) -->`
+
+#### G) `<Transition>` wrapping a non-element root component
+
+**Culprits:** Nuxt UI components (`UButton`, `UBadge`, etc.) used as the direct
+child of `<Transition>`. These components render through multi-level component
+chains (e.g., `NuxtLink > ULink`) that can produce non-element root nodes
+(comment nodes, fragments, or text), which Vue's Transition cannot animate.
+
+**Fix pattern:**
+
+- Wrap the component in a native element (`<div>`, `<span>`, `<button>`) that
+  becomes Transition's direct child.
+- Move `v-if`/`v-show` to the wrapper element.
+- Move any fixed/absolute positioning CSS to a wrapper class so the component
+  inside remains naturally positioned.
+- Add a comment:
+  `<!-- Transition requires a native element root; UButton renders NuxtLink/ULink which are non-element -->`
 
 ---
 
@@ -320,6 +355,27 @@ Provide:
 
 - SSR: skeleton div with fixed structure.
 - CSR: mount library inside same container after mount.
+
+### Transition-safe component wrapping
+
+- Never use a Nuxt UI component (UButton, UBadge, etc.) as the direct child of
+  `<Transition>` — wrap in a plain `<div>` or `<span>`.
+- Move `v-if` to the wrapper so Transition toggles a native element.
+- Move positioning CSS (fixed, absolute) to the wrapper class.
+
+```vue
+<!-- ✅ Correct -->
+<Transition name="fade">
+  <div v-if="visible" class="floating-wrapper">
+    <UButton icon="i-lucide-arrow-up" />
+  </div>
+</Transition>
+
+<!-- ❌ Wrong — UButton renders non-element root -->
+<Transition name="fade">
+  <UButton v-if="visible" icon="i-lucide-arrow-up" />
+</Transition>
+```
 
 ---
 
