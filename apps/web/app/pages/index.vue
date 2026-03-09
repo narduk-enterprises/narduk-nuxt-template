@@ -1,25 +1,66 @@
 <script setup lang="ts">
+const config = useRuntimeConfig()
+const appName = config.public.appName || 'Our App'
+
 useSeo({
-  title: 'Welcome to the Nuxt 4 Template',
-  description: 'Built with Nuxt 4, Nuxt UI 4, and Cloudflare Workers.',
+  title: `${appName} — Coming Soon`,
+  description: `${appName} is launching soon. Something amazing is on the way.`,
 })
 useWebPageSchema({
-  name: 'Welcome to the Nuxt 4 Template',
-  description: 'Built with Nuxt 4, Nuxt UI 4, and Cloudflare Workers.',
+  name: `${appName} — Coming Soon`,
+  description: `${appName} is launching soon. Something amazing is on the way.`,
 })
+
+const features = [
+  {
+    icon: 'i-lucide-zap',
+    title: 'Lightning Fast',
+    description: 'Deployed on the edge for sub-50ms responses worldwide.',
+  },
+  {
+    icon: 'i-lucide-palette',
+    title: 'Beautiful Design',
+    description: 'Crafted with care using modern design principles.',
+  },
+  {
+    icon: 'i-lucide-shield-check',
+    title: 'Enterprise Ready',
+    description: 'Built on production-grade infrastructure from day one.',
+  },
+]
 </script>
 
 <template>
   <UPage>
     <UPageHero
-      title="Nuxt 4 Template"
-      description="Built with Nuxt 4, Nuxt UI 4, Tailwind CSS 4, and deployed on Cloudflare Workers with D1."
+      :title="appName"
+      description="Something amazing is on the way."
+      :ui="{ title: 'text-5xl sm:text-6xl', description: 'text-xl text-muted' }"
     >
       <template #links>
-        <UButton to="https://ui.nuxt.com" target="_blank" icon="i-lucide-book-open" color="neutral">
-          Nuxt UI Docs
-        </UButton>
+        <UBadge
+          color="primary"
+          variant="subtle"
+          size="lg"
+          label="Coming Soon"
+          icon="i-lucide-rocket"
+        />
       </template>
     </UPageHero>
+
+    <UPageGrid>
+      <UPageCard
+        v-for="feature in features"
+        :key="feature.title"
+        :icon="feature.icon"
+        :title="feature.title"
+        :description="feature.description"
+      />
+    </UPageGrid>
+
+    <UPageSection :ui="{ wrapper: 'py-16 sm:py-24 text-center' }">
+      <p class="text-lg text-muted mb-2">Stay tuned — we're building something great.</p>
+      <p class="text-sm text-dimmed">Powered by Nuxt 4 &amp; Cloudflare Workers</p>
+    </UPageSection>
   </UPage>
 </template>

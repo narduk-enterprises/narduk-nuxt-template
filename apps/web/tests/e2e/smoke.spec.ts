@@ -10,11 +10,11 @@ test.describe('web smoke', () => {
     await warmUpApp(browser, baseURL)
   })
 
-  test('home page renders the template hero', async ({ page }) => {
+  test('home page renders the coming soon hero', async ({ page }) => {
     await page.goto('/')
     await waitForHydration(page)
-    await expect(page.getByText('Nuxt 4 Template').first()).toBeVisible()
-    await expect(page).toHaveTitle(/Welcome to the Nuxt 4 Template/)
-    await expect(page.getByRole('link', { name: 'Nuxt UI Docs' })).toBeVisible()
+    await expect(page.getByText('Coming Soon').first()).toBeVisible()
+    await expect(page.getByText('Something amazing is on the way').first()).toBeVisible()
+    await expect(page).toHaveTitle(/Coming Soon/)
   })
 })

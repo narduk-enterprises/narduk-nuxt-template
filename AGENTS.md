@@ -430,29 +430,50 @@ Sitemap and robots.txt are automatic. OG image templates live in
 
 ## Starting a New Project from This Template
 
-Follow these steps **in order** — the init script handles renaming, D1
-provisioning, and Doppler setup.
+### Recommended: Control Plane Provision API
 
-> **Doppler is optional for initial setup.** Steps that require Doppler (project
-> creation, hub secret sync, GitHub CI token, analytics) are skipped gracefully
-> when the Doppler CLI is not installed or configured. You can complete them
-> later by running `doppler setup` and re-running `pnpm run setup` with
-> `--repair`. Note: If you do have Doppler installed but your hub secrets are
-> not fully configured yet, the setup script will intelligently **defer** the
-> analytics provisioning step with a clear follow-up command.
+The fastest way to create a new app is via the control plane, which handles
+GitHub repo creation, init.ts, analytics/GSC setup, and first deploy
+automatically:
+
+```bash
+curl -X POST https://control-plane.nard.uk/api/fleet/provision \
+  -H "Authorization: Bearer $PROVISION_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"my-app","displayName":"My App","url":"https://my-app.nard.uk"}'
+```
+
+The control plane registers the app in the fleet, creates the GitHub repo, and
+triggers a `provision-app.yml` GitHub Action that runs the full init pipeline.
+Poll the returned `provisionId` to track progress:
+
+```bash
+curl https://control-plane.nard.uk/api/fleet/provision/{provisionId}
+```
+
+Once complete, clone locally and start developing:
+
+```bash
+git clone https://github.com/narduk-enterprises/my-app.git ~/new-code/my-app
+cd ~/new-code/my-app && pnpm install
+doppler setup --project my-app --config dev
+doppler run -- pnpm run dev
+```
+
+### Manual Setup (Fallback)
+
+If the provision API is unavailable, follow these manual steps:
 
 1. Clone:
    `git clone https://github.com/narduk-enterprises/narduk-nuxt-template.git my-app && cd my-app`
-2. Clear the template's git history and set up your own repository (Required for
-   GitHub CI secrets to bind properly):
+2. Clear the template's git history and set up your own repository:
    ```bash
    rm -rf .git
    git init
    git remote add origin git@github.com:your-username/my-app.git
    ```
 3. Install dependencies: `pnpm install`
-4. **Run the initialization script** (renames everything, provisions D1, creates
-   Doppler project, pushes CI token to GitHub):
+4. **Run the initialization script:**
    ```bash
    pnpm run setup -- --name="your-app-name" --display="Your Display Name" --url="https://yoururl.com"
    ```
@@ -467,7 +488,7 @@ provisioning, and Doppler setup.
 > **🛡️ Bootstrap Guard:** `pnpm dev`, `pnpm build`, and `pnpm deploy` are
 > **blocked** until `pnpm run setup` has been completed. The setup script writes
 > a `.setup-complete` sentinel file; the `pre*` hooks in `package.json` check
-> for it. If you see a "PROJECT SETUP NOT COMPLETE" error, follow steps 1–4
+> for it. If you see a "PROJECT SETUP NOT COMPLETE" error, follow the steps
 > above.
 
 > **ℹ️ CI is quality-only.** GitHub Actions runs lint, typecheck, and tests —
@@ -572,15 +593,13 @@ capability. For working reference implementations, refer to the showcase apps:
 
 ## 🚀 Initialization Routine (New Projects)
 
-**When:** You have just cloned this template to begin a new application.
-**CRITICAL:** This must be your very first step before writing any code.
+**When:** You need to create a new application from the template. **CRITICAL:**
+This must happen before any code is written.
 
-> **Doppler-optional:** Running setup without Doppler is supported. Steps that
-> require Doppler (project creation, hub secret sync, GitHub CI token,
-> analytics) are skipped with a clear message. After configuring Doppler, re-run
-> with `--repair` to complete those steps.
+**Preferred: Control Plane Provision API** — see "Starting a New Project" above.
+The API handles repo creation, init.ts, analytics, and first deploy.
 
-**Steps:**
+**Manual (if API unavailable):**
 
 1. Run the setup script from the root directory:
    ```bash
@@ -589,8 +608,7 @@ capability. For working reference implementations, refer to the showcase apps:
    _(This will rename the project, create the Cloudflare D1 database, spin up
    the Doppler project if available, and rewrite `wrangler.json`.)_
 2. Configure your Doppler secrets (see Secrets & Env below).
-3. Pull Doppler secrets and initialize the local database schema
-   (non-interactive):
+3. Pull Doppler secrets and initialize the local database schema:
    ```bash
    doppler setup --project <app-name> --config dev && pnpm run db:migrate
    ```

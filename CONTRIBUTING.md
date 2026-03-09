@@ -32,16 +32,16 @@ tools/          → Init, validate, and setup scripts
 
 ## Common Commands
 
-| Command                 | What It Does                                   |
-| ----------------------- | ---------------------------------------------- |
-| `pnpm run dev`          | Start the main web app                         |
-| `pnpm run dev:showcase` | Start all showcase apps concurrently           |
-| `pnpm run lint`         | Lint all packages (auto-builds ESLint plugins) |
-| `pnpm run typecheck`    | TypeScript type checking across all packages   |
-| `pnpm run quality`      | Lint + typecheck combined                      |
-| `pnpm run build`        | Production build (requires Doppler)            |
-| `pnpm run setup`        | Initialize a new project from the template     |
-| `pnpm run validate`     | Run project validation checks                  |
+| Command                 | What It Does                                                      |
+| ----------------------- | ----------------------------------------------------------------- |
+| `pnpm run dev`          | Start the main web app                                            |
+| `pnpm run dev:showcase` | Start all showcase apps concurrently                              |
+| `pnpm run lint`         | Lint all packages (auto-builds ESLint plugins)                    |
+| `pnpm run typecheck`    | TypeScript type checking across all packages                      |
+| `pnpm run quality`      | Lint + typecheck combined                                         |
+| `pnpm run build`        | Production build (requires Doppler)                               |
+| `pnpm run setup`        | Initialize a new project (prefer the control plane provision API) |
+| `pnpm run validate`     | Run project validation checks                                     |
 
 ## Development Workflow
 

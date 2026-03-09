@@ -10,13 +10,13 @@ These are **Node.js automation scripts** that run locally or in CI. They are
 
 ## Scripts
 
-| Script                 | Purpose                                                                                                   | Usage                                                        |
-| ---------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `init.ts`              | Transforms a fresh template clone into a ready-to-deploy app (renames, provisions D1, Doppler, analytics) | `pnpm run setup -- --name="..." --display="..." --url="..."` |
-| `validate.ts`          | Confirms infrastructure is correctly provisioned (D1, Doppler, GitHub secrets)                            | `pnpm run validate`                                          |
-| `generate-favicons.ts` | Generates all favicon variants (apple-touch-icon, ico, PNG, webmanifest) from a source SVG                | `pnpm generate:favicons`                                     |
-| `setup-analytics.ts`   | Bootstraps GA4, Google Search Console, and IndexNow                                                       | Called by `init.ts` or run directly                          |
-| `gsc-toolbox.ts`       | Google Search Console API utilities                                                                       | Used by `setup-analytics.ts`                                 |
+| Script                 | Purpose                                                                                                                                                                           | Usage                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `init.ts`              | Transforms a fresh template clone into a ready-to-deploy app (renames, provisions D1, Doppler, analytics). Prefer the control plane provision API which calls this automatically. | `pnpm run setup -- --name="..." --display="..." --url="..."` |
+| `validate.ts`          | Confirms infrastructure is correctly provisioned (D1, Doppler, GitHub secrets)                                                                                                    | `pnpm run validate`                                          |
+| `generate-favicons.ts` | Generates all favicon variants (apple-touch-icon, ico, PNG, webmanifest) from a source SVG                                                                                        | `pnpm generate:favicons`                                     |
+| `setup-analytics.ts`   | Bootstraps GA4, Google Search Console, and IndexNow                                                                                                                               | Called by `init.ts` or run directly                          |
+| `gsc-toolbox.ts`       | Google Search Console API utilities                                                                                                                                               | Used by `setup-analytics.ts`                                 |
 
 ## vs. `scripts/`
 

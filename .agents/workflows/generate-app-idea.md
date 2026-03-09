@@ -75,36 +75,47 @@ template.
 
 4. Present all 10 to the user and let them pick (or remix).
 
-## Step 2: Bootstrap the Repository
+## Step 2: Provision via Control Plane API
 
-Once the user selects an app idea, **you** (the current agent) perform the
-bootstrap directly:
+Once the user selects an app idea, **you** (the current agent) provision it via
+the control plane:
 
 // turbo-all
 
-1. Create a new private GitHub repo:
+1. Call the control plane provision API:
+
    ```bash
-   gh repo create narduk-enterprises/<app-name> --private
+   curl -X POST https://control-plane.nard.uk/api/fleet/provision \
+     -H "Authorization: Bearer $PROVISION_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"name":"<app-name>","displayName":"<Display Name>","url":"https://<app-name>.nard.uk"}'
    ```
-2. Clone the template:
+
+   This creates the GitHub repo, registers it in the fleet, and triggers the
+   `provision-app.yml` GitHub Action which runs init.ts, analytics setup, and
+   first deploy automatically.
+
+2. Poll for completion:
+
    ```bash
-   git clone https://github.com/narduk-enterprises/narduk-nuxt-template.git ~/new-code/<app-name>
+   curl https://control-plane.nard.uk/api/fleet/provision/{provisionId}
    ```
-3. Clear the template's git history and set up your own repository:
+
+   Wait until status is `complete` (typically ~5 minutes).
+
+3. Clone the provisioned repo locally:
+
    ```bash
-   cd ~/new-code/<app-name> && rm -rf .git && git init && git remote add origin https://github.com/narduk-enterprises/<app-name>.git
+   git clone https://github.com/narduk-enterprises/<app-name>.git ~/new-code/<app-name>
    ```
+
 4. Install dependencies:
    ```bash
    cd ~/new-code/<app-name> && pnpm install
    ```
-5. Create initial commit and push (required for GitHub secrets and CI):
-   ```bash
-   cd ~/new-code/<app-name> && git add . && git commit -m "chore: initialize from narduk-nuxt-template" && git push -u origin main
-   ```
 
-**Do NOT run `pnpm run setup`.** That will be handled by the next agent in the
-project workspace.
+**Setup, analytics, and first deploy have already been handled** by the
+provision pipeline. The app is live with a "Coming Soon" page.
 
 ## Step 3: Generate the Build Prompt and Copy to Clipboard
 
@@ -113,25 +124,20 @@ opened at `~/new-code/<app-name>`. Copy it to the clipboard using `pbcopy`.
 
 The prompt **must** contain three sections:
 
-### Section 1: Project Setup
+### Section 1: Project Verification
 
-Instruct the agent to run `pnpm run setup` with explicit parameters:
+Since the app was provisioned via the control plane, setup has already been
+completed. Instruct the agent to verify the infrastructure:
 
 ```
-pnpm run setup -- --name="<app-name>" --display="<Display Name>" --url="https://<app-name>.nard.uk"
+pnpm run validate
+pnpm run db:migrate
+pnpm --filter <app-name> run quality
 ```
-
-- `--name`: lowercase kebab-case slug (must match `/^[a-z0-9][a-z0-9-]*$/`)
-- `--display`: human-readable name for SEO, favicons, and UI
-- `--url`: production URL for site config, OG tags, and Doppler
 
 Then instruct the agent to:
 
-1. Run `pnpm run validate` to confirm infrastructure is correctly provisioned.
-2. Run `pnpm run db:migrate` to apply the base schema to local D1.
-3. Run `pnpm --filter <app-name> run quality` to confirm zero pre-existing
-   errors in the app scope.
-4. Read `AGENTS.md` and `tools/AGENTS.md`.
+1. Read `AGENTS.md` and `tools/AGENTS.md`.
 
 ### Section 2: Build the App
 
