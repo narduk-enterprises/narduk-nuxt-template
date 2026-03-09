@@ -249,8 +249,7 @@ async function main() {
       .readdir(path.join(ROOT_DIR, 'apps'), { withFileTypes: true })
       .catch(() => [])
     for (const entry of appsForWrangler) {
-      if (!entry.isDirectory() || entry.name.startsWith('example-') || entry.name === 'showcase')
-        continue
+      if (!entry.isDirectory() || entry.name.startsWith('example-')) continue
       const wranglerPath = path.join(ROOT_DIR, 'apps', entry.name, 'wrangler.json')
       try {
         const content = await fs.readFile(wranglerPath, 'utf-8')
@@ -410,7 +409,7 @@ async function main() {
     appDirs = entries
       .filter((e) => e.isDirectory())
       .map((e) => e.name)
-      .filter((name) => name !== 'showcase' && !name.startsWith('example-'))
+      .filter((name) => !name.startsWith('example-'))
   } catch {
     appDirs = []
   }
@@ -541,6 +540,7 @@ Deployment is done locally via \`pnpm run ship\` (see AGENTS.md).
       const hubRefs: Record<string, string> = {
         CLOUDFLARE_API_TOKEN: '${narduk-nuxt-template.prd.CLOUDFLARE_API_TOKEN}',
         CLOUDFLARE_ACCOUNT_ID: '${narduk-nuxt-template.prd.CLOUDFLARE_ACCOUNT_ID}',
+        CONTROL_PLANE_API_KEY: '${narduk-nuxt-template.prd.CONTROL_PLANE_API_KEY}',
         POSTHOG_PUBLIC_KEY: '${narduk-nuxt-template.prd.POSTHOG_PUBLIC_KEY}',
         POSTHOG_PROJECT_ID: '${narduk-nuxt-template.prd.POSTHOG_PROJECT_ID}',
         POSTHOG_HOST: '${narduk-nuxt-template.prd.POSTHOG_HOST}',

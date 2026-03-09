@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
- * Root Playwright config so the Test Explorer shows all example app E2E tests.
+ * Root Playwright config so the Test Explorer shows all app E2E tests.
  * Each project points to one app's tests and baseURL. Run from repo root.
  * Starts all apps via `pnpm run dev:e2e` (or reuse existing servers).
  */
@@ -35,45 +35,13 @@ export default defineConfig({
     {
       name: 'showcase',
       testDir: 'apps/showcase/tests/e2e',
-      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:3010' },
-    },
-    {
-      name: 'example-auth',
-      testDir: 'apps/example-auth/tests/e2e',
-      timeout: 15_000,
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: 'http://localhost:3011',
-      },
-    },
-    {
-      name: 'example-blog',
-      testDir: 'apps/example-blog/tests/e2e',
       timeout: 30_000,
       use: {
         ...devices['Desktop Chrome'],
-        baseURL: 'http://localhost:3012',
+        baseURL: 'http://localhost:3010',
         navigationTimeout: 15_000,
         actionTimeout: 10_000,
       },
-    },
-    {
-      name: 'example-marketing',
-      testDir: 'apps/example-marketing/tests/e2e',
-      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:3013' },
-      timeout: 30_000,
-    },
-    {
-      name: 'example-og-image',
-      testDir: 'apps/example-og-image/tests/e2e',
-      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:3015' },
-      timeout: 30_000,
-    },
-    {
-      name: 'example-apple-maps',
-      testDir: 'apps/example-apple-maps/tests/e2e',
-      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:3016' },
-      timeout: 15_000,
     },
   ],
 })

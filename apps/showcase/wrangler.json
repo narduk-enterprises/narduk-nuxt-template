@@ -10,11 +10,11 @@
   "observability": {
     "enabled": true
   },
-  "services": [
-    { "binding": "AUTH", "service": "example-auth" },
-    { "binding": "BLOG", "service": "example-blog" },
-    { "binding": "MARKETING", "service": "example-marketing" },
-    { "binding": "OG_IMAGE", "service": "example-og-image" },
-    { "binding": "APPLE_MAPS", "service": "example-apple-maps" }
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "narduk-nuxt-template-examples-db",
+      "database_id": "f8070060-4588-4f9b-a9a9-bb3f09e00501"
+    }
   ]
 }

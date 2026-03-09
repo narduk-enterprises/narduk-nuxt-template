@@ -17,15 +17,13 @@ useWebPageSchema({
   type: 'CollectionPage',
 })
 
-const config = useRuntimeConfig()
-
 const examples = [
   {
     title: 'Auth & Dashboard',
     description:
       'Login, registration, session management, and a protected dashboard with sidebar navigation.',
     icon: 'i-lucide-lock',
-    href: config.public.exampleAuthUrl as string,
+    to: '/auth',
     color: 'text-primary',
     features: ['Web Crypto PBKDF2', 'D1 sessions', 'CSRF protection', 'Dashboard layout'],
   },
@@ -33,7 +31,7 @@ const examples = [
     title: 'Blog',
     description: 'Content-driven blog powered by Nuxt Content v3 with markdown and MDC support.',
     icon: 'i-lucide-file-text',
-    href: config.public.exampleBlogUrl as string,
+    to: '/blog',
     color: 'text-info',
     features: ['Nuxt Content v3', 'MDC components', 'D1 storage on edge', 'SEO optimized'],
   },
@@ -41,7 +39,7 @@ const examples = [
     title: 'Marketing',
     description: 'Landing page components: hero, pricing tables, testimonials, and contact forms.',
     icon: 'i-lucide-megaphone',
-    href: config.public.exampleMarketingUrl as string,
+    to: '/marketing',
     color: 'text-warning',
     features: ['Hero section', 'Pricing table', 'Testimonials', 'Contact form'],
   },
@@ -50,7 +48,7 @@ const examples = [
     description:
       'Dynamic Open Graph image generation with nuxt-og-image v6 beta on Cloudflare Workers.',
     icon: 'i-lucide-image-up',
-    href: config.public.exampleOgImageUrl as string,
+    to: '/og-image',
     color: 'text-secondary',
     features: ['defineOgImage()', 'Renderer suffixes', 'Route + query driven', 'Multi-size cards'],
   },
@@ -59,7 +57,7 @@ const examples = [
     description:
       'Apple MapKit JS 5.x integration with JWT token auth on Nuxt 4 and Cloudflare Workers.',
     icon: 'i-lucide-map',
-    href: config.public.exampleAppleMapsUrl as string,
+    to: '/maps',
     color: 'text-success',
     features: ['MapKit JS 5.x', 'JWT token', 'Client-side init', 'Edge deploy'],
   },
@@ -74,8 +72,8 @@ const examples = [
         Nuxt 4 <span class="text-primary">Showcase</span>
       </h1>
       <p class="text-lg text-muted max-w-2xl mx-auto">
-        Production-ready example apps built with the Nuxt 4 template layer. Each example is a
-        standalone Cloudflare Worker you can explore independently.
+        Production-ready example sections built with the Nuxt 4 template layer. Explore each section
+        to see Nuxt 4 + Nuxt UI 4 + Cloudflare Workers patterns in action.
       </p>
       <div class="flex items-center justify-center gap-4">
         <UButton
@@ -95,12 +93,10 @@ const examples = [
 
     <!-- Example Apps Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <ULink
+      <NuxtLink
         v-for="example in examples"
         :key="example.title"
-        :to="example.href"
-        target="_blank"
-        rel="noopener"
+        :to="example.to"
         class="group block"
       >
         <UCard
@@ -115,7 +111,7 @@ const examples = [
                 {{ example.title }}
               </h2>
               <UIcon
-                name="i-lucide-external-link"
+                name="i-lucide-arrow-right"
                 class="size-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
               />
             </div>
@@ -137,7 +133,7 @@ const examples = [
             </div>
           </div>
         </UCard>
-      </ULink>
+      </NuxtLink>
     </div>
 
     <!-- Architecture Note -->
@@ -147,11 +143,11 @@ const examples = [
           <UIcon name="i-lucide-blocks" class="size-5" />
         </div>
         <div class="space-y-2">
-          <h3 class="font-semibold">Independent Workers</h3>
+          <h3 class="font-semibold">Consolidated Showcase</h3>
           <p class="text-sm text-muted">
-            Each example runs as a fully independent Cloudflare Worker with its own domain. Click
-            any card above to open it in a new tab. All apps are built from the same Nuxt 4 template
-            layer and can be developed and deployed independently.
+            All examples run within a single Nuxt 4 application on Cloudflare Workers. Navigate to
+            any section to explore the feature in detail. This app is built from the same Nuxt 4
+            template layer used across the fleet.
           </p>
         </div>
       </div>
