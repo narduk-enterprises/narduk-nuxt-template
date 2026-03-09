@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@narduk-enterprises/narduk-nuxt-template-layer": "workspace:*",
-    "@narduk/eslint-config": "workspace:*",
+    "@narduk-enterprises/eslint-config": "^1.0.3",
     "@nuxt/content": "^3.0.0",
     "@takumi-rs/core": "^0.70.1",
     "nuxt": "^4.3.1"
@@ -31,7 +31,7 @@
     "@cloudflare/workers-types": "^4.20250620.0",
     "@playwright/test": "^1.49.0",
     "@tailwindcss/vite": "^4.0.0",
-    "better-sqlite3": "^11.0.0",
+    "better-sqlite3": "^12.5.0",
     "eslint": "^10.0.2",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.9.3",

@@ -23,7 +23,7 @@ withDefaults(
     title: 'Article Title',
     description: 'This OG image is generated for article-type pages.',
     category: 'Article',
-    primaryColor: '#0ea5e9', // eslint-disable-line atx/no-inline-hex
+    primaryColor: '#0ea5e9', // eslint-disable-line narduk/no-inline-hex
   },
 )
 </script>
@@ -39,7 +39,7 @@ withDefaults(
       background: 'linear-gradient(145deg, #020617 0%, #111827 70%, #0c4a6e 100%)',
       padding: '56px',
       fontFamily: 'Inter, sans-serif',
-      // eslint-disable-next-line atx/no-inline-hex
+      // eslint-disable-next-line narduk/no-inline-hex
       color: '#e2e8f0',
     }"
   >
@@ -49,7 +49,7 @@ withDefaults(
         alignItems: 'center',
         borderRadius: '8px',
         background: primaryColor,
-        // eslint-disable-next-line atx/no-inline-hex
+        // eslint-disable-next-line narduk/no-inline-hex
         color: '#082f49',
         fontSize: '22px',
         fontWeight: '700',
@@ -73,7 +73,7 @@ withDefaults(
       <div
         :style="{
           fontSize: '30px',
-          // eslint-disable-next-line atx/no-inline-hex
+          // eslint-disable-next-line narduk/no-inline-hex
           color: '#cbd5e1',
           lineHeight: '1.35',
         }"
@@ -92,7 +92,7 @@ withDefaults(
     >
       <div
         :style="{
-          // eslint-disable-next-line atx/no-inline-hex
+          // eslint-disable-next-line narduk/no-inline-hex
           color: '#7dd3fc',
         }"
       >

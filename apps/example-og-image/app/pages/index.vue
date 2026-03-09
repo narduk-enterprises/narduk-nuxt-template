@@ -12,7 +12,7 @@ const playgroundPaths = defineOgImage(
   {
     title: 'Edge OG Image',
     description: 'Generated from URL query params with accent colors',
-    accent: '#0ea5e9', // eslint-disable-line atx/no-inline-hex
+    accent: '#0ea5e9', // eslint-disable-line narduk/no-inline-hex
     badge: 'Query Driven',
   },
   [{ key: 'playground-og' }, { key: 'playground-square', width: 800, height: 800 }],
@@ -24,7 +24,7 @@ const playgroundVariantPaths = defineOgImage(
   {
     title: 'Nuxt SEO Cards',
     description: 'Multi-size OG images for social platforms',
-    accent: '#f59e0b', // eslint-disable-line atx/no-inline-hex
+    accent: '#f59e0b', // eslint-disable-line narduk/no-inline-hex
     badge: 'Variant',
   },
   [{ key: 'playground-variant-og' }],
@@ -62,7 +62,7 @@ const defaultPaths = defineOgImage(
     description: 'Production-ready Nuxt 4 + Cloudflare Workers',
     icon: '✨',
     siteName: 'Nuxt 4 Demo',
-    primaryColor: '#10b981', // eslint-disable-line atx/no-inline-hex
+    primaryColor: '#10b981', // eslint-disable-line narduk/no-inline-hex
   },
   [{ key: 'default-og' }],
 )
@@ -75,7 +75,7 @@ const defaultVariantPaths = defineOgImage(
     description: 'Override primaryColor and icon for your app identity',
     icon: '🚀',
     siteName: 'My SaaS App',
-    primaryColor: '#8b5cf6', // eslint-disable-line atx/no-inline-hex
+    primaryColor: '#8b5cf6', // eslint-disable-line narduk/no-inline-hex
   },
   [{ key: 'default-variant-og' }],
 )
@@ -88,7 +88,7 @@ const layerArticlePaths = defineOgImage(
     title: 'Building with Nuxt Layers',
     description: 'Share OG templates across projects with Nuxt layer architecture.',
     category: 'Tutorial',
-    primaryColor: '#ec4899', // eslint-disable-line atx/no-inline-hex
+    primaryColor: '#ec4899', // eslint-disable-line narduk/no-inline-hex
   },
   [{ key: 'layer-article-og' }],
 )
@@ -126,7 +126,7 @@ const examples = computed(() => [
     props: {
       title: 'Edge OG Image',
       description: 'Generated from URL query params...',
-      // eslint-disable-next-line atx/no-inline-hex
+      // eslint-disable-next-line narduk/no-inline-hex
       accent: '#0ea5e9',
       badge: 'Query Driven',
     },
@@ -140,7 +140,7 @@ const examples = computed(() => [
     source: 'app',
     description:
       'Same Playground component with a different accent color and badge text. Demonstrates how a single component produces visually distinct cards via props.',
-    // eslint-disable-next-line atx/no-inline-hex
+    // eslint-disable-next-line narduk/no-inline-hex
     props: { title: 'Nuxt SEO Cards', accent: '#f59e0b', badge: 'Variant' },
     paths: allPreviews.value.playgroundVariant,
     dimensions: '1200×600',
@@ -174,7 +174,7 @@ const examples = computed(() => [
     source: 'layer',
     description:
       'The default OG image provided by the Nuxt layer. Features an emoji icon, gradient accent bar at the bottom, and a radial glow in the brand color. Used automatically by useSeo() when no type-specific template exists.',
-    // eslint-disable-next-line atx/no-inline-hex
+    // eslint-disable-next-line narduk/no-inline-hex
     props: { title: 'Nuxt 4 Template', icon: '✨', primaryColor: '#10b981' },
     paths: allPreviews.value.default,
     dimensions: '1200×630',
@@ -186,7 +186,7 @@ const examples = computed(() => [
     source: 'layer',
     description:
       'Same default layer template, rebranded with a purple accent and rocket icon. Override primaryColor, icon, and siteName to match your app.',
-    // eslint-disable-next-line atx/no-inline-hex
+    // eslint-disable-next-line narduk/no-inline-hex
     props: { title: 'Custom Brand Card', icon: '🚀', primaryColor: '#8b5cf6' },
     paths: allPreviews.value.defaultVariant,
     dimensions: '1200×630',
@@ -198,7 +198,7 @@ const examples = computed(() => [
     source: 'layer',
     description:
       'The article OG image provided by the Nuxt layer. Automatically selected by useSeo() when type is "article". Includes a category badge, headline, and the N4 brand mark.',
-    // eslint-disable-next-line atx/no-inline-hex
+    // eslint-disable-next-line narduk/no-inline-hex
     props: { title: 'Building with Nuxt Layers', category: 'Tutorial', primaryColor: '#ec4899' },
     paths: allPreviews.value.layerArticle,
     dimensions: '1200×630',

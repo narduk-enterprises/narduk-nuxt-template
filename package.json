@@ -11,10 +11,7 @@
     "preship": "node tools/check-setup.cjs && pnpm install --frozen-lockfile && npx tsx tools/check-drift-ci.ts && npx tsx tools/check-sync-health.ts && pnpm run quality && pnpm -r --if-present test:unit",
     "ship": "npx tsx tools/ship.ts",
     "ship:fleet": "npx tsx tools/ship-fleet.ts",
-    "postinstall": "node -e \"if(!require('fs').existsSync('.setup-complete'))console.log('\\n⚠️  Run pnpm run setup before doing anything else! See AGENTS.md.\\n')\"",
-    "build:plugins": "pnpm --filter @narduk/eslint-config build",
-    "prelint": "pnpm run build:plugins",
-    "lint": "pnpm run prelint && turbo run lint",
+    "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "quality": "turbo run quality --filter='./apps/*' --filter='./layers/*' --filter='./packages/*'",
     "check": "pnpm run quality",
@@ -72,7 +69,15 @@
       "@cloudflare/unenv-preset": "2.12.1",
       "nuxt-og-image": "6.0.0-beta.47",
       "@takumi-rs/core": ">=0.70.1",
-      "@takumi-rs/wasm": ">=0.70.1"
+      "@takumi-rs/wasm": ">=0.70.1",
+      "@cloudflare/workers-types": "4.20260307.1"
+    },
+    "peerDependencyRules": {
+      "allowAny": [
+        "eslint",
+        "citty",
+        "@cloudflare/workers-types"
+      ]
     },
     "onlyBuiltDependencies": [
       "@parcel/watcher",

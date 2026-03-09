@@ -1,4 +1,4 @@
-<!-- eslint-disable atx/no-fetch-in-component -- $fetch is used to load Texas outline GeoJSON for mask overlay -->
+<!-- eslint-disable narduk/no-fetch-in-component -- $fetch is used to load Texas outline GeoJSON for mask overlay -->
 <script lang="ts">
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const mapkit: any
@@ -157,7 +157,7 @@ let _texasCoords: Array<[number, number]> | null = null
 
 async function fetchTexasCoords(): Promise<Array<[number, number]>> {
   if (_texasCoords) return _texasCoords
-  // eslint-disable-next-line atx/no-fetch-in-component, nuxt-guardrails/no-raw-fetch -- client-only GeoJSON load inside async fn, not setup-level
+  // eslint-disable-next-line narduk/no-fetch-in-component, narduk/no-raw-fetch -- client-only GeoJSON load inside async fn, not setup-level
   const data = await $fetch<{ geometry: { coordinates: Array<Array<[number, number]>> } }>(
     '/api/geo/texas-outline',
   )
@@ -170,9 +170,9 @@ function getTexasMaskColor(): string {
   if (import.meta.client) {
     isDark = document.documentElement.classList.contains('dark')
   }
-  /* eslint-disable atx/no-inline-hex -- MapKit overlay mask colours */
+  /* eslint-disable narduk/no-inline-hex -- MapKit overlay mask colours */
   return isDark ? '#0a0a0a' : '#ffffff'
-  /* eslint-enable atx/no-inline-hex */
+  /* eslint-enable narduk/no-inline-hex */
 }
 
 /**
@@ -421,7 +421,7 @@ function extractAllPoints(geometry: GeoJSONGeometry): Array<[number, number]> {
 }
 
 function defaultOverlayStyle(): OverlayStyle {
-  /* eslint-disable atx/no-inline-hex -- MapKit overlay defaults */
+  /* eslint-disable narduk/no-inline-hex -- MapKit overlay defaults */
   return {
     strokeColor: '#065f46',
     strokeOpacity: 1,
@@ -429,7 +429,7 @@ function defaultOverlayStyle(): OverlayStyle {
     fillOpacity: 0.2,
     lineWidth: 1.5,
   }
-  /* eslint-enable atx/no-inline-hex */
+  /* eslint-enable narduk/no-inline-hex */
 }
 
 function buildPolygonRings(
@@ -486,7 +486,7 @@ function buildClusterElement(cluster: {
   if (props.createClusterElement) {
     el = props.createClusterElement(cluster, count)
   } else {
-    // eslint-disable-next-line nuxt-guardrails/no-ssr-dom-access
+    // eslint-disable-next-line narduk/no-ssr-dom-access
     el = document.createElement('div')
     el.className = 'mapkit-cluster'
     el.innerHTML = `<div class="mapkit-cluster-bubble"><span class="mapkit-cluster-count">${count}</span></div>`

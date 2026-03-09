@@ -11,7 +11,7 @@ interface NavLink {
   icon?: string
 }
 
-const props = withDefaults(
+const _props = withDefaults(
   defineProps<{
     appName?: string
     logoText?: string
@@ -53,6 +53,7 @@ watch(
 </script>
 
 <template>
+  <!-- eslint-disable-next-line narduk/no-native-layout -- layer scaffold: semantic landmark element -->
   <header class="sticky top-0 z-50 border-b border-default bg-default/80 backdrop-blur-xl">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <!-- Brand / Logo Area -->
@@ -70,6 +71,7 @@ watch(
       </slot>
 
       <!-- Desktop nav -->
+      <!-- eslint-disable-next-line narduk/no-native-layout -- layer scaffold: semantic landmark element -->
       <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
         <slot name="navigation">
           <template v-if="navLinks.length">
@@ -89,7 +91,7 @@ watch(
                 {{ link.label }}
               </NuxtLink>
 
-              <!-- External Link -->
+              <!-- eslint-disable-next-line narduk/prefer-ulink -- external link with target blank requires explicit rel -->
               <a
                 v-else-if="link.href"
                 :href="link.href"
@@ -134,6 +136,7 @@ watch(
 
     <!-- Mobile nav drawer -->
     <Transition name="slide-down">
+      <!-- eslint-disable-next-line narduk/no-native-layout -- layer scaffold: semantic landmark element -->
       <nav
         v-if="mobileMenuOpen"
         class="md:hidden border-t border-default bg-default/95 backdrop-blur-xl"
@@ -158,7 +161,7 @@ watch(
                   {{ link.label }}
                 </NuxtLink>
 
-                <!-- External Link -->
+                <!-- eslint-disable-next-line narduk/prefer-ulink -- external link with target blank requires explicit rel -->
                 <a
                   v-else-if="link.href"
                   :href="link.href"

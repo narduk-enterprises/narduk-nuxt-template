@@ -1,10 +1,10 @@
 // @ts-check
 import withNuxt from './.nuxt/eslint.config.mjs'
-import { sharedConfigs } from '@narduk/eslint-config'
+import { sharedConfigs } from '@narduk-enterprises/eslint-config/config'
 
 export default withNuxt(...sharedConfigs, {
   files: ['app/**/*.vue'],
   rules: {
-    'atx/no-native-layout': 'off',
+    'narduk/no-native-layout': 'off',
   },
 })

@@ -41,6 +41,9 @@ const SYNC_MAP: Record<string, Record<string, string>> = {
     POSTHOG_PROJECT_ID: 'POSTHOG_PROJECT_ID',
     POSTHOG_PUBLIC_KEY: 'POSTHOG_PUBLIC_KEY',
   },
+  github: {
+    GITHUB_TOKEN_PACKAGES_READ: 'GITHUB_TOKEN_PACKAGES_READ',
+  },
 }
 
 function getSecrets(project: string, config: string): Record<string, string> {

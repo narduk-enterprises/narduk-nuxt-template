@@ -284,7 +284,7 @@ async function main() {
 
     for (const file of files) {
       // Skip this init script so we don't dynamically break the replacements
-      if (file.endsWith('tools/init.ts')) continue
+      if (file.endsWith('tools/init.ts') || file.endsWith('tools/validate.ts')) continue
       // Skip documentation files — they reference the template name intentionally
       if (file.endsWith('.md')) continue
 
@@ -1150,19 +1150,6 @@ export default defineConfig({
   console.log(
     '     If this repo should receive fleet sync PRs, also add it to control-plane/apps/web/server/data/managed-repos.ts.',
   )
-
-  // Build ESLint plugins to ensure dist/ exists (required for linting)
-  // .gitignore excludes dist/, so this must run after every fresh clone/init.
-  console.log('\n  Building ESLint plugins...')
-  try {
-    execSync('pnpm run build:plugins', { stdio: 'inherit', cwd: ROOT_DIR })
-    console.log('  ✅ ESLint plugins built successfully.')
-    completed.push('ESLint plugin build')
-  } catch (error: any) {
-    console.warn(`  ⚠️ ESLint plugin build failed: ${error.message}`)
-    console.warn('    Run manually: pnpm run build:plugins')
-    failed.push('ESLint plugin build')
-  }
 
   // 10. Done (script is kept for re-runs)
   // Write the bootstrap sentinel so pre* hooks allow dev/build/deploy
