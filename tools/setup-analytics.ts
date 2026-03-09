@@ -563,8 +563,8 @@ async function runGscPipeline() {
     )
     console.log()
     console.log('  ⚠️   You must deploy now so Google can find the verification file.')
-    console.log('       Run: npm run deploy')
-    console.log('       Then run: npm run setup:gsc:verify')
+    console.log('       Run: pnpm ship')
+    console.log('       Then run: doppler run -- npx jiti tools/setup-analytics.ts gsc:verify')
     return
   }
 
@@ -602,8 +602,8 @@ async function runGscPipeline() {
 
     console.log()
     console.log('  ⚠️   You must deploy now so Google can find the verification file.')
-    console.log('       Run: npm run deploy')
-    console.log('       Then run: npm run setup:gsc:verify')
+    console.log('       Run: pnpm ship')
+    console.log('       Then run: doppler run -- npx jiti tools/setup-analytics.ts gsc:verify')
   } else {
     console.log('  ⚠️   No verification token returned. Site may already be verified.')
   }
@@ -739,8 +739,8 @@ async function runSetupAll() {
   console.log()
   console.log('══════════════════════════════════════════════════════════')
   console.log('  Next steps (run after deploy):')
-  console.log('    1. npm run deploy')
-  console.log('    2. doppler run -- npm run setup:gsc:verify')
+  console.log('    1. pnpm ship')
+  console.log('    2. doppler run -- npx jiti tools/setup-analytics.ts gsc:verify')
   console.log('══════════════════════════════════════════════════════════')
   console.log()
 }
