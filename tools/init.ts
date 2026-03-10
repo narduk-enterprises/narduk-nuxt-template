@@ -365,17 +365,23 @@ async function main() {
    * Safe to call multiple times — skips if the database already exists.
    * Uses `wrangler d1 info --json` for reliable ID parsing (avoids brittle regex on table output).
    */
+  // Augment PATH so locally-installed wrangler is found (pnpm doesn't add to npx PATH)
+  const execEnv = {
+    ...process.env,
+    PATH: `${path.join(ROOT_DIR, 'node_modules', '.bin')}:${process.env.PATH}`,
+  }
+
   function provisionD1(name: string): string | null {
     // Try to create first
     try {
-      console.log(`  Running: npx --yes wrangler d1 create ${name}`)
-      execSync(`npx --yes wrangler d1 create ${name}`, { encoding: 'utf-8', stdio: 'pipe' })
+      console.log(`  Running: wrangler d1 create ${name}`)
+      execSync(`wrangler d1 create ${name}`, { encoding: 'utf-8', stdio: 'pipe', env: execEnv })
       console.log(`  ✅ Database created: ${name}`)
     } catch (error: any) {
       const stderr = error.stderr || ''
       if (!stderr.includes('already exists')) {
         console.error(`  ❌ D1 creation failed for ${name}: ${stderr || error.message}`)
-        console.error('  Are you logged into Wrangler? (npx --yes wrangler login)')
+        console.error('  Are you logged into Wrangler? (wrangler login)')
         return null
       }
       console.log(`  ⏭ Database ${name} already exists.`)
@@ -383,9 +389,10 @@ async function main() {
 
     // Always fetch the ID via --json for reliable parsing
     try {
-      const infoOutput = execSync(`npx --yes wrangler d1 info ${name} --json`, {
+      const infoOutput = execSync(`wrangler d1 info ${name} --json`, {
         encoding: 'utf-8',
         stdio: 'pipe',
+        env: execEnv,
       })
       const info = JSON.parse(infoOutput)
       const dbId = info.uuid || info.database_id

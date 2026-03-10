@@ -116,6 +116,10 @@ jobs:
             --url="${{ inputs.app-url }}"
 
       # ── Initial commit + push ──
+      - name: Strip .npmrc auth token before commit
+        working-directory: app-source
+        run: sed -i '/_authToken/d' .npmrc
+
       - name: Commit and push
         working-directory: app-source
         run: |
