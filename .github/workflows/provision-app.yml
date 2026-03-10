@@ -128,7 +128,7 @@ jobs:
           git config user.email "bot@nard.uk"
           git commit -m "chore: initialize ${{ inputs.app-name }} from narduk-nuxt-template"
           git branch -M main
-          git push -u origin main
+          git push --force -u origin main
 
       - name: Update provision status → deploying
         run: |
