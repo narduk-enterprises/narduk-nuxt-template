@@ -80,6 +80,10 @@ jobs:
         with:
           node-version: 22
 
+      - name: Configure GitHub Packages auth
+        working-directory: app-source
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_SERVICE_TOKEN }}" >> .npmrc
+
       - name: Install dependencies
         working-directory: app-source
         run: pnpm install --no-frozen-lockfile
