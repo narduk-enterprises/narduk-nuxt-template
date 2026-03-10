@@ -20,6 +20,9 @@ on:
       CONTROL_PLANE_URL:
         description: "Control plane base URL for fleet sync (optional)"
         required: false
+      GH_PACKAGES_TOKEN:
+        description: "GitHub Packages read token for @narduk-enterprises scoped packages"
+        required: false
 
 jobs:
   check-changes:
@@ -100,6 +103,10 @@ jobs:
             packages/eslint-config/eslint-plugin-nuxt-ui/dist
             packages/eslint-config/eslint-plugin-vue-official-best-practices/dist
           key: workspace-${{ github.sha }}
+
+      - name: Configure GitHub Packages auth
+        if: ${{ steps.cache.outputs.cache-hit != 'true' && secrets.GH_PACKAGES_TOKEN != '' }}
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PACKAGES_TOKEN }}" >> .npmrc
 
       - name: Install dependencies (cache miss fallback)
         if: steps.cache.outputs.cache-hit != 'true'

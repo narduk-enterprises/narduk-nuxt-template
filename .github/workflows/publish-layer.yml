@@ -33,6 +33,9 @@ jobs:
           registry-url: https://npm.pkg.github.com
           cache: pnpm
 
+      - name: Configure GitHub Packages auth
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PACKAGES_TOKEN }}" >> .npmrc
+
       - run: pnpm install --frozen-lockfile
 
       - name: Determine version bump type

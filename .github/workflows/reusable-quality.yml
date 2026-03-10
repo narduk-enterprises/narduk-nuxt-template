@@ -28,6 +28,10 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      GH_PACKAGES_TOKEN:
+        description: "GitHub Packages read token for @narduk-enterprises scoped packages"
+        required: false
 
 env:
   NUXT_TELEMETRY_DISABLED: 1
@@ -47,6 +51,10 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
           cache: pnpm
+
+      - name: Configure GitHub Packages auth
+        if: ${{ secrets.GH_PACKAGES_TOKEN != '' }}
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PACKAGES_TOKEN }}" >> .npmrc
 
       - run: pnpm install --frozen-lockfile
 
@@ -208,6 +216,10 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
           cache: pnpm
+
+      - name: Configure GitHub Packages auth
+        if: ${{ secrets.GH_PACKAGES_TOKEN != '' }}
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PACKAGES_TOKEN }}" >> .npmrc
 
       - run: pnpm install --frozen-lockfile
 

@@ -98,6 +98,9 @@ jobs:
           cache: pnpm
           cache-dependency-path: template/pnpm-lock.yaml
 
+      - name: Configure GitHub Packages auth
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PACKAGES_TOKEN }}" >> template/.npmrc
+
       - name: Install template dependencies
         run: pnpm install --frozen-lockfile
         working-directory: template
@@ -122,6 +125,10 @@ jobs:
             echo "Changes detected:"
             git diff --stat
           fi
+
+      - name: Configure GitHub Packages auth (app)
+        if: steps.changes.outputs.changed == 'true' && inputs.dry-run != true
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PACKAGES_TOKEN }}" >> app/.npmrc
 
       - name: Sync lockfile after template changes
         if: steps.changes.outputs.changed == 'true' && inputs.dry-run != true

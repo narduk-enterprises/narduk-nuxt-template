@@ -364,18 +364,14 @@ async function main() {
    * Provision a D1 database by name. Returns the database_id or null on failure.
    * Safe to call multiple times — skips if the database already exists.
    * Uses `wrangler d1 info --json` for reliable ID parsing (avoids brittle regex on table output).
+   * Note: Uses `pnpm exec wrangler` because wrangler is a workspace devDep (apps/web),
+   * not hoisted to root node_modules/.bin in pnpm monorepos.
    */
-  // Augment PATH so locally-installed wrangler is found (pnpm doesn't add to npx PATH)
-  const execEnv = {
-    ...process.env,
-    PATH: `${path.join(ROOT_DIR, 'node_modules', '.bin')}:${process.env.PATH}`,
-  }
-
   function provisionD1(name: string): string | null {
     // Try to create first
     try {
-      console.log(`  Running: wrangler d1 create ${name}`)
-      execSync(`wrangler d1 create ${name}`, { encoding: 'utf-8', stdio: 'pipe', env: execEnv })
+      console.log(`  Running: pnpm exec wrangler d1 create ${name}`)
+      execSync(`pnpm exec wrangler d1 create ${name}`, { encoding: 'utf-8', stdio: 'pipe' })
       console.log(`  ✅ Database created: ${name}`)
     } catch (error: any) {
       const stderr = error.stderr || ''
@@ -389,10 +385,9 @@ async function main() {
 
     // Always fetch the ID via --json for reliable parsing
     try {
-      const infoOutput = execSync(`wrangler d1 info ${name} --json`, {
+      const infoOutput = execSync(`pnpm exec wrangler d1 info ${name} --json`, {
         encoding: 'utf-8',
         stdio: 'pipe',
-        env: execEnv,
       })
       const info = JSON.parse(infoOutput)
       const dbId = info.uuid || info.database_id

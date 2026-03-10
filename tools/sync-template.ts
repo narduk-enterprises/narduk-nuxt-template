@@ -268,6 +268,8 @@ concurrency:
 jobs:
   quality:
     uses: narduk-enterprises/narduk-nuxt-template/.github/workflows/reusable-quality.yml@main
+    secrets:
+      GH_PACKAGES_TOKEN: \${{ secrets.GH_PACKAGES_TOKEN }}
 `
 
   if (existsSync(ciPath)) {
