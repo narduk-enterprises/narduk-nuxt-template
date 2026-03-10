@@ -91,6 +91,13 @@ jobs:
         working-directory: app-source
         run: pnpm install --no-frozen-lockfile
 
+      # ── Fetch secrets BEFORE init (needed for wrangler D1 provisioning + deploy) ──
+      - name: Fetch secrets from Doppler
+        uses: dopplerhq/secrets-fetch-action@v1.3.1
+        with:
+          doppler-token: ${{ secrets.DOPPLER_HUB_TOKEN }}
+          inject-env-vars: true
+
       - name: Update provision status → initializing
         run: |
           curl -sf -X POST \
@@ -116,14 +123,8 @@ jobs:
           git config user.name "narduk-bot"
           git config user.email "bot@nard.uk"
           git commit -m "chore: initialize ${{ inputs.app-name }} from narduk-nuxt-template"
+          git branch -M main
           git push -u origin main
-
-      # ── Analytics setup (requires Doppler) ──
-      - name: Fetch secrets from Doppler
-        uses: dopplerhq/secrets-fetch-action@v1.3.1
-        with:
-          doppler-token: ${{ secrets.DOPPLER_HUB_TOKEN }}
-          inject-env-vars: true
 
       - name: Update provision status → deploying
         run: |

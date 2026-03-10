@@ -368,14 +368,14 @@ async function main() {
   function provisionD1(name: string): string | null {
     // Try to create first
     try {
-      console.log(`  Running: npx wrangler d1 create ${name}`)
-      execSync(`npx wrangler d1 create ${name}`, { encoding: 'utf-8', stdio: 'pipe' })
+      console.log(`  Running: npx --yes wrangler d1 create ${name}`)
+      execSync(`npx --yes wrangler d1 create ${name}`, { encoding: 'utf-8', stdio: 'pipe' })
       console.log(`  ✅ Database created: ${name}`)
     } catch (error: any) {
       const stderr = error.stderr || ''
       if (!stderr.includes('already exists')) {
         console.error(`  ❌ D1 creation failed for ${name}: ${stderr || error.message}`)
-        console.error('  Are you logged into Wrangler? (npx wrangler login)')
+        console.error('  Are you logged into Wrangler? (npx --yes wrangler login)')
         return null
       }
       console.log(`  ⏭ Database ${name} already exists.`)
@@ -383,7 +383,7 @@ async function main() {
 
     // Always fetch the ID via --json for reliable parsing
     try {
-      const infoOutput = execSync(`npx wrangler d1 info ${name} --json`, {
+      const infoOutput = execSync(`npx --yes wrangler d1 info ${name} --json`, {
         encoding: 'utf-8',
         stdio: 'pipe',
       })

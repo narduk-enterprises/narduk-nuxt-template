@@ -340,7 +340,6 @@ async function runGaSetup() {
     throw new Error('SITE_URL is required for the web data stream.')
   }
 
-  // @ts-expect-error googleapis is used as an optional dev script dependency
   const { google } = await import('googleapis')
   const credentials = loadCredentials()
   const auth = new google.auth.GoogleAuth({
@@ -523,7 +522,6 @@ async function runGscPipeline() {
     )
   }
 
-  // @ts-expect-error googleapis is used as an optional dev script dependency
   const { google } = await import('googleapis')
 
   const credentials = loadCredentials()
@@ -618,7 +616,6 @@ async function runGscVerify() {
     )
   }
 
-  // @ts-expect-error googleapis is used as an optional dev script dependency
   const { google } = await import('googleapis')
 
   const credentials = loadCredentials()
