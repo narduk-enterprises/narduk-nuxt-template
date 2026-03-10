@@ -23,6 +23,42 @@ on:
         description: "Control plane provision job ID for status callbacks"
         required: true
         type: string
+      # Pre-provisioned by Control Plane API (skip if provided)
+      d1-database-id:
+        description: "Pre-provisioned D1 database UUID (skip D1 creation in init.ts)"
+        required: false
+        type: string
+        default: ""
+      d1-database-name:
+        description: "Pre-provisioned D1 database name"
+        required: false
+        type: string
+        default: ""
+      ga-property-id:
+        description: "Pre-provisioned GA4 property ID (skip analytics in init.ts)"
+        required: false
+        type: string
+        default: ""
+      ga-measurement-id:
+        description: "Pre-provisioned GA4 measurement ID (G-XXXXXXX)"
+        required: false
+        type: string
+        default: ""
+      gsc-verification-file:
+        description: "GSC verification filename (e.g. google1234.html)"
+        required: false
+        type: string
+        default: ""
+      gsc-verification-content:
+        description: "GSC verification file content"
+        required: false
+        type: string
+        default: ""
+      indexnow-key:
+        description: "Pre-generated IndexNow API key"
+        required: false
+        type: string
+        default: ""
 
 concurrency:
   group: provision-${{ github.event.inputs.app-name }}
@@ -109,11 +145,34 @@ jobs:
 
       - name: Run init.ts (setup script)
         working-directory: app-source
+        env:
+          # Pre-provisioned by Control Plane API — init.ts skips these steps
+          PROVISION_ID: ${{ inputs.provision-id }}
+          D1_DATABASE_ID: ${{ inputs.d1-database-id }}
+          D1_DATABASE_NAME: ${{ inputs.d1-database-name }}
+          GA_PROPERTY_ID: ${{ inputs.ga-property-id }}
+          GA_MEASUREMENT_ID: ${{ inputs.ga-measurement-id }}
+          INDEXNOW_KEY: ${{ inputs.indexnow-key }}
+          DOPPLER_PRE_PROVISIONED: ${{ inputs.d1-database-id != '' && 'true' || '' }}
         run: |
           pnpm run setup -- \
             --name="${{ inputs.app-name }}" \
             --display="${{ inputs.display-name }}" \
             --url="${{ inputs.app-url }}"
+
+      # ── Write GSC verification file if pre-provisioned ──
+      - name: Write GSC verification file
+        if: inputs.gsc-verification-file != ''
+        working-directory: app-source
+        run: |
+          mkdir -p apps/web/public
+          echo '${{ inputs.gsc-verification-content }}' > "apps/web/public/${{ inputs.gsc-verification-file }}"
+          # Also write no-extension fallback (Cloudflare Pages may strip .html)
+          NOEXT=$(echo "${{ inputs.gsc-verification-file }}" | sed 's/.html$//')
+          if [ "$NOEXT" != "${{ inputs.gsc-verification-file }}" ]; then
+            echo '${{ inputs.gsc-verification-content }}' > "apps/web/public/$NOEXT"
+          fi
+          echo "✅ GSC verification file written: ${{ inputs.gsc-verification-file }}"
 
       # ── Initial commit + push ──
       - name: Strip .npmrc auth token before commit
@@ -146,8 +205,21 @@ jobs:
           pnpm build
           pnpm exec wrangler deploy
 
-      # ── Post-deploy: GSC verification ──
-      - name: Run analytics setup (post-deploy)
+      # ── Post-deploy: GSC verification (only if pre-provisioned) ──
+      - name: Verify GSC ownership (post-deploy)
+        if: inputs.gsc-verification-file != ''
+        working-directory: app-source
+        continue-on-error: true
+        env:
+          DOPPLER_PROJECT: ${{ inputs.app-name }}
+          DOPPLER_CONFIG: prd
+        run: |
+          if [ -f "tools/setup-analytics.ts" ]; then
+            npx jiti tools/setup-analytics.ts gsc:verify || echo "⚠️ GSC verification deferred — site may not be live yet"
+          fi
+
+      - name: Run analytics setup (post-deploy, fallback)
+        if: inputs.ga-property-id == ''
         working-directory: app-source
         continue-on-error: true
         env:
