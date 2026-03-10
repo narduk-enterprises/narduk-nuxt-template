@@ -95,7 +95,7 @@ jobs:
       - name: Fetch secrets from Doppler
         uses: dopplerhq/secrets-fetch-action@v1.3.1
         with:
-          doppler-token: ${{ secrets.DOPPLER_HUB_TOKEN }}
+          doppler-token: ${{ secrets.DOPPLER_TOKEN }}
           inject-env-vars: true
 
       - name: Update provision status → initializing
