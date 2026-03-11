@@ -56,7 +56,10 @@
       "nuxt-og-image": "6.0.0-beta.47",
       "@takumi-rs/core": ">=0.70.1",
       "@takumi-rs/wasm": ">=0.70.1",
-      "@cloudflare/workers-types": "4.20260307.1"
+      "@cloudflare/workers-types": "4.20260307.1",
+      "@typescript-eslint/utils": "^8.57.0",
+      "@nuxt/eslint": "^1.15.2",
+      "eslint-plugin-unicorn": "^63.0.0"
     },
     "peerDependencyRules": {
       "allowAny": [

@@ -412,11 +412,11 @@ jobs:
       if (webPkg.dependencies && webPkg.dependencies['@narduk/eslint-config']) {
         console.log(`  FIX: apps/web dependencies (migrating to @narduk-enterprises/eslint-config)`)
         delete webPkg.dependencies['@narduk/eslint-config']
-        webPkg.dependencies['@narduk-enterprises/eslint-config'] = '^1.0.8'
+        webPkg.dependencies['@narduk-enterprises/eslint-config'] = '^1.0.11'
         changed = true
       } else if (webPkg.dependencies && !webPkg.dependencies['@narduk-enterprises/eslint-config']) {
         console.log(`  ADD: apps/web dependencies (@narduk-enterprises/eslint-config)`)
-        webPkg.dependencies['@narduk-enterprises/eslint-config'] = '^1.0.8'
+        webPkg.dependencies['@narduk-enterprises/eslint-config'] = '^1.0.11'
         changed = true
       }
 
@@ -542,6 +542,8 @@ jobs:
       ship: 'git add -A && git diff --cached --quiet || git commit -m "chore: ship $(date -u +%Y-%m-%dT%H:%M:%SZ)" && git fetch && (git merge-base --is-ancestor @{u} HEAD || (echo \'\\\\n❌ Remote has changes not in local branch. Run: git pull --rebase && pnpm ship\\\\n\' && false)) && git push && doppler run -- pnpm --filter web run deploy',
       'update-layer': 'npx tsx tools/update-layer.ts',
       'check:sync-health': 'npx tsx tools/check-sync-health.ts',
+      clean: "find . -type d \\( -name node_modules -o -name .nuxt -o -name .output -o -name .nitro -o -name .wrangler -o -name .turbo -o -name .data -o -name dist \\) -not -path './.git/*' -prune -exec rm -rf {} +",
+      'clean:install': "pnpm run clean && pnpm install && pnpm run db:ready:all",
       'generate:favicons': 'npx tsx tools/generate-favicons.ts',
       tail: 'npx tsx tools/tail.ts',
       // Fleet apps only run quality on their own code, not layer/eslint packages
