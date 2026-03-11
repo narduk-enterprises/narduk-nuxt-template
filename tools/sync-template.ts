@@ -408,6 +408,18 @@ jobs:
         }
       }
 
+      // Ensure the eslint config package is correctly migrated
+      if (webPkg.dependencies && webPkg.dependencies['@narduk/eslint-config']) {
+        console.log(`  FIX: apps/web dependencies (migrating to @narduk-enterprises/eslint-config)`)
+        delete webPkg.dependencies['@narduk/eslint-config']
+        webPkg.dependencies['@narduk-enterprises/eslint-config'] = '^1.0.8'
+        changed = true
+      } else if (webPkg.dependencies && !webPkg.dependencies['@narduk-enterprises/eslint-config']) {
+        console.log(`  ADD: apps/web dependencies (@narduk-enterprises/eslint-config)`)
+        webPkg.dependencies['@narduk-enterprises/eslint-config'] = '^1.0.8'
+        changed = true
+      }
+
       if (changed && !dryRun) {
         writeFileSync(webPkgPath, JSON.stringify(webPkg, null, 2) + '\n', 'utf-8')
         console.log('  ✅ Updated apps/web/package.json')
