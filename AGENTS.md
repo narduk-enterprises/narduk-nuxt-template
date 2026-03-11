@@ -268,6 +268,10 @@ HTTP headers on every response:
 - Icons use `i-` prefix: `i-lucide-home`, not `name="heroicons-..."`
 - Use design token colors (`primary`, `neutral`) not arbitrary color strings
 - Tailwind CSS 4 — configure via `@theme` in `main.css`, not `tailwind.config`
+- **Input Sizing**: In Nuxt UI 4, input components like `<UTextarea>` and
+  `<UInput>` do not take 100% of their container's width by default. Always
+  apply `class="w-full"` to inputs unless explicitly designing a narrow inline
+  field.
 
 ## Lint Rule Quick Reference
 
