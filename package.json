@@ -30,6 +30,7 @@
     "check:reach": "npx tsx tools/check-apps-reachable.ts",
     "check:fleet-doppler": "doppler run -- npx tsx tools/validate-fleet-doppler.ts",
     "validate:fleet": "npx tsx tools/validate-fleet.ts",
+    "backfill:packages-read": "doppler run -- npx tsx tools/backfill-github-packages-read.ts",
     "tail:fleet": "npx tsx tools/tail-fleet.ts",
     "fetch:fleet": "npx tsx tools/fetch-fleet.ts",
     "backfill:secrets": "doppler run -- npx tsx tools/backfill-secrets.ts",

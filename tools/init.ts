@@ -561,6 +561,7 @@ Deployment is done locally via \`pnpm run ship\` (see AGENTS.md).
         CLOUDFLARE_API_TOKEN: '${narduk-nuxt-template.prd.CLOUDFLARE_API_TOKEN}',
         CLOUDFLARE_ACCOUNT_ID: '${narduk-nuxt-template.prd.CLOUDFLARE_ACCOUNT_ID}',
         CONTROL_PLANE_API_KEY: '${narduk-nuxt-template.prd.CONTROL_PLANE_API_KEY}',
+        GITHUB_TOKEN_PACKAGES_READ: '${narduk-nuxt-template.prd.GITHUB_TOKEN_PACKAGES_READ}',
         POSTHOG_PUBLIC_KEY: '${narduk-nuxt-template.prd.POSTHOG_PUBLIC_KEY}',
         POSTHOG_PROJECT_ID: '${narduk-nuxt-template.prd.POSTHOG_PROJECT_ID}',
         POSTHOG_HOST: '${narduk-nuxt-template.prd.POSTHOG_HOST}',

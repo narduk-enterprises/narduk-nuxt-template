@@ -15,4 +15,5 @@ jobs:
       run-tests: true
       run-drift-check: true
     secrets:
+      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
       GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}

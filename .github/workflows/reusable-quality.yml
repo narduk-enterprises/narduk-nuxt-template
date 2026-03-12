@@ -29,6 +29,9 @@ on:
         type: boolean
         default: false
     secrets:
+      DOPPLER_TOKEN:
+        description: "Doppler service token for secret resolution"
+        required: false
       GH_PACKAGES_TOKEN:
         description: "GitHub Packages read token for @narduk-enterprises scoped packages"
         required: false
@@ -52,9 +55,21 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: pnpm
 
+      - name: Fetch secrets from Doppler
+        if: ${{ secrets.DOPPLER_TOKEN != '' }}
+        uses: dopplerhq/secrets-fetch-action@v1.3.1
+        with:
+          doppler-token: ${{ secrets.DOPPLER_TOKEN }}
+          inject-env-vars: true
+
       - name: Configure GitHub Packages auth
-        if: ${{ secrets.GH_PACKAGES_TOKEN != '' }}
-        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PACKAGES_TOKEN }}" >> .npmrc
+        env:
+          GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+        run: |
+          TOKEN="${GITHUB_TOKEN_PACKAGES_READ:-$GH_PACKAGES_TOKEN}"
+          if [ -n "$TOKEN" ]; then
+            echo "//npm.pkg.github.com/:_authToken=$TOKEN" >> .npmrc
+          fi
 
       - run: pnpm install --frozen-lockfile
 
@@ -217,9 +232,21 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: pnpm
 
+      - name: Fetch secrets from Doppler
+        if: ${{ secrets.DOPPLER_TOKEN != '' }}
+        uses: dopplerhq/secrets-fetch-action@v1.3.1
+        with:
+          doppler-token: ${{ secrets.DOPPLER_TOKEN }}
+          inject-env-vars: true
+
       - name: Configure GitHub Packages auth
-        if: ${{ secrets.GH_PACKAGES_TOKEN != '' }}
-        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PACKAGES_TOKEN }}" >> .npmrc
+        env:
+          GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+        run: |
+          TOKEN="${GITHUB_TOKEN_PACKAGES_READ:-$GH_PACKAGES_TOKEN}"
+          if [ -n "$TOKEN" ]; then
+            echo "//npm.pkg.github.com/:_authToken=$TOKEN" >> .npmrc
+          fi
 
       - run: pnpm install --frozen-lockfile
 
