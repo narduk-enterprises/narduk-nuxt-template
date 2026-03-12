@@ -13,7 +13,7 @@
     "ship:fleet": "npx tsx tools/ship-fleet.ts",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "quality": "prettier --write \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path .gitignore --log-level warn && turbo run quality --filter='./apps/*' --filter='./layers/*' --filter='./packages/*'",
+    "quality": "pnpm run quality:fix && turbo run quality --filter='./apps/*' --filter='./layers/*' --filter='./packages/*'",
     "quality:fix": "turbo run lint --force -- --fix && pnpm run format",
     "check": "pnpm run quality",
     "quality:fleet": "bash scripts/fleet-quality.sh",

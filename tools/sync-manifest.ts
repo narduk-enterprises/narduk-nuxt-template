@@ -89,7 +89,7 @@ export const FLEET_ROOT_SCRIPT_PATCHES: Readonly<Record<string, string>> = {
   'dev:kill': 'sh scripts/dev-kill.sh',
   'generate:favicons': 'npx tsx tools/generate-favicons.ts',
   tail: 'npx tsx tools/tail.ts',
-  quality: "turbo run quality --filter='./apps/*'",
+  quality: "pnpm run quality:fix && turbo run quality --filter='./apps/*'",
   'quality:fix': 'turbo run lint --force -- --fix && pnpm run format',
   format:
     'prettier --write "**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}" --ignore-path .gitignore',
