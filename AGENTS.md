@@ -661,8 +661,8 @@ need to manage your D1 database schema.
    ```bash
    pnpm run ship
    ```
-   This runs `doppler run -- pnpm run deploy` inside the app package, which builds and
-   deploys via `wrangler deploy`.
+   This runs `doppler run -- pnpm run deploy` inside the app package, which
+   builds and deploys via `wrangler deploy`.
 4. **Push to remote** as good practice (but this does NOT trigger a deploy):
    ```bash
    git push
@@ -820,8 +820,8 @@ Doppler to inject secrets and runs `wrangler deploy`.
 
 1. `init.ts` creates the Doppler project and provisions hub references
 2. Run `doppler setup --project <app-name> --config prd` to wire up locally
-3. `pnpm run ship` runs `doppler run -- pnpm run deploy` inside the app package, injecting
-   all secrets
+3. `pnpm run ship` runs `doppler run -- pnpm run deploy` inside the app package,
+   injecting all secrets
 4. `wrangler deploy` uses `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
    from Doppler
 
