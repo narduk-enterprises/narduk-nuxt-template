@@ -9,7 +9,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs'
-import { dirname, join, relative } from 'node:path'
+import { basename, dirname, join, relative } from 'node:path'
 import {
   FLEET_ROOT_SCRIPT_PATCHES,
   FLEET_WEB_SCRIPT_PATCHES,
@@ -280,6 +280,7 @@ function patchRootPackage(
       onlyBuiltDependencies?: string[]
     }
   }
+  const expectedPackageName = basename(appDir)
 
   let touched = false
   patchJsonFile<Record<string, any>>(
@@ -288,6 +289,11 @@ function patchRootPackage(
       let changed = false
 
       if (mode === 'full') {
+        if (pkg.name !== expectedPackageName) {
+          pkg.name = expectedPackageName
+          changed = true
+        }
+
         pkg.scripts = pkg.scripts || {}
         for (const [name, command] of Object.entries(FLEET_ROOT_SCRIPT_PATCHES)) {
           if (pkg.scripts[name] !== command) {
