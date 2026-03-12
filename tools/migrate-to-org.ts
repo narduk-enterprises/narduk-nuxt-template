@@ -236,7 +236,7 @@ function main() {
   // ── Step 7: Control-plane managed repo follow-up ──
   console.log()
   console.log('Step 7: Updating control-plane managed repo catalog...')
-  console.log(`  ℹ️ Sync membership is now owned by control-plane, not template-sync-bot.yml.`)
+  console.log('  ℹ️ Sync membership is now owned by control-plane, not GitHub sync workflows.')
   console.log(
     '  Add the repo to control-plane/apps/web/server/data/managed-repos.ts and re-export config/fleet-sync-repos.json.',
   )

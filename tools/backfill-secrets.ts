@@ -17,6 +17,7 @@
 
 import crypto from 'node:crypto'
 import { execSync } from 'node:child_process'
+import { resolveFleetTargets } from './fleet-projects'
 
 if (process.env.FLEET_DOPPLER_TOKEN) {
   process.env.DOPPLER_TOKEN = process.env.FLEET_DOPPLER_TOKEN
@@ -31,54 +32,6 @@ function isDopplerAvailable(): boolean {
     return true
   } catch {
     return false
-  }
-}
-
-// ──────────────────────────────────────────────────────────────
-// Fleet auto-discovery from control-plane API
-// ──────────────────────────────────────────────────────────────
-interface FleetApp {
-  name: string
-  dopplerProject: string
-  url: string
-}
-
-async function discoverFleetProjects(): Promise<string[]> {
-  const apiKey = process.env.CONTROL_PLANE_API_KEY
-  if (!apiKey) {
-    try {
-      const raw = execSync(
-        'doppler secrets get CONTROL_PLANE_API_KEY --project narduk-nuxt-template --config prd --plain',
-        { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
-      ).trim()
-      if (raw && raw.startsWith('nk_')) {
-        process.env.CONTROL_PLANE_API_KEY = raw
-        return discoverFleetProjects()
-      }
-    } catch {
-      /* not available */
-    }
-    return []
-  }
-
-  const baseUrl = process.env.CONTROL_PLANE_URL || 'https://control-plane.nard.uk'
-  try {
-    const res = await fetch(`${baseUrl}/api/fleet/apps`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    })
-    if (!res.ok) {
-      console.error(
-        `⚠️  Control plane API returned ${res.status}. Falling back to manual project list.`,
-      )
-      return []
-    }
-    const apps = (await res.json()) as FleetApp[]
-    return apps.map((a) => a.dopplerProject).filter(Boolean)
-  } catch (e: any) {
-    console.error(
-      `⚠️  Failed to reach control plane: ${e.message}. Falling back to manual project list.`,
-    )
-    return []
   }
 }
 
@@ -110,24 +63,16 @@ async function main() {
     process.exit(1)
   }
 
-  let FLEET_PROJECTS: string[] = (projectsArg ?? process.env.FLEET_PROJECTS ?? '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-
-  if (FLEET_PROJECTS.length === 0) {
-    console.log('🔍 No --projects specified. Discovering fleet apps from control-plane API...')
-    FLEET_PROJECTS = await discoverFleetProjects()
-
-    if (FLEET_PROJECTS.length > 0) {
-      console.log(`   Found ${FLEET_PROJECTS.length} fleet app(s).\n`)
-    } else {
-      console.error('❌ No fleet projects discovered.')
-      console.error('  Provide --projects=app1,app2, set FLEET_PROJECTS=app1,app2,')
-      console.error('  or set CONTROL_PLANE_API_KEY (nk_...) for auto-discovery.')
-      process.exit(1)
-    }
-  }
+  const { repos: fleetProjects } = await resolveFleetTargets({
+    explicit: projectsArg
+      ? projectsArg
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean)
+      : [],
+    envValue: process.env.FLEET_PROJECTS,
+    log: (message) => console.error(message),
+  })
 
   const SECRETS_TO_BACKFILL = ['CRON_SECRET', 'NUXT_SESSION_PASSWORD']
 
@@ -142,7 +87,7 @@ async function main() {
   let skipCount = 0
   let failCount = 0
 
-  for (const project of FLEET_PROJECTS) {
+  for (const project of fleetProjects) {
     for (const secretKey of SECRETS_TO_BACKFILL) {
       const hasPrd = hasSecret(project, 'prd', secretKey)
       const hasDev = hasSecret(project, 'dev', secretKey)

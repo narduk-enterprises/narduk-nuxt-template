@@ -3,6 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import { fileURLToPath } from 'node:url'
+import { parseCommaSeparated, resolveFleetTargets } from './fleet-projects'
 
 interface CliOptions {
   appsDir: string
@@ -14,10 +15,6 @@ interface CliOptions {
   exclude: Set<string>
 }
 
-interface FleetManifest {
-  repos?: unknown
-}
-
 interface DopplerSetup {
   path: string
   exists: boolean
@@ -26,18 +23,6 @@ interface DopplerSetup {
 }
 
 const FLEET_DOPPLER_CONFIG = 'prd'
-
-function parseListArg(name: string): string[] {
-  const value = process.argv
-    .slice(2)
-    .find((arg) => arg.startsWith(`--${name}=`))
-    ?.slice(name.length + 3)
-
-  return (value ?? '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
-}
 
 function usage(): never {
   console.error('Usage: npx tsx tools/ship-fleet.ts [options]')
@@ -74,51 +59,15 @@ function parseArgs(): CliOptions {
     dryRun: args.includes('--dry-run'),
     continueOnError: args.includes('--continue-on-error'),
     fromRepo,
-    repos: parseListArg('repos'),
-    exclude: new Set(parseListArg('exclude')),
+    repos: parseCommaSeparated(
+      args.find((arg) => arg.startsWith('--repos='))?.slice('--repos='.length),
+    ),
+    exclude: new Set(
+      parseCommaSeparated(
+        args.find((arg) => arg.startsWith('--exclude='))?.slice('--exclude='.length),
+      ),
+    ),
   }
-}
-
-function loadFleetRepos(): string[] {
-  const manifestPath = resolve(
-    join(fileURLToPath(new URL('.', import.meta.url)), '..', 'config', 'fleet-sync-repos.json'),
-  )
-  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as FleetManifest
-
-  if (!Array.isArray(manifest.repos) || manifest.repos.some((repo) => typeof repo !== 'string')) {
-    console.error(`Invalid fleet manifest: ${manifestPath}`)
-    process.exit(1)
-  }
-
-  return [...new Set(manifest.repos)]
-}
-
-function resolveTargets(options: CliOptions): string[] {
-  const available = loadFleetRepos()
-  const requested = options.repos.length > 0 ? options.repos : available
-  const unknown = requested.filter((repo) => !available.includes(repo))
-
-  if (unknown.length > 0) {
-    console.error(`Unknown fleet repos: ${unknown.join(', ')}`)
-    process.exit(1)
-  }
-
-  let targets = requested.filter((repo) => !options.exclude.has(repo))
-  if (options.fromRepo) {
-    const startIndex = targets.indexOf(options.fromRepo)
-    if (startIndex === -1) {
-      console.error(`--from repo not found in target set: ${options.fromRepo}`)
-      process.exit(1)
-    }
-    targets = targets.slice(startIndex)
-  }
-
-  if (targets.length === 0) {
-    console.error('No fleet repos selected.')
-    process.exit(1)
-  }
-
-  return targets
 }
 
 function readDopplerSetup(repoDir: string): DopplerSetup {
@@ -283,13 +232,20 @@ async function main() {
   const options = parseArgs()
   if (process.argv.slice(2).includes('--help')) usage()
 
-  const targets = resolveTargets(options)
+  const { repos: targets, source } = await resolveFleetTargets({
+    explicit: options.repos,
+    envValue: process.env.FLEET_PROJECTS,
+    exclude: options.exclude,
+    fromRepo: options.fromRepo,
+    log: (message) => console.error(message),
+  })
 
   console.log('')
   console.log('Fleet Ship')
   console.log('══════════════════════════════════════════════════════════════')
   console.log(`Apps dir: ${options.appsDir}`)
   console.log(`Targets:  ${targets.join(', ')}`)
+  console.log(`Source:   ${source}`)
   console.log(`Parallel: ${Math.min(options.concurrency, targets.length)}`)
   if (options.dryRun) console.log('Mode:     dry run')
   if (options.continueOnError) console.log('Policy:   continue on error')

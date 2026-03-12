@@ -10,58 +10,9 @@
  *   npx tsx tools/tail-fleet.ts my-app   # direct mode
  */
 
-import { execSync, spawn } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import * as readline from 'node:readline'
-
-// ──────────────────────────────────────────────────────────────
-// App Discovery
-// ──────────────────────────────────────────────────────────────
-
-interface FleetApp {
-  name: string
-  dopplerProject: string
-  url: string
-}
-
-async function discoverFleetProjects(): Promise<string[]> {
-  const apiKey = process.env.CONTROL_PLANE_API_KEY
-  if (!apiKey) {
-    // Try to get it from Doppler
-    try {
-      const raw = execSync(
-        'doppler secrets get CONTROL_PLANE_API_KEY --project narduk-nuxt-template --config prd --plain',
-        { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
-      ).trim()
-      if (raw && raw.startsWith('nk_')) {
-        process.env.CONTROL_PLANE_API_KEY = raw
-        return discoverFleetProjects()
-      }
-    } catch {
-      /* not available */
-    }
-
-    return []
-  }
-
-  const baseUrl = process.env.CONTROL_PLANE_URL || 'https://control-plane.nard.uk'
-  try {
-    const res = await fetch(`${baseUrl}/api/fleet/apps`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    })
-    if (!res.ok) {
-      console.error(`⚠️  Control plane API returned ${res.status}.`)
-      return []
-    }
-    const apps = (await res.json()) as FleetApp[]
-    return apps
-      .map((a) => a.dopplerProject)
-      .filter(Boolean)
-      .sort()
-  } catch (e: any) {
-    console.error(`⚠️  Failed to reach control plane: ${e.message}.`)
-    return []
-  }
-}
+import { resolveFleetTargets } from './fleet-projects'
 
 // ──────────────────────────────────────────────────────────────
 // Interaction
@@ -153,7 +104,10 @@ async function main() {
   }
 
   console.log('🔍 Discovering fleet apps from control-plane API...')
-  const apps = await discoverFleetProjects()
+  const { repos: apps } = await resolveFleetTargets({
+    envValue: process.env.FLEET_PROJECTS,
+    log: (message) => console.error(message),
+  })
 
   if (apps.length === 0) {
     console.error('❌ No fleet apps found or could not connect to control plane.')

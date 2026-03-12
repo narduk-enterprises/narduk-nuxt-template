@@ -146,7 +146,7 @@ tools/                 # Node.js automation scripts (init, validate, analytics)
 ### Updating the Layer
 
 Ensure your project uses the latest version of the layer by running the local
-update script:
+update script from the downstream app:
 
 ```bash
 pnpm run update-layer
@@ -155,9 +155,16 @@ pnpm run update-layer
 > **⚠️ NOTE: Local Sync over CI** Layer syncing is intentionally
 > **local-first**. Automated CI workflows for syncing the layer have been
 > removed to prevent unpredictable breaking changes in production. Developers
-> must pull layer updates explicitly into their working tree via the
-> `update-layer` script, review the generated `pnpm-lock.yaml` and code diff,
-> and commit the update.
+> must pull layer updates explicitly into their working tree, review the
+> generated `pnpm-lock.yaml` and code diff, and commit the update.
+
+To sync template infrastructure and the vendored layer together across local
+fleet clones, use the template repo entrypoints instead:
+
+```bash
+pnpm run sync-template ~/new-code/your-app
+pnpm run sync:fleet
+```
 
 ---
 

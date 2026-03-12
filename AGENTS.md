@@ -152,24 +152,31 @@ downstream app, always use the local update script:
 pnpm run update-layer
 ```
 
-> **⚠️ NOTE: Local Sync is Mandatory** Automated CI actions (like
-> `sync-fleet.yml`) are generally excluded from blindly pushing layer code.
-> Layer updates change dependencies and core runtime files, which must be
-> reviewed locally by a developer, tested against the app's specific
-> implementation, and pushed manually.
+> **⚠️ NOTE: Local Sync is Mandatory** Automated CI actions (like the old GitHub
+> sync workflows) are generally excluded from blindly pushing layer code. Layer
+> updates change dependencies and core runtime files, which must be reviewed
+> locally by a developer, tested against the app's specific implementation, and
+> pushed manually.
 
 **What this does under the hood:**
 
-1. Adds or updates a `template` Git remote pointing to
-   `https://github.com/narduk-enterprises/narduk-nuxt-template.git`.
-2. Fetches `main` from the template.
-3. Checks out the `layers/narduk-nuxt-layer` directory from `template/main`,
-   overwriting the local layer directory.
-4. Rewrites `layers/narduk-nuxt-layer/package.json` so its `repository.url`
+1. Uses a local checkout of `narduk-nuxt-template` as the source of truth (pass
+   `--from /path/to/narduk-nuxt-template` if needed).
+2. Copies `layers/narduk-nuxt-layer` into the downstream app, overwriting the
+   vendored layer directory.
+3. Rewrites `layers/narduk-nuxt-layer/package.json` so its `repository.url`
    points to _your_ app's origin instead of the template's, preventing identity
    drift.
+4. Applies canonical pnpm config required by the vendored layer.
 5. Runs `pnpm install` to sync any new layer dependencies with the workspace
    lockfile.
+
+For full app syncs from the template checkout, use:
+
+```bash
+pnpm run sync-template ~/new-code/your-app
+pnpm run sync:fleet
+```
 
 > **⚠️ WARNING: Local Overwrites**  
 > This script will unconditionally overwrite `layers/narduk-nuxt-layer`. Any

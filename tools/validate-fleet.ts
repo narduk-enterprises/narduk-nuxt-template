@@ -21,6 +21,15 @@
  */
 
 import { execSync } from 'node:child_process'
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { resolveFleetTargets } from './fleet-projects'
+import {
+  collectManagedTemplateFiles,
+  getCanonicalCiContent,
+  normalizeManagedContent,
+} from './sync-manifest'
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -165,21 +174,6 @@ const dopplerHubSync: Validator = {
   },
 }
 
-const CRITICAL_FILES = [
-  'tools/init.ts',
-  'tools/validate.ts',
-  'tools/update-layer.ts',
-  'tools/check-drift-ci.ts',
-  'tools/check-sync-health.ts',
-  'turbo.json',
-  'pnpm-workspace.yaml',
-  'renovate.json',
-  'packages/eslint-config/eslint.config.mjs',
-  'packages/eslint-config/package.json',
-  'packages/eslint-config/eslint-plugins/index.mjs',
-  'tools/tail.ts',
-]
-
 const drift: Validator = {
   name: 'drift',
   async run(ctx) {
@@ -199,34 +193,35 @@ const drift: Validator = {
       }
     }
 
+    const managedFiles = collectManagedTemplateFiles(ctx.templateRoot)
     let drifted = 0
     let matched = 0
     const driftedFiles: string[] = []
 
-    for (const file of CRITICAL_FILES) {
-      let templateContent: string
-      let appContent: string
-      try {
-        templateContent = execSync(`cat "${ctx.templateRoot}/${file}"`, {
-          encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe'],
-        })
-      } catch {
-        continue
-      } // file doesn't exist in template
+    for (const file of managedFiles) {
+      const templatePath = join(ctx.templateRoot, file)
+      const appPath = join(appRoot, file)
+      const templateContent =
+        file === '.github/workflows/ci.yml'
+          ? getCanonicalCiContent()
+          : existsSync(templatePath)
+            ? readFileSync(templatePath, 'utf-8')
+            : null
 
-      try {
-        appContent = execSync(`cat "${appRoot}/${file}"`, {
-          encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe'],
-        })
-      } catch {
+      if (templateContent === null) {
+        continue
+      }
+
+      if (!existsSync(appPath)) {
         drifted++
         driftedFiles.push(`  MISSING: ${file}`)
         continue
       }
 
-      if (appContent !== templateContent) {
+      const appContent = readFileSync(appPath, 'utf-8')
+      if (
+        normalizeManagedContent(file, appContent) !== normalizeManagedContent(file, templateContent)
+      ) {
         drifted++
         driftedFiles.push(`  DRIFTED: ${file}`)
       } else {
@@ -544,57 +539,6 @@ export async function runFleetValidation(opts: RunOptions) {
 }
 
 // ──────────────────────────────────────────────────────────────
-// Fleet auto-discovery from control-plane API
-// ──────────────────────────────────────────────────────────────
-
-interface FleetApp {
-  name: string
-  dopplerProject: string
-  url: string
-}
-
-async function discoverFleetProjects(): Promise<string[]> {
-  const apiKey = process.env.CONTROL_PLANE_API_KEY
-  if (!apiKey) {
-    // Try to get it from Doppler
-    try {
-      const raw = execSync(
-        'doppler secrets get CONTROL_PLANE_API_KEY --project narduk-nuxt-template --config prd --plain',
-        { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
-      ).trim()
-      if (raw && raw.startsWith('nk_')) {
-        process.env.CONTROL_PLANE_API_KEY = raw
-        return discoverFleetProjects()
-      }
-    } catch {
-      /* not available */
-    }
-
-    return []
-  }
-
-  const baseUrl = process.env.CONTROL_PLANE_URL || 'https://control-plane.nard.uk'
-  try {
-    const res = await fetch(`${baseUrl}/api/fleet/apps`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    })
-    if (!res.ok) {
-      console.error(
-        `⚠️  Control plane API returned ${res.status}. Falling back to manual project list.`,
-      )
-      return []
-    }
-    const apps = (await res.json()) as FleetApp[]
-    return apps.map((a) => a.dopplerProject).filter(Boolean)
-  } catch (e: any) {
-    console.error(
-      `⚠️  Failed to reach control plane: ${e.message}. Falling back to manual project list.`,
-    )
-    return []
-  }
-}
-
-// ──────────────────────────────────────────────────────────────
 // CLI entrypoint
 // ──────────────────────────────────────────────────────────────
 
@@ -602,10 +546,6 @@ async function parseCli() {
   const args = process.argv.slice(2)
 
   const projectsArg = args.find((a) => a.startsWith('--projects='))?.slice('--projects='.length)
-  let projects = (projectsArg ?? process.env.FLEET_PROJECTS ?? '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
 
   const skip =
     args
@@ -618,21 +558,16 @@ async function parseCli() {
       ?.slice('--only='.length)
       ?.split(',') ?? []
   const strict = args.includes('--strict')
-
-  // Auto-discover from control-plane API if no projects specified
-  if (projects.length === 0) {
-    console.log('🔍 No --projects specified. Discovering fleet apps from control-plane API...')
-    projects = await discoverFleetProjects()
-
-    if (projects.length > 0) {
-      console.log(`   Found ${projects.length} fleet app(s).\n`)
-    } else {
-      console.error('❌ No fleet projects discovered.')
-      console.error('  Provide --projects=app1,app2, set FLEET_PROJECTS=app1,app2,')
-      console.error('  or set CONTROL_PLANE_API_KEY (nk_...) for auto-discovery.')
-      process.exit(1)
-    }
-  }
+  const { repos: projects } = await resolveFleetTargets({
+    explicit: projectsArg
+      ? projectsArg
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean)
+      : [],
+    envValue: process.env.FLEET_PROJECTS,
+    log: (message) => console.error(message),
+  })
 
   return { projects, skip, only, strict }
 }
@@ -647,7 +582,7 @@ if (isDirectRun) {
         skip,
         only,
         strict,
-        templateRoot: new URL('..', import.meta.url).pathname.replace(/\/$/, ''),
+        templateRoot: fileURLToPath(new URL('..', import.meta.url)).replace(/\/$/, ''),
       }),
     )
     .catch((e) => {
