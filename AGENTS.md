@@ -538,7 +538,6 @@ file in `.agents/workflows/`:
 | `/check-seo-compliance`       | Audits pages for useSeo, Schema.org, and OG images             |
 | `/check-ssr-hydration-safety` | SSR safety, window access, isHydrated, ClientOnly, DOM nesting |
 | `/check-ui-styling`           | Tailwind v4 CSS import order, token usage, Nuxt UI v4          |
-| `/migrate-to-monorepo`        | Migration workflow to convert legacy apps to this monorepo     |
 | `/review-cloudflare-layer`    | Full review of Nuxt layer + Cloudflare Workers setup           |
 | `/review-doppler-pattern`     | Audit Doppler secret management for completeness and security  |
 | `/score-repo`                 | Full repo audit — scores 19 categories out of 10               |
@@ -662,7 +661,7 @@ need to manage your D1 database schema.
    ```bash
    pnpm run ship
    ```
-   This runs `doppler run -- pnpm --filter web run deploy`, which builds and
+   This runs `doppler run -- pnpm run deploy` inside the app package, which builds and
    deploys via `wrangler deploy`.
 4. **Push to remote** as good practice (but this does NOT trigger a deploy):
    ```bash
@@ -821,7 +820,7 @@ Doppler to inject secrets and runs `wrangler deploy`.
 
 1. `init.ts` creates the Doppler project and provisions hub references
 2. Run `doppler setup --project <app-name> --config prd` to wire up locally
-3. `pnpm run ship` runs `doppler run -- pnpm --filter web run deploy`, injecting
+3. `pnpm run ship` runs `doppler run -- pnpm run deploy` inside the app package, injecting
    all secrets
 4. `wrangler deploy` uses `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
    from Doppler

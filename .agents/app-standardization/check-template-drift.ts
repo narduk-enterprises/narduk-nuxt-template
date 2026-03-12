@@ -65,7 +65,6 @@ const CRITICAL_FILES = [
   '.agents/workflows/generate-app-idea.md',
   '.agents/workflows/generate-brand-identity.md',
   '.agents/workflows/migrate-local.md',
-  '.agents/workflows/migrate-to-monorepo.md',
 ]
 
 /**
