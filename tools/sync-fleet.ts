@@ -12,6 +12,7 @@ interface CliOptions {
   skipQuality: boolean
   autoCommit: boolean
   continueOnError: boolean
+  allowDirtyApp: boolean
   allowDirtyTemplate: boolean
   fromRepo: string | null
   repos: string[]
@@ -31,6 +32,7 @@ function usage(): never {
   console.error('  --skip-quality           Skip per-app quality checks')
   console.error('  --auto-commit            Commit sync changes locally per repo')
   console.error('  --continue-on-error      Keep syncing after a failure')
+  console.error('  --allow-dirty-app        Sync onto dirty app worktrees')
   console.error('  --allow-dirty-template   Sync from an uncommitted template checkout')
   process.exit(1)
 }
@@ -61,6 +63,7 @@ function parseArgs(): CliOptions {
     skipQuality: args.includes('--skip-quality'),
     autoCommit: args.includes('--auto-commit'),
     continueOnError: args.includes('--continue-on-error'),
+    allowDirtyApp: args.includes('--allow-dirty-app'),
     allowDirtyTemplate: args.includes('--allow-dirty-template'),
     fromRepo: args.find((arg) => arg.startsWith('--from='))?.slice('--from='.length) ?? null,
     repos: parseCommaSeparated(
@@ -122,6 +125,7 @@ function runSync(repoName: string, repoDir: string, options: CliOptions): Promis
   const args = ['exec', 'tsx', 'tools/sync-template.ts', repoDir]
   if (options.dryRun) args.push('--dry-run')
   if (options.skipQuality) args.push('--skip-quality')
+  if (options.allowDirtyApp) args.push('--allow-dirty-app')
   if (options.allowDirtyTemplate) args.push('--allow-dirty-template')
 
   return new Promise((resolveExitCode) => {

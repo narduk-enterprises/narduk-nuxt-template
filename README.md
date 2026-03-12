@@ -152,6 +152,10 @@ update script from the downstream app:
 pnpm run update-layer
 ```
 
+By default, local sync refuses to run if the downstream app worktree is dirty.
+Use `--allow-dirty-app` only when you intentionally want to sync on top of local
+uncommitted changes.
+
 > **⚠️ NOTE: Local Sync over CI** Layer syncing is intentionally
 > **local-first**. Automated CI workflows for syncing the layer have been
 > removed to prevent unpredictable breaking changes in production. Developers
@@ -165,6 +169,9 @@ fleet clones, use the template repo entrypoints instead:
 pnpm run sync-template ~/new-code/your-app
 pnpm run sync:fleet
 ```
+
+Both commands also refuse dirty downstream app worktrees unless you pass
+`--allow-dirty-app`.
 
 ---
 

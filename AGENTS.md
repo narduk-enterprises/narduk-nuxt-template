@@ -152,6 +152,10 @@ downstream app, always use the local update script:
 pnpm run update-layer
 ```
 
+By default, local sync refuses to run if the downstream app worktree is dirty.
+Use `--allow-dirty-app` only when you intentionally want to sync on top of local
+uncommitted changes.
+
 > **⚠️ NOTE: Local Sync is Mandatory** Automated CI actions (like the old GitHub
 > sync workflows) are generally excluded from blindly pushing layer code. Layer
 > updates change dependencies and core runtime files, which must be reviewed
@@ -178,12 +182,13 @@ pnpm run sync-template ~/new-code/your-app
 pnpm run sync:fleet
 ```
 
-> **⚠️ WARNING: Local Overwrites**  
-> This script will unconditionally overwrite `layers/narduk-nuxt-layer`. Any
-> customizations you've made directly to the layer code in your repository will
-> be discarded. You will need to use your Git staging interface (e.g.,
-> `git diff` or VS Code Source Control) to review the incoming changes and
-> merge/restore your local modifications before committing.
+Both commands also refuse dirty downstream app worktrees unless you pass
+`--allow-dirty-app`.
+
+> **⚠️ WARNING: Managed Path Overwrites** Sync updates managed template files in
+> place. If you pass `--allow-dirty-app`, local edits inside managed paths such
+> as `layers/narduk-nuxt-layer`, synced `tools/*`, and patched config files can
+> be overwritten. Review the diff before committing.
 
 ## Hard Constraints (Cloudflare Workers)
 
