@@ -19,7 +19,8 @@ withDefaults(
     description: 'Production-ready Nuxt 4 + Cloudflare Workers',
     icon: '✨',
     siteName: 'Nuxt 4 Demo',
-    primaryColor: '#10b981', // eslint-disable-line narduk/no-inline-hex
+    // eslint-disable-next-line narduk/no-inline-hex -- OG image default brand color; Tailwind utilities are not available in component props defaults
+    primaryColor: '#10b981',
   },
 )
 </script>

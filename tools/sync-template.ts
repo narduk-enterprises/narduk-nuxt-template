@@ -69,17 +69,18 @@ const COPY_VERBATIM = [
   'tools/check-drift-ci.ts',
   'tools/check-sync-health.ts',
   'tools/generate-favicons.ts',
-  'tools/check-setup.cjs',
-  'tools/validate.ts',
   'tools/init.ts',
   'tools/tail.ts',
+  'tools/ship.ts',
   'tools/db-migrate.sh',
+  'scripts/dev-kill.sh',
 
   // CI/CD
   '.github/workflows/weekly-drift-check.yml',
 
   // Build orchestration
   'turbo.json',
+  'pnpm-workspace.yaml',
 
   // Renovate
   'renovate.json',
@@ -136,17 +137,36 @@ function copyRecursiveSync(
   src: string,
   dest: string,
   ignores: RegExp[] = [/\/node_modules$/, /\/dist$/, /\/\.turbo$/],
-): { copied: number; skipped: number } {
-  const result = { copied: 0, skipped: 0 }
+  prune: boolean = true,
+): { copied: number; skipped: number; pruned: number } {
+  const result = { copied: 0, skipped: 0, pruned: 0 }
   if (ignores.some((regex) => regex.test(src))) return result
 
   const stat = statSync(src)
   if (stat.isDirectory()) {
     if (!existsSync(dest)) mkdirSync(dest, { recursive: true })
-    for (const child of readdirSync(src)) {
-      const childRes = copyRecursiveSync(join(src, child), join(dest, child), ignores)
+
+    const srcEntries = new Set(readdirSync(src))
+
+    if (prune && existsSync(dest)) {
+      const destEntries = readdirSync(dest)
+      for (const destEntry of destEntries) {
+        if (!srcEntries.has(destEntry)) {
+          const destPath = join(dest, destEntry)
+          console.log(`  PRUNE: ${relative(dest, destPath)}`)
+          if (!dryRun) {
+            rmSync(destPath, { recursive: true, force: true })
+          }
+          result.pruned++
+        }
+      }
+    }
+
+    for (const child of srcEntries) {
+      const childRes = copyRecursiveSync(join(src, child), join(dest, child), ignores, prune)
       result.copied += childRes.copied
       result.skipped += childRes.skipped
+      result.pruned += childRes.pruned
     }
   } else {
     if (existsSync(dest) && filesIdentical(src, dest)) {
@@ -192,8 +212,8 @@ function main() {
 
   let copied = 0
   let skipped = 0
-  let added = 0
   let removed = 0
+  let pruned = 0
   let packageJsonChanged = false
   let npmrcChanged = false
 
@@ -226,12 +246,14 @@ function main() {
     const res = copyRecursiveSync(srcDir, destDir)
     copied += res.copied
     skipped += res.skipped
+    pruned += res.pruned
   }
 
-  console.log(`  ${copied} files synced, ${skipped} already up to date.`)
+  console.log(`  ${copied} files synced, ${skipped} already up to date, ${pruned} pruned.`)
   console.log()
 
   // Phase 2: Add missing workflow files
+  let added = 0
   console.log('Phase 2: Adding missing agent workflows...')
   for (const file of COPY_IF_MISSING) {
     const src = join(TEMPLATE_DIR, file)
@@ -539,16 +561,18 @@ jobs:
       predeploy: 'node tools/check-setup.cjs',
       preship:
         'node tools/check-setup.cjs && pnpm install --frozen-lockfile && npx tsx tools/check-drift-ci.ts && npx tsx tools/check-sync-health.ts && pnpm run quality',
-      ship: 'git add -A && git diff --cached --quiet || git commit -m "chore: ship $(date -u +%Y-%m-%dT%H:%M:%SZ)" && git fetch && (git merge-base --is-ancestor @{u} HEAD || (echo \'\\\\n❌ Remote has changes not in local branch. Run: git pull --rebase && pnpm ship\\\\n\' && false)) && git push && doppler run -- pnpm --filter web run deploy',
+      ship: 'npx tsx tools/ship.ts',
       'update-layer': 'npx tsx tools/update-layer.ts',
       'check:sync-health': 'npx tsx tools/check-sync-health.ts',
       clean:
         "find . -type d \\( -name node_modules -o -name .nuxt -o -name .output -o -name .nitro -o -name .wrangler -o -name .turbo -o -name .data -o -name dist \\) -not -path './.git/*' -prune -exec rm -rf {} +",
       'clean:install': 'pnpm run clean && pnpm install && pnpm run db:ready:all',
+      'dev:kill': 'sh scripts/dev-kill.sh',
       'generate:favicons': 'npx tsx tools/generate-favicons.ts',
       tail: 'npx tsx tools/tail.ts',
       // Fleet apps only run quality on their own code, not layer/eslint packages
       quality: "turbo run quality --filter='./apps/*'",
+      'quality:fix': 'turbo run lint --force -- --fix && pnpm run format',
       // Formatting — must match template exactly so all apps have consistent formatting tooling
       format:
         'prettier --write "**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}" --ignore-path .gitignore',

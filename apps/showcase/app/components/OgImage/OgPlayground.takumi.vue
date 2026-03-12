@@ -10,7 +10,8 @@ withDefaults(
     title: 'nuxt-og-image v6 beta',
     description: 'Dynamic OG images on Cloudflare Workers',
     badge: 'Playground',
-    accent: '#8b5cf6', // eslint-disable-line narduk/no-inline-hex
+    // eslint-disable-next-line narduk/no-inline-hex -- OG image default accent color; Tailwind utilities are not available in component props defaults
+    accent: '#8b5cf6',
   },
 )
 </script>

@@ -1,3 +1,4 @@
+// eslint-disable-next-line import-x/named -- @playwright/test exports are namespace objects; not statically resolvable by import-x in this tsconfig
 import { test, expect } from '@playwright/test'
 
 test.describe('Showcase Hub', () => {

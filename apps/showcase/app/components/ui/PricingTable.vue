@@ -80,16 +80,21 @@ const tiers = [
             size="lg"
             >Buy plan</UButton
           >
-          <ul role="list" class="mt-8 space-y-3 text-sm leading-6 text-muted">
-            <li v-for="feature in tier.features" :key="feature" class="flex gap-x-3">
+          <div role="list" class="mt-8 space-y-3 text-sm leading-6 text-muted">
+            <div
+              v-for="feature in tier.features"
+              :key="feature"
+              role="listitem"
+              class="flex gap-x-3"
+            >
               <UIcon
                 name="i-lucide-check"
                 class="size-6 flex-none text-primary"
                 aria-hidden="true"
               />
               {{ feature }}
-            </li>
-          </ul>
+            </div>
+          </div>
         </UCard>
       </div>
     </div>

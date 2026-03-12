@@ -63,9 +63,9 @@ export default defineNuxtConfig({
   $development: {
     hooks: {
       'vite:extendConfig'(config) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- vite config type doesn't expose server directly; cast required for HMR port injection
         ;(config as any).server ??= {}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- same cast as above; accessing server.hmr which is not in vite's exported type
         ;(config as any).server.hmr = { port: hmrPort++ }
       },
     },
