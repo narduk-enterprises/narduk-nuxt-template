@@ -1,12 +1,12 @@
 import { ensureDefaultTestUser } from '../../utils/defaultTestUser'
+import { RATE_LIMIT_POLICIES, enforceRateLimitPolicy } from '#layer/server/utils/rateLimit'
 
 export default defineEventHandler(async (event) => {
   if (!import.meta.dev) {
     throw createError({ statusCode: 404, message: 'Not found' })
   }
 
-  // Allow enough for E2E tests running in parallel (5/min is too low)
-  await enforceRateLimit(event, 'auth-login-test', 100, 60_000)
+  await enforceRateLimitPolicy(event, RATE_LIMIT_POLICIES.showcaseAuthLoginTest)
 
   const user = await ensureDefaultTestUser(event)
 
