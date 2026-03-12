@@ -18,6 +18,7 @@ import {
   STALE_SYNC_PATHS,
   VERBATIM_SYNC_FILES,
   getCanonicalCiContent,
+  isIgnoredManagedPath,
 } from './sync-manifest'
 
 export interface RunAppSyncOptions {
@@ -37,9 +38,6 @@ interface SyncCounters {
   skipped: number
   removed: number
 }
-
-const DIRECTORY_IGNORE_PATTERN =
-  /(^|\/)(node_modules|dist|\.turbo|\.nuxt|\.output|\.nitro|\.wrangler|\.data)(\/|$)/
 
 function createCounters(): SyncCounters {
   return { copied: 0, skipped: 0, removed: 0 }
@@ -103,7 +101,7 @@ function syncDirectoryRecursive(
   dryRun: boolean,
   log: (message: string) => void,
 ) {
-  if (!existsSync(sourceRoot) || DIRECTORY_IGNORE_PATTERN.test(sourceRoot)) return
+  if (!existsSync(sourceRoot) || isIgnoredManagedPath(sourceRoot)) return
 
   const stat = statSync(sourceRoot)
   if (stat.isDirectory()) {
