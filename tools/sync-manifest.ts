@@ -62,6 +62,9 @@ export const STALE_SYNC_PATHS = [
   '.env',
   '.env.local',
   '.env.example',
+  'layers/narduk-nuxt-layer/app/utils/format.ts',
+  'layers/narduk-nuxt-layer/app/utils/safeLinkTarget.ts',
+  'layers/narduk-nuxt-layer/eslint.overrides.mjs',
 ] as const
 
 export const GENERATED_SYNC_FILES = ['.github/workflows/ci.yml'] as const
